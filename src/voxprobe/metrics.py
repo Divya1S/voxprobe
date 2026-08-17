@@ -1,55 +1,102 @@
 """Turn-taking and latency metrics for BOTH parties, computed from the audio-derived transcript.
 
-From the merged, timestamped segments (AGENT / PATIENT) we derive:
-* patient response latency = gap from the agent's last word to the patient's first word (our bot's speed — this is
-  what a reviewer *hears* as "natural" or "laggy");
-* agent response latency = the mirror image (the target agent — a quality signal for the bug report);
-* overlaps (negative gaps = someone spoke over the other), long silences, talk share, turn counts.
-Vapi's own `performanceMetrics` (per-turn model/voice/transcriber/endpointing latency) and our brain-turn events
-(LLM latency, provider, prompt tokens) are attached when available so numbers can be cross-checked.
+Inputs are timestamped speech segments per channel (AGENT / PATIENT) from `retranscribe.py` (timing from each
+channel's energy envelope; words from Whisper). We derive:
+
+* **response gaps** — at every speaker change, the gap from the previous speaker's last word to the next speaker's
+  first word. Split by direction: `patient_response` (agent stops → patient starts: our simulator's speed, what a
+  reviewer hears as natural or laggy) and `agent_response` (patient stops → agent starts: the agent under test).
+  Summarised as n / p50 / p95 / max (p95 only when n ≥ 5 — percentiles over four numbers are noise).
+* **dead air** — response gaps ≥ DEAD_AIR_S. These ARE part of the response-gap distribution above (not a second
+  event); they are listed separately, attributed to the party that was slow, so the judge must weigh them.
+* **overlaps** — negative gaps (someone started before the other finished) beyond OVERLAP_S.
+* **intra-turn pauses** — long silences WITHIN one speaker's turn (a distinct phenomenon: hesitation / TTS stall).
+* talk share, turn counts.
+
+The thresholds are a named *turn-segmentation policy* (SegmentationPolicy) rather than magic numbers.
+Pipecat's own metrics (turn latency components) and our brain-turn events are attached when available.
 """
 
 from __future__ import annotations
 
 import json
 import statistics
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 
-def _turns(segments: list[dict]) -> list[dict]:
-    """Collapse consecutive same-speaker segments into turns with start/end/text."""
+@dataclass(frozen=True)
+class SegmentationPolicy:
+    merge_gap_s: float = 1.5  # same-speaker segments closer than this belong to one turn
+    overlap_s: float = 0.3  # a new speaker starting more than this before the other ends = talk-over
+    dead_air_s: float = 3.0  # a response gap this long is dead air (industry: >2 s reads as "poor")
+    intra_pause_s: float = 2.5  # a pause this long inside one turn is worth listing
+
+
+DEFAULT_POLICY = SegmentationPolicy()
+
+
+def _turns(segments: list[dict], policy: SegmentationPolicy) -> list[dict]:
+    """Collapse consecutive same-speaker segments into turns; remember internal pauses."""
     turns: list[dict] = []
     for s in segments:
-        if turns and turns[-1]["speaker"] == s["speaker"] and s["start"] - turns[-1]["end"] < 1.5:
+        if turns and turns[-1]["speaker"] == s["speaker"] and s["start"] - turns[-1]["end"] < policy.merge_gap_s:
+            pause = s["start"] - turns[-1]["end"]
+            if pause > 0:
+                turns[-1]["pauses"].append(round(pause, 2))
             turns[-1]["end"] = max(turns[-1]["end"], s["end"])
             turns[-1]["text"] += " " + s["text"]
         else:
-            turns.append({"speaker": s["speaker"], "start": s["start"], "end": s["end"], "text": s["text"]})
+            turns.append(
+                {"speaker": s["speaker"], "start": s["start"], "end": s["end"], "text": s["text"], "pauses": []}
+            )
     return turns
 
 
-def compute(segments: list[dict], events: list[dict] | None = None, vapi_perf: dict | None = None) -> dict:
-    turns = _turns(segments)
-    patient_gaps, agent_gaps, overlaps, silences = [], [], [], []
-    for prev, nxt in zip(turns, turns[1:], strict=False):
-        gap = nxt["start"] - prev["end"]
-        if prev["speaker"] != nxt["speaker"]:
-            (patient_gaps if nxt["speaker"] == "PATIENT" else agent_gaps).append(round(gap, 2))
-        if gap < -0.3:
-            overlaps.append({"at": round(nxt["start"], 1), "who_started": nxt["speaker"], "overlap_s": round(-gap, 2)})
-        if gap > 2.5:
-            silences.append({"after": prev["speaker"], "at": round(prev["end"], 1), "silence_s": round(gap, 2)})
+def _summary(xs: list[float]) -> dict:
+    if not xs:
+        return {"n": 0}
+    out = {
+        "n": len(xs),
+        "p50_s": round(statistics.median(xs), 2),
+        "max_s": round(max(xs), 2),
+        "min_s": round(min(xs), 2),
+    }
+    if len(xs) >= 5:
+        srt = sorted(xs)
+        out["p95_s"] = round(srt[min(len(srt) - 1, int(round(0.95 * (len(srt) - 1))))], 2)
+    return out
 
-    def stats(xs: list[float]) -> dict:
-        if not xs:
-            return {"n": 0}
-        return {
-            "n": len(xs),
-            "median_s": round(statistics.median(xs), 2),
-            "p90_s": round(sorted(xs)[int(0.9 * (len(xs) - 1))], 2),
-            "max_s": round(max(xs), 2),
-            "min_s": round(min(xs), 2),
-        }
+
+def compute(
+    segments: list[dict],
+    events: list[dict] | None = None,
+    vapi_perf: dict | None = None,
+    policy: SegmentationPolicy = DEFAULT_POLICY,
+) -> dict:
+    turns = _turns(segments, policy)
+    patient_gaps: list[float] = []
+    agent_gaps: list[float] = []
+    dead_air: list[dict] = []
+    overlaps: list[dict] = []
+    for prev, nxt in zip(turns, turns[1:], strict=False):
+        gap = round(nxt["start"] - prev["end"], 2)
+        if prev["speaker"] == nxt["speaker"]:
+            continue  # same speaker back-to-back beyond merge gap: not a response
+        (patient_gaps if nxt["speaker"] == "PATIENT" else agent_gaps).append(gap)
+        if gap >= policy.dead_air_s:
+            dead_air.append(
+                {"at": round(prev["end"], 1), "gap_s": gap, "slow_party": nxt["speaker"], "after": prev["speaker"]}
+            )
+        if gap < -policy.overlap_s:
+            overlaps.append({"at": round(nxt["start"], 1), "who_started": nxt["speaker"], "overlap_s": round(-gap, 2)})
+
+    intra_pauses = [
+        {"speaker": t["speaker"], "at": round(t["start"], 1), "pause_s": p}
+        for t in turns
+        for p in t["pauses"]
+        if p >= policy.intra_pause_s
+    ]
 
     talk = {"AGENT": 0.0, "PATIENT": 0.0}
     for t in turns:
@@ -57,14 +104,16 @@ def compute(segments: list[dict], events: list[dict] | None = None, vapi_perf: d
     total = max(1e-6, (turns[-1]["end"] - turns[0]["start"]) if turns else 0)
 
     out = {
+        "policy": asdict(policy),
         "turns": {
             "AGENT": sum(t["speaker"] == "AGENT" for t in turns),
             "PATIENT": sum(t["speaker"] == "PATIENT" for t in turns),
         },
-        "patient_response_latency": stats(patient_gaps),
-        "agent_response_latency": stats(agent_gaps),
+        "patient_response": _summary(patient_gaps),
+        "agent_response": _summary(agent_gaps),
+        "dead_air": dead_air,  # subset of the response gaps above, ≥ policy.dead_air_s
         "overlaps": overlaps,
-        "long_silences": silences,
+        "intra_turn_pauses": intra_pauses,
         "talk_share": {k: round(v / total, 2) for k, v in talk.items()},
         "duration_s": round(total, 1),
     }
@@ -74,13 +123,14 @@ def compute(segments: list[dict], events: list[dict] | None = None, vapi_perf: d
             lat = [e["latency_ms"] for e in brain]
             out["brain"] = {
                 "turns": len(brain),
-                "llm_latency_ms": {"median": int(statistics.median(lat)), "max": max(lat)},
+                "llm_latency_ms": {"p50": int(statistics.median(lat)), "max": max(lat)},
                 "providers": sorted({e["provider"] for e in brain}),
                 "failovers": sum(1 for e in brain if e.get("failed_over_from")),
                 "prompt_tokens": {"first": brain[0].get("prompt_tokens"), "last": brain[-1].get("prompt_tokens")},
             }
         interrupted = [e for e in events if e.get("type") == "user-interrupted"]
-        out["vapi_user_interrupted_events"] = len(interrupted)
+        if interrupted:
+            out["vapi_user_interrupted_events"] = len(interrupted)
     if vapi_perf:
         out["vapi_performance_metrics"] = {
             k: vapi_perf.get(k)
@@ -98,22 +148,45 @@ def compute(segments: list[dict], events: list[dict] | None = None, vapi_perf: d
     return out
 
 
+def _fmt(s: dict) -> str:
+    if not s or s.get("n", 0) == 0:
+        return "n=0"
+    parts = [f"n={s['n']}", f"p50 {s['p50_s']} s"]
+    if "p95_s" in s:
+        parts.append(f"p95 {s['p95_s']} s")
+    parts.append(f"max {s['max_s']} s")
+    return " · ".join(parts)
+
+
 def render_md(m: dict) -> str:
-    pl, al = m["patient_response_latency"], m["agent_response_latency"]
     lines = [
         "| Metric | Value |",
         "|---|---|",
-        f"| Turns (agent / patient) | {m['turns']['AGENT']} / {m['turns']['PATIENT']} |",
-        f"| Patient response latency (agent stops → patient starts) | median {pl.get('median_s', '–')} s · p90 {pl.get('p90_s', '–')} s · max {pl.get('max_s', '–')} s |",
-        f"| Agent response latency (patient stops → agent starts) | median {al.get('median_s', '–')} s · p90 {al.get('p90_s', '–')} s · max {al.get('max_s', '–')} s |",
-        f"| Overlaps (talk-over > 0.3 s) | {len(m['overlaps'])} {m['overlaps'][:3] if m['overlaps'] else ''} |",
-        f"| Silences > 2.5 s | {len(m['long_silences'])} {m['long_silences'][:3] if m['long_silences'] else ''} |",
-        f"| Talk share agent / patient | {m['talk_share']['AGENT']} / {m['talk_share']['PATIENT']} |",
+        f"| Turns (agent / caller) | {m['turns']['AGENT']} / {m['turns']['PATIENT']} |",
+        f"| Caller response gap (agent stops → caller starts) | {_fmt(m['patient_response'])} |",
+        f"| Agent response gap (caller stops → agent starts) | {_fmt(m['agent_response'])} |",
+        f"| Dead air (response gap ≥ {m['policy']['dead_air_s']} s) | {len(m['dead_air'])}"
+        + (
+            " — " + "; ".join(f"{d['gap_s']} s at {d['at']} s ({d['slow_party']} slow)" for d in m["dead_air"][:4])
+            if m["dead_air"]
+            else ""
+        )
+        + " |",
+        f"| Overlaps (talk-over > {m['policy']['overlap_s']} s) | {len(m['overlaps'])}"
+        + (
+            " — " + "; ".join(f"{o['who_started']} +{o['overlap_s']} s at {o['at']} s" for o in m["overlaps"][:4])
+            if m["overlaps"]
+            else ""
+        )
+        + " |",
+        f"| Intra-turn pauses ≥ {m['policy']['intra_pause_s']} s | {len(m['intra_turn_pauses'])} |",
+        f"| Talk share agent / caller | {m['talk_share']['AGENT']} / {m['talk_share']['PATIENT']} |",
     ]
     if "brain" in m:
         b = m["brain"]
         lines.append(
-            f"| Our LLM latency (server-side) | median {b['llm_latency_ms']['median']} ms · max {b['llm_latency_ms']['max']} ms · providers {b['providers']} · failovers {b['failovers']} |"
+            f"| Caller LLM latency (in-process) | p50 {b['llm_latency_ms']['p50']} ms · max {b['llm_latency_ms']['max']} ms · "
+            f"providers {b['providers']} · failovers {b['failovers']} |"
         )
     if "vapi_performance_metrics" in m:
         lines.append(f"| Vapi performance metrics (ms) | {m['vapi_performance_metrics']} |")
