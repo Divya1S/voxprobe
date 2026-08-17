@@ -38,10 +38,14 @@ outside JSON) with this shape:
     "timestamp": "mm:ss", "quote": "verbatim from transcript", "expected": "what should have happened",
     "why_it_matters": "...", "confidence": "high" | "medium" | "low", "matches_hypothesis": "text of the matching bug hypothesis or empty"}
  ],
+ "criteria": [ {"criterion": "verbatim success criterion from the scenario", "met": true | false | "unclear", "evidence": "timestamp + quote or reason"} ],
+ "hypotheses": [ {"hypothesis": "verbatim bug hypothesis from the scenario", "observed": true | false | "unclear", "evidence": "timestamp + quote or reason"} ],
  "positive_controls": ["specific things the agent did well, with timestamps"],
  "simulator_notes": ["specific things OUR patient bot should do better next time"],
  "testing_value": "1-2 sentences: did this scenario stress the agent meaningfully?"
 }
+`criteria` MUST contain one entry per success criterion listed in the scenario block, in order, and `hypotheses` one entry per
+bug hypothesis, in order — copy their text verbatim. `met`/`observed` are true only with transcript evidence.
 Domain checklist — look specifically for these classes of receptionist failure (flag only with transcript evidence):
 weekend/after-hours or otherwise impossible bookings (a medical practice's stated hours; if the agent itself says it is open
 Monday–Friday, a Saturday/Sunday slot is a HIGH-severity correctness bug); fabricated or placeholder patient data (e.g. a made-up
@@ -145,6 +149,29 @@ def measured_issues(metrics: dict, scenario: Scenario) -> list[dict]:
     return out
 
 
+def decide(verdict: dict, measured: list[dict]) -> dict:
+    """Deterministic PASS/FAIL from structured verdicts + measured issues. No LLM in this function.
+
+    FAIL if: any success criterion is not met, any bug hypothesis is observed, any agent-attributed judge issue is high/critical,
+    or any measured issue attributed to the agent is high. 'unclear' never fails a run but is reported.
+    """
+    reasons: list[str] = []
+    for c in verdict.get("criteria") or []:
+        if c.get("met") is False:
+            reasons.append(f"criterion not met: {c.get('criterion', '')[:90]}")
+    for h in verdict.get("hypotheses") or []:
+        if h.get("observed") is True:
+            reasons.append(f"hypothesis observed: {h.get('hypothesis', '')[:90]}")
+    for it in verdict.get("candidate_issues") or []:
+        if it.get("who") == "agent" and str(it.get("severity", "")).lower() in ("high", "critical"):
+            reasons.append(f"agent issue ({it.get('severity')}): {it.get('title', '')[:90]}")
+    for it in measured:
+        if it.get("who") == "agent" and it.get("severity") == "high":
+            reasons.append(f"measured ({it.get('severity')}): {it.get('title', '')[:90]}")
+    unclear = [c.get("criterion", "")[:60] for c in verdict.get("criteria") or [] if c.get("met") == "unclear"]
+    return {"pass": not reasons, "reasons": reasons, "unclear_criteria": unclear}
+
+
 def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict, verdict: dict) -> str:
     run_id = meta.get("call_id") or stem
     mode = meta.get("mode", "phone-call")
@@ -175,7 +202,14 @@ def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict,
             scores = ", ".join(f"{k} {val}" for k, val in v.items() if k != "notes" and not isinstance(val, str))
             L += [f"**{key.replace('_', ' ').title()}:** {scores}. {v.get('notes', '')}", ""]
     measured = measured_issues(metrics, scenario)
-    L += ["### Measured issues (deterministic, from audio timing)", ""]
+    decision = decide(verdict, measured)
+    L += [f"## Verdict: {'PASS' if decision['pass'] else 'FAIL'}", ""]
+    L += [f"- {r}" for r in decision["reasons"]] or [
+        "- all success criteria met, no hypotheses observed, no high-severity agent issues"
+    ]
+    if decision["unclear_criteria"]:
+        L.append(f"- unclear criteria (not counted as failures): {decision['unclear_criteria']}")
+    L += ["", "### Measured issues (deterministic, from audio timing)", ""]
     if not measured:
         L.append("_none_")
     for i, it in enumerate(measured, 1):
@@ -202,6 +236,22 @@ def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict,
     return "\n".join(L)
 
 
+def judge_and_report(
+    settings: Settings, scenario: Scenario, target: Target, stem: str, meta: dict, transcript_md: str, metrics: dict
+) -> dict:
+    """Judge a transcript, decide PASS/FAIL, write reports/<stem>.analysis.{json,md}. Returns the analysis dict."""
+    verdict = judge(settings, scenario, target, transcript_md, metrics)
+    measured = measured_issues(metrics, scenario)
+    decision = decide(verdict, measured)
+    settings.reports_dir.mkdir(parents=True, exist_ok=True)
+    analysis = {"stem": stem, "metrics": metrics, "measured_issues": measured, "judge": verdict, "decision": decision}
+    (settings.reports_dir / f"{stem}.analysis.json").write_text(json.dumps(analysis, indent=2))
+    (settings.reports_dir / f"{stem}.analysis.md").write_text(
+        render_analysis_md(stem, scenario, meta, metrics, verdict)
+    )
+    return analysis
+
+
 def analyze_call(settings: Settings, stem: str) -> Path:
     """Full post-call pipeline for one recorded call identified by its artifact stem."""
     meta_path = settings.reports_dir / f"{stem}.meta.json"
@@ -221,7 +271,13 @@ def analyze_call(settings: Settings, stem: str) -> Path:
 
     (settings.reports_dir / f"{stem}.analysis.json").write_text(
         json.dumps(
-            {"metrics": metrics, "measured_issues": measured_issues(metrics, scenario), "judge": verdict}, indent=2
+            {
+                "metrics": metrics,
+                "measured_issues": measured_issues(metrics, scenario),
+                "judge": verdict,
+                "decision": decide(verdict, measured_issues(metrics, scenario)),
+            },
+            indent=2,
         )
     )
     out = settings.reports_dir / f"{stem}.analysis.md"

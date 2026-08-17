@@ -61,7 +61,12 @@ def sample_agent_prompt(target: Target) -> str:
 
 
 async def run_text_simulation(
-    settings: Settings, scenario: Scenario, target: Target, max_turns: int = 14, quiet: bool = False
+    settings: Settings,
+    scenario: Scenario,
+    target: Target,
+    max_turns: int = 14,
+    quiet: bool = False,
+    judge: bool = True,
 ) -> dict:
     brain = Brain(build_providers(settings))
     if not settings.google_api_key:
@@ -74,6 +79,7 @@ async def run_text_simulation(
     state = CallState(scenario=scenario, business_name=target.business.name)
     latencies: list[int] = []
     prompt_tokens: list[int] = []
+    brain_log: list = []
     transcript: list[dict] = []
     t_start = time.monotonic()
 
@@ -93,6 +99,7 @@ async def run_text_simulation(
         system_prompt = compose_system_prompt(scenario, target.business.name, note)
         t0 = time.perf_counter()
         rec = await brain.reply(system_prompt, window_history(history))
+        brain_log.append(rec)
         wall_ms = int((time.perf_counter() - t0) * 1000)
         latencies.append(wall_ms)
         if rec.prompt_tokens:
@@ -114,6 +121,7 @@ async def run_text_simulation(
             rec = await brain.reply(
                 compose_system_prompt(scenario, target.business.name, note), window_history(history)
             )
+            brain_log.append(rec)
             say("CALLER", rec.reply, f"   [{rec.provider} {rec.latency_ms} ms]")
             break
 
@@ -134,14 +142,65 @@ async def run_text_simulation(
         print(json.dumps(stats))
         if prompt_tokens:
             print(f"≈ tokens/min at 7 turns/min: {stats['prompt_tokens']['mean'] * 7}")
-    return {
+    result = {
         "scenario_id": scenario.id,
         "target_id": target.id,
         "mode": "text",
         "started_at": datetime.now(UTC).isoformat(),
         "transcript": transcript,
         "stats": stats,
+        "brain_records": [
+            {
+                "turn": i + 1,
+                "provider": r.provider,
+                "model": r.model,
+                "latency_ms": r.latency_ms,
+                "prompt_tokens": r.prompt_tokens,
+                "completion_tokens": r.completion_tokens,
+                "failed_over_from": r.failed_over_from,
+                "reply": r.reply,
+            }
+            for i, r in enumerate(brain_log)
+        ],
     }
+    if judge:
+        result["analysis"] = _judge_text_run(settings, scenario, target, result)
+        if not quiet:
+            d = result["analysis"]["decision"]
+            print(f"\n● verdict: {'PASS' if d['pass'] else 'FAIL'} {d['reasons'] if d['reasons'] else ''}")
+            print(f"● analysis → reports/{result['analysis']['stem']}.analysis.md")
+    return result
+
+
+def _judge_text_run(settings: Settings, scenario: Scenario, target: Target, result: dict) -> dict:
+    """Text runs have no audio: metrics carry only the brain latencies; the judge sees the text transcript."""
+    from uuid import uuid4
+
+    from .analyze import judge_and_report
+    from .metrics import compute
+
+    stem = f"text-{scenario.id}-{datetime.now(UTC).strftime('%Y%m%d')}-{uuid4().hex[:6]}"
+    lines = [
+        f"[{int(ln['t']) // 60:02d}:{int(ln['t']) % 60:02d}] {'AGENT' if ln['speaker'] == 'AGENT' else 'PATIENT'}: {ln['text']}"
+        for ln in result["transcript"]
+    ]
+    transcript_md = "\n".join(lines)
+    events = [{"type": "brain-turn", **r} for r in result["brain_records"]]
+    metrics = compute([], events)  # no audio timing in text mode
+    meta = {
+        "stem": stem,
+        "scenario_id": scenario.id,
+        "target_id": target.id,
+        "mode": "text",
+        "started_at": result["started_at"],
+        "ended_reason": "text-simulation",
+        "files": {"recording_mp3": None, "transcript_md": None},
+    }
+    settings.transcripts_dir.mkdir(exist_ok=True)
+    (settings.transcripts_dir / f"{stem}.md").write_text(
+        f"# {stem} — {scenario.title} (text mode, {target.id})\n\n" + transcript_md + "\n"
+    )
+    return judge_and_report(settings, scenario, target, stem, meta, transcript_md, metrics)
 
 
 async def _agent_turn(client: AsyncOpenAI, model: str, agent_prompt: str, history: list[dict]) -> str:
