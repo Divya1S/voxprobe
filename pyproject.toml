@@ -18,7 +18,7 @@ dependencies = [
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.6"]
 phone = []  # Vapi adapter uses httpx only; Twilio adapter (via Pipecat) will add deps here
 # Audio arena: simulated caller <-> sample agent over real audio (Pipecat). Deepgram for STT/TTS by default.
-arena = ["pipecat-ai[silero,local-smart-turn,deepgram,groq,openai,websocket,soundfile]>=1.7.0"]
+arena = ["pipecat-ai[silero,deepgram,groq,openai,websocket,soundfile]>=1.7.0"]  # smart-turn v3 ONNX model ships in the wheel; no torch needed
 # Fully local speech for the arena on Apple Silicon (no accounts): Kokoro TTS + MLX Whisper STT
 arena-local = ["pipecat-ai[kokoro,mlx-whisper]>=1.7.0"]
 
