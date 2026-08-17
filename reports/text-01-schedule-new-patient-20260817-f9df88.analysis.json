@@ -1,0 +1,142 @@
+{
+  "stem": "text-01-schedule-new-patient-20260817-f9df88",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 6,
+      "llm_latency_ms": {
+        "p50": 297,
+        "max": 417
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 699,
+        "last": 933
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to schedule an appointment for knee pain. The agent initially offered a Saturday slot, which is outside clinic hours, but corrected to a weekday upon request. The appointment was successfully scheduled for Monday at 4:00 PM with Dr. Chen, and the agent provided the correct arrival instructions.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 4,
+      "pacing": 4,
+      "notes": "The agent was polite and efficient, though the initial offer of a Saturday appointment was a policy error."
+    },
+    "agent_quality": {
+      "correctness": 3,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 4,
+      "clarification": 5,
+      "notes": "The agent correctly identified the specialist and collected necessary information but failed to respect the clinic's operating hours in the first offer."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "There was 3 seconds of dead air reported in the metrics, which impacted the pacing score."
+    },
+    "candidate_issues": [
+      {
+        "title": "Offered Saturday appointment",
+        "who": "agent",
+        "severity": "high",
+        "timestamp": "00:10",
+        "quote": "Would this coming Saturday at nine in the morning work for you?",
+        "expected": "The agent should only offer appointments within Monday-Friday 8am-5pm.",
+        "why_it_matters": "The clinic is closed on weekends; offering these slots causes confusion and scheduling errors.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "A specific weekday date, time and provider were confirmed back to the patient",
+        "met": true,
+        "evidence": "00:50: 'You are all set for Monday at four, and we look forward to seeing you then.'"
+      },
+      {
+        "criterion": "The agent used the patient's own name and DOB (did not substitute demo values without saying so)",
+        "met": true,
+        "evidence": "00:10: 'Thanks for verifying that, Maya.'"
+      },
+      {
+        "criterion": "Call ended naturally after the patient said goodbye",
+        "met": true,
+        "evidence": "00:59: 'You too, thanks. Bye.'"
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends",
+        "observed": true,
+        "evidence": "00:10: 'Would this coming Saturday at nine in the morning work for you?'"
+      },
+      {
+        "hypothesis": "Agent fabricates or assigns a placeholder DOB instead of using the one given",
+        "observed": false,
+        "evidence": "Agent correctly acknowledged the patient's name."
+      },
+      {
+        "hypothesis": "Agent confirms a slot without stating the day/time/provider explicitly",
+        "observed": false,
+        "evidence": "Agent confirmed Monday at 4:00 PM with Dr. Chen."
+      },
+      {
+        "hypothesis": "Agent asks a new patient for \"the phone number on file\"",
+        "observed": false,
+        "evidence": "Agent did not ask for a phone number."
+      },
+      {
+        "hypothesis": "Agent cannot answer \"what should I bring\" and reaches for a transfer instead",
+        "observed": false,
+        "evidence": "00:40: 'As a new patient, please arrive fifteen minutes early with your photo ID and insurance card.'"
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified Dr. Chen as the knee specialist (00:10)",
+      "Agent provided clear instructions on what to bring (00:40)"
+    ],
+    "simulator_notes": [
+      "The simulator performed well; no improvements needed."
+    ],
+    "testing_value": "This scenario effectively stressed the agent's knowledge of clinic operating hours, revealing a failure to filter out weekend slots."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "hypothesis observed: Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on",
+      "agent issue (high): Offered Saturday appointment"
+    ],
+    "unclear_criteria": []
+  }
+}

@@ -169,6 +169,23 @@ def cmd_call(args) -> None:
     asyncio.run(_call_all_in_one(args))
 
 
+def cmd_bench(args) -> None:
+    from . import bench
+
+    settings = load_settings()
+    out = bench.main(
+        settings,
+        args.name,
+        args.bugs,
+        args.k,
+        resume=not args.no_resume,
+        concurrency=args.concurrency,
+        max_turns=args.max_turns,
+    )
+    print(f"● bench summary → {(out / 'summary.md').relative_to(settings.repo_root)}")
+    print((out / "summary.md").read_text())
+
+
 def cmd_analyze(args) -> None:
     from .analyze import analyze_call
 
@@ -201,12 +218,25 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--target", required=True)
     p.set_defaults(fn=cmd_call)
 
+    p = sub.add_parser("bench", help="planted-bug detection benchmark (text mode): precision/recall/F1 per bug class")
+    p.add_argument("--name", default=None, help="results dir name under reports/bench/ (default: date)")
+    p.add_argument("--bugs", nargs="*", default=None, help="subset of bug classes (default: all)")
+    p.add_argument("-k", type=int, default=3, help="repeats per (bug, scenario, target) cell")
+    p.add_argument("--concurrency", type=int, default=1)
+    p.add_argument("--max-turns", type=int, default=12)
+    p.add_argument("--no-resume", action="store_true")
+    p.set_defaults(fn=cmd_bench)
+
     p = sub.add_parser("analyze", help="re-transcribe + metrics + judge draft for recorded call(s) by artifact stem")
     p.add_argument("stems", nargs="+")
     p.set_defaults(fn=cmd_analyze)
 
     args = ap.parse_args(argv)
     _logging(args.verbose)
+    if getattr(args, "cmd", None) == "bench" and not args.name:
+        from datetime import UTC, datetime
+
+        args.name = datetime.now(UTC).strftime("%Y%m%d")
     args.fn(args)
 
 

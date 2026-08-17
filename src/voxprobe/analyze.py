@@ -62,10 +62,15 @@ simulator faults; if the transcript is too short or garbled to judge, say so in 
 
 
 def _judge_client(settings: Settings) -> tuple[OpenAI, str]:
-    if settings.groq_api_key:
-        return OpenAI(base_url=GROQ_BASE_URL, api_key=settings.groq_api_key, timeout=90), settings.groq_model
+    prefer_gemini = settings.judge_provider == "gemini"
+    if settings.groq_api_key and not (prefer_gemini and settings.google_api_key):
+        return OpenAI(base_url=GROQ_BASE_URL, api_key=settings.groq_api_key, timeout=90, max_retries=4), (
+            settings.judge_model or settings.groq_model
+        )
     if settings.google_api_key:
-        return OpenAI(base_url=GEMINI_BASE_URL, api_key=settings.google_api_key, timeout=90), settings.gemini_model
+        return OpenAI(base_url=GEMINI_BASE_URL, api_key=settings.google_api_key, timeout=90, max_retries=4), (
+            settings.judge_model or settings.gemini_model
+        )
     raise RuntimeError("no LLM key for the judge")
 
 

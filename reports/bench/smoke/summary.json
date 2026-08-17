@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-08-17T07:49:09.877409+00:00",
+  "runs": 6,
+  "overall": {
+    "tp": 3,
+    "fn": 0,
+    "fp": 0,
+    "tn": 3,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "clean_control_flag_rate": 0.0
+  },
+  "per_bug": {
+    "weekend_booking": {
+      "runs_planted": 3,
+      "runs_clean": 3,
+      "tp": 3,
+      "fn": 0,
+      "fp": 0,
+      "tn": 3,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1,
+      "pass_pow_k": 1,
+      "k": 1,
+      "scenarios": [
+        "01-schedule-new-patient",
+        "02-schedule-with-constraints",
+        "06-office-info-hours-address"
+      ],
+      "symptom_recall": 1.0,
+      "symptom_false_alarm_rate": 0.0,
+      "clean_control_flag_rate": 0.0
+    }
+  },
+  "avg_run_seconds": 284.367
+}

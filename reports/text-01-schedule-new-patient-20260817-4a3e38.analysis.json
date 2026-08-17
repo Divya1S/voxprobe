@@ -1,0 +1,127 @@
+{
+  "stem": "text-01-schedule-new-patient-20260817-4a3e38",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 7,
+      "llm_latency_ms": {
+        "p50": 371,
+        "max": 456
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 694,
+        "last": 1044
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The agent successfully collected the patient's information, identified the correct provider for the knee issue, and scheduled an appointment for Monday morning. The agent clearly communicated the arrival requirements and office policies. The call concluded naturally with all success criteria met.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 4,
+      "pacing": 4,
+      "notes": "The conversation flowed logically and the agent was responsive to the patient's questions."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent correctly identified Doctor Chen for knee pain and provided accurate instructions regarding arrival time and documentation."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None reported.",
+      "notes": "Latency was acceptable, though there was some dead air noted in the metrics."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "A specific weekday date, time and provider were confirmed back to the patient",
+        "met": true,
+        "evidence": "00:40: 'you are scheduled with Doctor Chen for Monday, November sixth at nine in the morning'"
+      },
+      {
+        "criterion": "The agent used the patient's own name and DOB (did not substitute demo values without saying so)",
+        "met": true,
+        "evidence": "00:10: 'Thanks for that information, Maya.'"
+      },
+      {
+        "criterion": "Call ended naturally after the patient said goodbye",
+        "met": true,
+        "evidence": "01:10: 'You too, thanks. Bye.'"
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent fabricates or assigns a placeholder DOB instead of using the one given",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent confirms a slot without stating the day/time/provider explicitly",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent asks a new patient for \"the phone number on file\"",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent cannot answer \"what should I bring\" and reaches for a transfer instead",
+        "observed": false,
+        "evidence": "N/A"
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the provider specialty match (Dr. Chen for knee pain) at 00:20.",
+      "Agent proactively provided the address and arrival instructions at 00:40."
+    ],
+    "simulator_notes": [
+      "The simulator performed well and followed the scenario instructions accurately."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle new patient intake, provider matching, and policy communication."
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}
