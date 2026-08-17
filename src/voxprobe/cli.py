@@ -1,10 +1,10 @@
 """Command-line entry point.
 
-  voxprobe list                                        scenarios and targets
-  voxprobe simulate --scenario 01 --target local-clinic   local run against the bundled sample agent (text mode; audio arena coming)
-  voxprobe call --scenario 01 --target my-phone-agent  real phone call through the optional Vapi adapter (tunnel + brain server + call + evidence)
-  voxprobe serve                                       run the brain server only (external tunnel)
-  voxprobe analyze <stem>...                           re-transcribe + metrics + judge draft for recorded call(s)
+voxprobe list                                        scenarios and targets
+voxprobe simulate --scenario 01 --target local-clinic   local run against the bundled sample agent (text mode; audio arena coming)
+voxprobe call --scenario 01 --target my-phone-agent  real phone call through the optional Vapi adapter (tunnel + brain server + call + evidence)
+voxprobe serve                                       run the brain server only (external tunnel)
+voxprobe analyze <stem>...                           re-transcribe + metrics + judge draft for recorded call(s)
 """
 
 from __future__ import annotations
@@ -27,8 +27,11 @@ TUNNEL_URL_RE = re.compile(r"https://[a-z0-9-]+\.trycloudflare\.com")
 
 
 def _logging(verbose: bool) -> None:
-    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO,
-                        format="%(asctime)s %(levelname)-7s %(name)s: %(message)s", datefmt="%H:%M:%S")
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
 
@@ -45,6 +48,7 @@ def cmd_list(args) -> None:
 
 def cmd_simulate(args) -> None:
     from . import simulate
+
     settings = load_settings()
     scenario = find_scenario(settings.scenarios_dir, args.scenario)
     target = find_target(settings.targets_dir, args.target)
@@ -57,6 +61,7 @@ def cmd_simulate(args) -> None:
 
 def cmd_serve(args) -> None:
     from .server import create_app
+
     settings = load_settings()
     uvicorn.run(create_app(settings), host=settings.brain_host, port=settings.brain_port, log_level="info")
 
@@ -70,7 +75,10 @@ async def _start_tunnel(port: int, timeout_s: int = 90) -> tuple[subprocess.Pope
     log = logging.getLogger("voxprobe.tunnel")
     proc = subprocess.Popen(
         ["cloudflared", "tunnel", "--url", f"http://127.0.0.1:{port}", "--no-autoupdate"],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
     )
     t0 = time.monotonic()
     url, registered = None, False
@@ -123,8 +131,9 @@ async def _call_all_in_one(args) -> None:
     scenario = find_scenario(settings.scenarios_dir, args.scenario)
     target = find_target(settings.targets_dir, args.target)
 
-    server = uvicorn.Server(uvicorn.Config(create_app(settings), host=settings.brain_host, port=settings.brain_port,
-                                           log_level="warning"))
+    server = uvicorn.Server(
+        uvicorn.Config(create_app(settings), host=settings.brain_host, port=settings.brain_port, log_level="warning")
+    )
     server_task = asyncio.create_task(server.serve())
     proc, url = await _start_tunnel(settings.brain_port)
     print(f"● tunnel up: {url}")
@@ -146,6 +155,7 @@ def cmd_call(args) -> None:
 
 def cmd_analyze(args) -> None:
     from .analyze import analyze_call
+
     settings = load_settings()
     for stem in args.stems:
         out = analyze_call(settings, stem)

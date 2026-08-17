@@ -7,7 +7,9 @@ from voxprobe.config import TargetNumberError, assert_allowed_target, load_setti
 ALLOWED = parse_allowlist("+15550101234, +1 (555) 010-9999")
 
 
-@pytest.mark.parametrize("raw", ["+15550101234", "+1 (555) 010-1234", "1-555-010-1234", "15550101234", " +1 555 010 1234 "])
+@pytest.mark.parametrize(
+    "raw", ["+15550101234", "+1 (555) 010-1234", "1-555-010-1234", "15550101234", " +1 555 010 1234 "]
+)
 def test_guard_accepts_every_spelling_of_an_allowed_number(raw):
     assert assert_allowed_target(raw, ALLOWED) == "+15550101234"
 

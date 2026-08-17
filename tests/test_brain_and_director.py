@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from voxprobe.brain import shape_reply, window_history, HISTORY_WINDOW
+from voxprobe.brain import HISTORY_WINDOW, shape_reply, window_history
 from voxprobe.director import CallState, director_note, looks_like_goodbye
 from voxprobe.scenarios import find_scenario
 

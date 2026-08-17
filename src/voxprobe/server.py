@@ -61,7 +61,9 @@ class CallRegistry:
 
     def state(self, call_id: str, scenario_id: str, target_id: str) -> CallState:
         if call_id not in self._states:
-            self._states[call_id] = CallState(scenario=self.scenario(scenario_id), business_name=self.target(target_id).business.name)
+            self._states[call_id] = CallState(
+                scenario=self.scenario(scenario_id), business_name=self.target(target_id).business.name
+            )
             self._turns[call_id] = []
         return self._states[call_id]
 
@@ -99,12 +101,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         call = body.get("call") or {}
         call_id = call.get("id") or body.get("callId") or "no-call-id"
         if not registry.turns(call_id):  # first request of a call: learn the protocol shape once
-            log.info("[%s] first custom-llm request keys=%s call_keys=%s n_messages=%d",
-                     call_id[:8], sorted(k for k in body if k != "messages"), sorted(call.keys()), len(messages))
+            log.info(
+                "[%s] first custom-llm request keys=%s call_keys=%s n_messages=%d",
+                call_id[:8],
+                sorted(k for k in body if k != "messages"),
+                sorted(call.keys()),
+                len(messages),
+            )
 
         scenario_id, target_id = _markers_from(messages, body)
         if not scenario_id or not target_id:
-            raise HTTPException(status_code=400, detail="system message must carry SCENARIO:<id> and TARGET:<id> markers")
+            raise HTTPException(
+                status_code=400, detail="system message must carry SCENARIO:<id> and TARGET:<id> markers"
+            )
 
         state = registry.state(call_id, scenario_id, target_id)
         history = window_history(messages)
@@ -117,16 +126,35 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         state.patient_turns += 1
         state.previous_replies.append(rec.reply)
         registry.record_turn(call_id, rec)
-        _append_event(events_dir, call_id, {
-            "type": "brain-turn", "received_at": time.time(), "scenario": scenario_id,
-            "turn": state.patient_turns, "provider": rec.provider, "model": rec.model,
-            "latency_ms": rec.latency_ms, "server_ms": int((time.perf_counter() - t0) * 1000),
-            "prompt_tokens": rec.prompt_tokens, "completion_tokens": rec.completion_tokens,
-            "failed_over_from": rec.failed_over_from, "director": note,
-            "agent_last": agent_last, "reply": rec.reply,
-        })
-        log.info("[%s] turn %d %s %dms tok=%s :: %s", call_id[:8], state.patient_turns, rec.provider,
-                 rec.latency_ms, rec.prompt_tokens, rec.reply)
+        _append_event(
+            events_dir,
+            call_id,
+            {
+                "type": "brain-turn",
+                "received_at": time.time(),
+                "scenario": scenario_id,
+                "turn": state.patient_turns,
+                "provider": rec.provider,
+                "model": rec.model,
+                "latency_ms": rec.latency_ms,
+                "server_ms": int((time.perf_counter() - t0) * 1000),
+                "prompt_tokens": rec.prompt_tokens,
+                "completion_tokens": rec.completion_tokens,
+                "failed_over_from": rec.failed_over_from,
+                "director": note,
+                "agent_last": agent_last,
+                "reply": rec.reply,
+            },
+        )
+        log.info(
+            "[%s] turn %d %s %dms tok=%s :: %s",
+            call_id[:8],
+            state.patient_turns,
+            rec.provider,
+            rec.latency_ms,
+            rec.prompt_tokens,
+            rec.reply,
+        )
 
         if body.get("stream", True):
             return StreamingResponse(_sse(rec.reply, rec.model), media_type="text/event-stream")
@@ -188,7 +216,10 @@ async def _sse(text: str, model: str):
 
     def chunk(delta: dict, finish: str | None) -> str:
         payload = {
-            "id": cid, "object": "chat.completion.chunk", "created": created, "model": model,
+            "id": cid,
+            "object": "chat.completion.chunk",
+            "created": created,
+            "model": model,
             "choices": [{"index": 0, "delta": delta, "finish_reason": finish}],
         }
         return f"data: {json.dumps(payload)}\n\n"

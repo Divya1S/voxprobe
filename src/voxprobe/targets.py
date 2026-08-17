@@ -43,18 +43,21 @@ class Business(BaseModel):
 
 class LocalConnection(BaseModel):
     """The bundled sample agent, run in-process. `planted_bugs` deliberately degrade it so detection can be demoed."""
+
     kind: Literal["local"] = "local"
     planted_bugs: list[str] = Field(default_factory=list, description="e.g. weekend_booking, fabricated_dob, phi_leak")
 
 
 class WebsocketConnection(BaseModel):
     """Any agent that speaks Pipecat's websocket audio protocol (16 kHz PCM frames)."""
+
     kind: Literal["websocket"] = "websocket"
     url: str
 
 
 class VapiConnection(BaseModel):
     """Phone target dialed through the optional Vapi adapter (bring your own paid telephony)."""
+
     kind: Literal["vapi"] = "vapi"
     phone_number: str = Field(description="E.164 number to dial; must ALSO be in ALLOWED_NUMBERS_E164")
 

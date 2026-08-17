@@ -16,7 +16,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.6"]
-phone = []  # Vapi adapter uses httpx only; Twilio/Pipecat adapters will add deps here
+phone = []  # Vapi adapter uses httpx only; Twilio adapter (via Pipecat) will add deps here
+# Audio arena: simulated caller <-> sample agent over real audio (Pipecat). Deepgram for STT/TTS by default.
+arena = ["pipecat-ai[silero,local-smart-turn,deepgram,groq,openai,websocket,soundfile]>=1.7.0"]
+# Fully local speech for the arena on Apple Silicon (no accounts): Kokoro TTS + MLX Whisper STT
+arena-local = ["pipecat-ai[kokoro,mlx-whisper]>=1.7.0"]
 
 [project.scripts]
 voxprobe = "voxprobe.cli:main"
@@ -31,3 +35,12 @@ packages = ["src/voxprobe"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]  # long lines are wrapped by hand where it helps readability

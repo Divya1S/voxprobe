@@ -31,7 +31,7 @@ def _turns(segments: list[dict]) -> list[dict]:
 def compute(segments: list[dict], events: list[dict] | None = None, vapi_perf: dict | None = None) -> dict:
     turns = _turns(segments)
     patient_gaps, agent_gaps, overlaps, silences = [], [], [], []
-    for prev, nxt in zip(turns, turns[1:]):
+    for prev, nxt in zip(turns, turns[1:], strict=False):
         gap = nxt["start"] - prev["end"]
         if prev["speaker"] != nxt["speaker"]:
             (patient_gaps if nxt["speaker"] == "PATIENT" else agent_gaps).append(round(gap, 2))
@@ -43,8 +43,13 @@ def compute(segments: list[dict], events: list[dict] | None = None, vapi_perf: d
     def stats(xs: list[float]) -> dict:
         if not xs:
             return {"n": 0}
-        return {"n": len(xs), "median_s": round(statistics.median(xs), 2), "p90_s": round(sorted(xs)[int(0.9 * (len(xs) - 1))], 2),
-                "max_s": round(max(xs), 2), "min_s": round(min(xs), 2)}
+        return {
+            "n": len(xs),
+            "median_s": round(statistics.median(xs), 2),
+            "p90_s": round(sorted(xs)[int(0.9 * (len(xs) - 1))], 2),
+            "max_s": round(max(xs), 2),
+            "min_s": round(min(xs), 2),
+        }
 
     talk = {"AGENT": 0.0, "PATIENT": 0.0}
     for t in turns:
@@ -52,7 +57,10 @@ def compute(segments: list[dict], events: list[dict] | None = None, vapi_perf: d
     total = max(1e-6, (turns[-1]["end"] - turns[0]["start"]) if turns else 0)
 
     out = {
-        "turns": {"AGENT": sum(t["speaker"] == "AGENT" for t in turns), "PATIENT": sum(t["speaker"] == "PATIENT" for t in turns)},
+        "turns": {
+            "AGENT": sum(t["speaker"] == "AGENT" for t in turns),
+            "PATIENT": sum(t["speaker"] == "PATIENT" for t in turns),
+        },
         "patient_response_latency": stats(patient_gaps),
         "agent_response_latency": stats(agent_gaps),
         "overlaps": overlaps,
@@ -75,25 +83,38 @@ def compute(segments: list[dict], events: list[dict] | None = None, vapi_perf: d
         out["vapi_user_interrupted_events"] = len(interrupted)
     if vapi_perf:
         out["vapi_performance_metrics"] = {
-            k: vapi_perf.get(k) for k in ("turnLatencyAverage", "modelLatencyAverage", "voiceLatencyAverage",
-                                          "transcriberLatencyAverage", "endpointingLatencyAverage",
-                                          "numUserInterrupted", "numAssistantInterrupted") if k in vapi_perf
+            k: vapi_perf.get(k)
+            for k in (
+                "turnLatencyAverage",
+                "modelLatencyAverage",
+                "voiceLatencyAverage",
+                "transcriberLatencyAverage",
+                "endpointingLatencyAverage",
+                "numUserInterrupted",
+                "numAssistantInterrupted",
+            )
+            if k in vapi_perf
         }
     return out
 
 
 def render_md(m: dict) -> str:
     pl, al = m["patient_response_latency"], m["agent_response_latency"]
-    lines = ["| Metric | Value |", "|---|---|",
-             f"| Turns (agent / patient) | {m['turns']['AGENT']} / {m['turns']['PATIENT']} |",
-             f"| Patient response latency (agent stops → patient starts) | median {pl.get('median_s','–')} s · p90 {pl.get('p90_s','–')} s · max {pl.get('max_s','–')} s |",
-             f"| Agent response latency (patient stops → agent starts) | median {al.get('median_s','–')} s · p90 {al.get('p90_s','–')} s · max {al.get('max_s','–')} s |",
-             f"| Overlaps (talk-over > 0.3 s) | {len(m['overlaps'])} {m['overlaps'][:3] if m['overlaps'] else ''} |",
-             f"| Silences > 2.5 s | {len(m['long_silences'])} {m['long_silences'][:3] if m['long_silences'] else ''} |",
-             f"| Talk share agent / patient | {m['talk_share']['AGENT']} / {m['talk_share']['PATIENT']} |"]
+    lines = [
+        "| Metric | Value |",
+        "|---|---|",
+        f"| Turns (agent / patient) | {m['turns']['AGENT']} / {m['turns']['PATIENT']} |",
+        f"| Patient response latency (agent stops → patient starts) | median {pl.get('median_s', '–')} s · p90 {pl.get('p90_s', '–')} s · max {pl.get('max_s', '–')} s |",
+        f"| Agent response latency (patient stops → agent starts) | median {al.get('median_s', '–')} s · p90 {al.get('p90_s', '–')} s · max {al.get('max_s', '–')} s |",
+        f"| Overlaps (talk-over > 0.3 s) | {len(m['overlaps'])} {m['overlaps'][:3] if m['overlaps'] else ''} |",
+        f"| Silences > 2.5 s | {len(m['long_silences'])} {m['long_silences'][:3] if m['long_silences'] else ''} |",
+        f"| Talk share agent / patient | {m['talk_share']['AGENT']} / {m['talk_share']['PATIENT']} |",
+    ]
     if "brain" in m:
         b = m["brain"]
-        lines.append(f"| Our LLM latency (server-side) | median {b['llm_latency_ms']['median']} ms · max {b['llm_latency_ms']['max']} ms · providers {b['providers']} · failovers {b['failovers']} |")
+        lines.append(
+            f"| Our LLM latency (server-side) | median {b['llm_latency_ms']['median']} ms · max {b['llm_latency_ms']['max']} ms · providers {b['providers']} · failovers {b['failovers']} |"
+        )
     if "vapi_performance_metrics" in m:
         lines.append(f"| Vapi performance metrics (ms) | {m['vapi_performance_metrics']} |")
     return "\n".join(lines) + "\n"

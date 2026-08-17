@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .config import Settings
@@ -21,11 +21,17 @@ from .targets import Target
 
 # Vapi's roles from the assistant's point of view: "user" is the party we called (the target agent),
 # "bot" is our assistant (the simulated patient).
-ROLE_LABEL = {"user": "AGENT  ", "bot": "PATIENT", "system": "SYSTEM ", "tool_calls": "TOOL   ", "tool_call_result": "TOOL   "}
+ROLE_LABEL = {
+    "user": "AGENT  ",
+    "bot": "PATIENT",
+    "system": "SYSTEM ",
+    "tool_calls": "TOOL   ",
+    "tool_call_result": "TOOL   ",
+}
 
 
 def artifact_stem(scenario: Scenario, call: dict) -> str:
-    started = call.get("startedAt") or call.get("createdAt") or datetime.now(timezone.utc).isoformat()
+    started = call.get("startedAt") or call.get("createdAt") or datetime.now(UTC).isoformat()
     day = started[:10].replace("-", "")
     return f"call-{scenario.id}-{day}-{call['id'][:6]}"
 
@@ -41,7 +47,10 @@ def render_transcript_md(scenario: Scenario, target: Target, call: dict, setting
     started, ended = call.get("startedAt"), call.get("endedAt")
     dur = None
     if started and ended:
-        dur = (datetime.fromisoformat(ended.replace("Z", "+00:00")) - datetime.fromisoformat(started.replace("Z", "+00:00"))).total_seconds()
+        dur = (
+            datetime.fromisoformat(ended.replace("Z", "+00:00"))
+            - datetime.fromisoformat(started.replace("Z", "+00:00"))
+        ).total_seconds()
     lines = [
         f"# {scenario.id} — {scenario.title}",
         "",
@@ -66,20 +75,42 @@ def probe_audio(path: Path) -> dict:
     """ffprobe: channels, sample rate, duration — to verify we really have both sides."""
     try:
         out = subprocess.run(
-            ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
-             "stream=channels,sample_rate,codec_name:format=duration", "-of", "json", str(path)],
-            capture_output=True, text=True, check=True,
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-select_streams",
+                "a:0",
+                "-show_entries",
+                "stream=channels,sample_rate,codec_name:format=duration",
+                "-of",
+                "json",
+                str(path),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
         ).stdout
         data = json.loads(out)
         st = (data.get("streams") or [{}])[0]
-        return {"channels": st.get("channels"), "sample_rate": st.get("sample_rate"), "codec": st.get("codec_name"),
-                "duration_s": float((data.get("format") or {}).get("duration") or 0)}
+        return {
+            "channels": st.get("channels"),
+            "sample_rate": st.get("sample_rate"),
+            "codec": st.get("codec_name"),
+            "duration_s": float((data.get("format") or {}).get("duration") or 0),
+        }
     except Exception as e:  # ffprobe missing or unreadable file — report, don't crash the run
         return {"error": str(e)}
 
 
-def write_bundle(settings: Settings, scenario: Scenario, target: Target, call: dict, mp3_path: Path | None,
-                 mono_paths: dict[str, Path] | None = None) -> dict:
+def write_bundle(
+    settings: Settings,
+    scenario: Scenario,
+    target: Target,
+    call: dict,
+    mp3_path: Path | None,
+    mono_paths: dict[str, Path] | None = None,
+) -> dict:
     stem = artifact_stem(scenario, call)
     settings.transcripts_dir.mkdir(parents=True, exist_ok=True)
     settings.reports_dir.mkdir(parents=True, exist_ok=True)

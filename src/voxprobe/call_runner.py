@@ -6,7 +6,6 @@ also starts the tunnel and the server in-process, or `call`, which expects them 
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from dataclasses import replace
 from pathlib import Path
@@ -25,7 +24,9 @@ log = logging.getLogger("voxprobe.runner")
 async def preflight(settings: Settings, scenario: Scenario, target: Target) -> None:
     """Fail fast on anything that would waste a call. Checked BEFORE the phone adapter is contacted."""
     if not isinstance(target.connection, VapiConnection):
-        raise RuntimeError(f"target {target.id} is a {target.kind} target; use `voxprobe run --target <local target>` for it")
+        raise RuntimeError(
+            f"target {target.id} is a {target.kind} target; use `voxprobe run --target <local target>` for it"
+        )
     assert_allowed_target(target.connection.phone_number, settings.allowed_numbers)
     if not settings.public_base_url.startswith("https://"):
         raise RuntimeError(f"PUBLIC_BASE_URL must be an https tunnel URL, got {settings.public_base_url!r}")
@@ -35,8 +36,14 @@ async def preflight(settings: Settings, scenario: Scenario, target: Target) -> N
         r = await c.get(f"{settings.public_base_url}/health")
         if r.status_code != 200 or not r.json().get("ok"):
             raise RuntimeError(f"brain server not healthy through the tunnel: {r.status_code} {r.text[:200]}")
-    log.info("preflight ok: %s reachable, scenario %s, caller %s → target %s (%s)",
-             settings.public_base_url, scenario.id, settings.caller_number, target.id, target.connection.phone_number)
+    log.info(
+        "preflight ok: %s reachable, scenario %s, caller %s → target %s (%s)",
+        settings.public_base_url,
+        scenario.id,
+        settings.caller_number,
+        target.id,
+        target.connection.phone_number,
+    )
 
 
 async def run_call(settings: Settings, scenario: Scenario, target: Target, analyze: bool = True) -> dict:
@@ -45,7 +52,9 @@ async def run_call(settings: Settings, scenario: Scenario, target: Target, analy
     try:
         call = await client.create_call(scenario, target)
         call_id = call["id"]
-        print(f"\n▶ call {call_id} placed: {settings.caller_number} → {target.connection.phone_number}  [{scenario.id} @ {target.id}]")
+        print(
+            f"\n▶ call {call_id} placed: {settings.caller_number} → {target.connection.phone_number}  [{scenario.id} @ {target.id}]"
+        )
         call = await client.wait_until_ended(call_id, timeout_s=scenario.max_duration_seconds + 180)
         print(f"■ call ended: reason={call.get('endedReason')}  cost=${call.get('cost')}")
 
@@ -55,7 +64,11 @@ async def run_call(settings: Settings, scenario: Scenario, target: Target, analy
 
         # stereo recording (LEFT = agent/customer, RIGHT = patient/assistant)
         mp3_path: Path | None = None
-        stereo_url = art.get("presignedStereoUrl") or art.get("stereoRecordingUrl") or (art.get("recording") or {}).get("stereoUrl")
+        stereo_url = (
+            art.get("presignedStereoUrl")
+            or art.get("stereoRecordingUrl")
+            or (art.get("recording") or {}).get("stereoUrl")
+        )
         if stereo_url:
             mp3_path = await client.download(stereo_url, settings.recordings_dir / f"{stem}.mp3")
             print(f"● stereo recording → {mp3_path.relative_to(settings.repo_root)}")
@@ -69,7 +82,9 @@ async def run_call(settings: Settings, scenario: Scenario, target: Target, analy
             url = art.get(f"presigned{'Customer' if key == 'customerUrl' else 'Assistant'}Url") or mono.get(key)
             if url:
                 try:
-                    mono_paths[label] = await client.download(url, settings.recordings_dir / "raw" / f"{stem}-{label}.mp3")
+                    mono_paths[label] = await client.download(
+                        url, settings.recordings_dir / "raw" / f"{stem}-{label}.mp3"
+                    )
                 except Exception as e:  # non-fatal: stereo is the deliverable
                     log.warning("mono %s download failed: %s", label, e)
 
@@ -79,6 +94,7 @@ async def run_call(settings: Settings, scenario: Scenario, target: Target, analy
         if mp3_path and analyze:
             try:
                 from .analyze import analyze_call
+
                 out = analyze_call(settings, meta["stem"])
                 print(f"● analysis   → {out.relative_to(settings.repo_root)}")
             except Exception as e:  # analysis is best-effort; the recording is the deliverable

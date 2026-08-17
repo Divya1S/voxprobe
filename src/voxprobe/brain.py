@@ -17,7 +17,7 @@ import re
 import time
 from dataclasses import dataclass, field
 
-from openai import AsyncOpenAI, APIStatusError, APITimeoutError, APIConnectionError, RateLimitError
+from openai import APIConnectionError, APIStatusError, APITimeoutError, AsyncOpenAI, RateLimitError
 
 from .config import Settings
 
@@ -63,11 +63,21 @@ def build_providers(settings: Settings) -> list[Provider]:
     """Failover order: Groq primary → Groq fallback model (separate TPM bucket) → Gemini."""
     providers: list[Provider] = []
     if settings.groq_api_key:
-        providers.append(Provider("groq", GROQ_BASE_URL, settings.groq_api_key, settings.groq_model,
-                                  _groq_extra(settings.groq_model)))
+        providers.append(
+            Provider(
+                "groq", GROQ_BASE_URL, settings.groq_api_key, settings.groq_model, _groq_extra(settings.groq_model)
+            )
+        )
         if settings.groq_fallback_model and settings.groq_fallback_model != settings.groq_model:
-            providers.append(Provider("groq-fallback", GROQ_BASE_URL, settings.groq_api_key,
-                                      settings.groq_fallback_model, _groq_extra(settings.groq_fallback_model)))
+            providers.append(
+                Provider(
+                    "groq-fallback",
+                    GROQ_BASE_URL,
+                    settings.groq_api_key,
+                    settings.groq_fallback_model,
+                    _groq_extra(settings.groq_fallback_model),
+                )
+            )
     if settings.google_api_key:
         providers.append(Provider("gemini", GEMINI_BASE_URL, settings.google_api_key, settings.gemini_model))
     if not providers:
@@ -137,7 +147,11 @@ class Brain:
             except (RateLimitError, APITimeoutError, APIConnectionError, APIStatusError) as e:
                 last_error = e
                 failed.append(p.name)
-                log.warning("provider %s failed (%s) after %d ms — failing over", p.name, type(e).__name__,
-                            int((time.perf_counter() - t0) * 1000))
+                log.warning(
+                    "provider %s failed (%s) after %d ms — failing over",
+                    p.name,
+                    type(e).__name__,
+                    int((time.perf_counter() - t0) * 1000),
+                )
                 continue
         raise RuntimeError(f"all LLM providers failed: {failed}") from last_error
