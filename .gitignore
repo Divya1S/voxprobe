@@ -37,3 +37,4 @@ reports/arena-*
 reports/call-*
 reports/events/arena-*
 reports/events/call-*
+.ruff_cache/
