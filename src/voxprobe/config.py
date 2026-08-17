@@ -68,6 +68,8 @@ class Settings:
     groq_fallback_model: str = "llama-3.1-8b-instant"
     google_api_key: str = ""
     gemini_model: str = "gemini-3.5-flash-lite"
+    judge_provider: str = "groq"  # "groq" | "gemini" — the LLM used for the post-call judge draft
+    judge_model: str = ""  # override model name for the judge (default: the provider's configured model)
 
     # speech (used by the audio arena and by phone adapters that support bring-your-own keys)
     deepgram_api_key: str = ""
@@ -129,6 +131,8 @@ def load_settings() -> Settings:
         groq_fallback_model=env("GROQ_FALLBACK_MODEL", "llama-3.1-8b-instant"),
         google_api_key=env("GOOGLE_API_KEY", ""),
         gemini_model=env("GEMINI_MODEL", "gemini-3.5-flash-lite"),
+        judge_provider=env("JUDGE_PROVIDER", "groq"),
+        judge_model=env("JUDGE_MODEL", ""),
         deepgram_api_key=env("DEEPGRAM_API_KEY", ""),
         public_base_url=env("PUBLIC_BASE_URL", "").rstrip("/"),
         brain_server_secret=env("BRAIN_SERVER_SECRET", ""),

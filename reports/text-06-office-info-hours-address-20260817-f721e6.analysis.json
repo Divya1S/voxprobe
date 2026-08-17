@@ -1,0 +1,162 @@
+{
+  "stem": "text-06-office-info-hours-address-20260817-f721e6",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 7,
+      "llm_latency_ms": {
+        "p50": 316,
+        "max": 471
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 725,
+        "last": 1114
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to inquire about clinic hours, location, parking, and new patient requirements. The agent correctly provided the address, parking, and arrival instructions, but incorrectly claimed the clinic is open on Saturdays despite the clinic policy stating it is closed on weekends. The agent repeatedly pushed for a Saturday appointment even after the patient declined.",
+    "objective_outcome": "partial",
+    "conversation_quality": {
+      "coherence": 4,
+      "naturalness_of_patient": 5,
+      "turn_taking": 4,
+      "pacing": 4,
+      "notes": "The agent was polite and clear, but the insistence on scheduling a Saturday appointment felt pushy and ignored the patient's stated preference."
+    },
+    "agent_quality": {
+      "correctness": 2,
+      "task_completion": 4,
+      "consistency": 3,
+      "policy_safety": 3,
+      "clarification": 5,
+      "notes": "The agent failed significantly on factual correctness regarding weekend hours, directly contradicting the clinic's stated policy."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "Latency was acceptable, but the agent's persistence in offering a Saturday slot was a major functional error."
+    },
+    "candidate_issues": [
+      {
+        "title": "Incorrect weekend hours",
+        "who": "agent",
+        "severity": "high",
+        "timestamp": "00:29",
+        "quote": "but we can actually see you this coming Saturday if you would like to schedule a visit then.",
+        "expected": "The agent should state the clinic is closed on weekends.",
+        "why_it_matters": "It provides false information about clinic availability, leading to potential patient frustration.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends"
+      },
+      {
+        "title": "Pushy scheduling",
+        "who": "agent",
+        "severity": "medium",
+        "timestamp": "00:39",
+        "quote": "Would you like to go ahead and schedule an appointment for this coming Saturday?",
+        "expected": "The agent should respect the patient's stated intent not to book today.",
+        "why_it_matters": "The patient explicitly stated they were not booking today, and the agent ignored this constraint.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent steers into scheduling or \"books\" a visit despite the caller declining"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "Agent states weekday hours and gives a plain, consistent yes/no on Saturdays",
+        "met": false,
+        "evidence": "00:29 - Agent incorrectly claims they can see the patient on Saturday."
+      },
+      {
+        "criterion": "Agent gives a street address and parking guidance, or explicitly says it doesn't have them \u2014 no deflection",
+        "met": true,
+        "evidence": "00:29 and 00:39 - Agent provided correct address and parking info."
+      },
+      {
+        "criterion": "Agent answers paperwork and arrival-time questions without contradicting itself",
+        "met": true,
+        "evidence": "00:49 - Agent correctly stated arrival time and required documents."
+      },
+      {
+        "criterion": "Agent respects \"not booking today\" and does not create an appointment",
+        "met": true,
+        "evidence": "The agent pushed for an appointment but did not actually create one."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends",
+        "observed": true,
+        "evidence": "00:29 - \"we can actually see you this coming Saturday\""
+      },
+      {
+        "hypothesis": "Agent cannot give a street address or parking info and offers a transfer instead of saying so",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent states hours that contradict its own greeting or an earlier turn (e.g. says open Saturday)",
+        "observed": true,
+        "evidence": "00:29 and 00:59 - Agent consistently claimed Saturday availability despite stating M-F hours."
+      },
+      {
+        "hypothesis": "Agent transfers or promises a callback for simple factual questions it should answer directly",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent steers into scheduling or \"books\" a visit despite the caller declining",
+        "observed": true,
+        "evidence": "00:39 and 00:49 - Agent repeatedly asked to schedule after the patient declined."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly provided the address at 00:29.",
+      "Agent correctly provided parking information at 00:39.",
+      "Agent correctly provided new patient requirements at 00:49."
+    ],
+    "simulator_notes": [
+      "The simulator performed well by explicitly stating it was not booking today."
+    ],
+    "testing_value": "This scenario effectively stressed the agent's ability to handle factual boundaries and respect user constraints regarding scheduling."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: Agent states weekday hours and gives a plain, consistent yes/no on Saturdays",
+      "hypothesis observed: Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on",
+      "hypothesis observed: Agent states hours that contradict its own greeting or an earlier turn (e.g. says open Sat",
+      "hypothesis observed: Agent steers into scheduling or \"books\" a visit despite the caller declining",
+      "agent issue (high): Incorrect weekend hours"
+    ],
+    "unclear_criteria": []
+  }
+}

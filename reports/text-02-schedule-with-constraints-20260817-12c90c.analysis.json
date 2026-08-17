@@ -1,0 +1,157 @@
+{
+  "stem": "text-02-schedule-with-constraints-20260817-12c90c",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 8,
+      "llm_latency_ms": {
+        "p50": 279,
+        "max": 316
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 726,
+        "last": 987
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The agent initially attempted to book a Saturday appointment despite the clinic being closed on weekends. After the patient insisted on seeing Dr. Chen, the agent confirmed a Saturday slot, which was incorrect. The agent eventually corrected the scheduling to a Monday afternoon slot after the patient clarified their availability.",
+    "objective_outcome": "partial",
+    "conversation_quality": {
+      "coherence": 3,
+      "naturalness_of_patient": 5,
+      "turn_taking": 3,
+      "pacing": 3,
+      "notes": "The agent's insistence on booking a Saturday appointment despite the clinic's stated hours caused significant confusion."
+    },
+    "agent_quality": {
+      "correctness": 1,
+      "task_completion": 3,
+      "consistency": 2,
+      "policy_safety": 2,
+      "clarification": 3,
+      "notes": "The agent failed to adhere to the clinic's operating hours by offering and confirming a Saturday appointment."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None reported.",
+      "notes": "Latency was acceptable, but the logic regarding business hours was flawed."
+    },
+    "candidate_issues": [
+      {
+        "title": "Offered appointment on closed day",
+        "who": "agent",
+        "severity": "critical",
+        "timestamp": "00:10",
+        "quote": "I can get you scheduled this coming Saturday morning if that works for you.",
+        "expected": "Agent should state the clinic is closed on weekends.",
+        "why_it_matters": "The clinic is closed on weekends; booking a patient for a non-existent shift is a critical failure.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends"
+      },
+      {
+        "title": "Confirmed appointment on closed day",
+        "who": "agent",
+        "severity": "critical",
+        "timestamp": "00:40",
+        "quote": "You are all set for this coming Saturday at 10:00 AM with Dr. Chen",
+        "expected": "Agent should not confirm a Saturday appointment.",
+        "why_it_matters": "Confirmed a non-existent appointment.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent books or \"confirms\" a Saturday appointment although the clinic is closed on weekends"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "Agent does not book a Saturday if the practice is closed on weekends, and says so plainly",
+        "met": false,
+        "evidence": "00:10, 00:40 - Agent offered and confirmed a Saturday appointment."
+      },
+      {
+        "criterion": "Any offered slot respects \"after 3 pm on weekdays\"",
+        "met": true,
+        "evidence": "01:00 - Agent offered 4:15 PM."
+      },
+      {
+        "criterion": "Provider preference is handled honestly (available / not available / alternative offered)",
+        "met": true,
+        "evidence": "00:20 - Agent correctly identified Dr. Chen's specialty and offered Dr. Reed, then accommodated the patient's request for Dr. Chen."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends",
+        "observed": true,
+        "evidence": "00:10, 00:40"
+      },
+      {
+        "hypothesis": "Agent books or \"confirms\" a Saturday appointment although the clinic is closed on weekends",
+        "observed": true,
+        "evidence": "00:40"
+      },
+      {
+        "hypothesis": "Agent offers a morning weekday slot despite the after-3pm constraint",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent claims Doctor Chen is available/unavailable inconsistently across turns",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent cannot state weekend hours (prior public reports quote it saying \"weekend hours are not listed\")",
+        "observed": true,
+        "evidence": "Agent never stated the hours, instead hallucinated availability."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the specialty of the doctors at 00:20.",
+      "Agent successfully pivoted to a Monday 4:15 PM slot at 01:00."
+    ],
+    "simulator_notes": [
+      "The simulator performed well in pushing back against the incorrect Saturday booking."
+    ],
+    "testing_value": "This scenario successfully stressed the agent's knowledge of business hours and its ability to handle conflicting constraints."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: Agent does not book a Saturday if the practice is closed on weekends, and says so plainly",
+      "hypothesis observed: Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on",
+      "hypothesis observed: Agent books or \"confirms\" a Saturday appointment although the clinic is closed on weekends",
+      "hypothesis observed: Agent cannot state weekend hours (prior public reports quote it saying \"weekend hours are ",
+      "agent issue (critical): Offered appointment on closed day",
+      "agent issue (critical): Confirmed appointment on closed day"
+    ],
+    "unclear_criteria": []
+  }
+}

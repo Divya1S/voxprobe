@@ -1,0 +1,144 @@
+{
+  "stem": "text-02-schedule-with-constraints-20260817-8e7dc8",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 9,
+      "llm_latency_ms": {
+        "p50": 353,
+        "max": 691
+      },
+      "providers": [
+        "gemini",
+        "groq"
+      ],
+      "failovers": 2,
+      "prompt_tokens": {
+        "first": 714,
+        "last": 967
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to schedule an appointment for shoulder pain, initially requesting a Saturday appointment and a specific doctor (Dr. Chen). The agent correctly noted that Dr. Chen handles knees and hips while Dr. Reed handles shoulders, but repeatedly tried to book a Saturday appointment despite the clinic being closed on weekends. Eventually, the patient mentioned weekday availability after 3 pm, and the agent successfully booked a Monday slot at 3:30 pm with Dr. Reed.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 3,
+      "naturalness_of_patient": 4,
+      "turn_taking": 4,
+      "pacing": 3,
+      "notes": "The agent was overly persistent in attempting to book a weekend appointment when the clinic is closed, creating confusion before eventually pivoting to a valid weekday slot."
+    },
+    "agent_quality": {
+      "correctness": 2,
+      "task_completion": 4,
+      "consistency": 4,
+      "policy_safety": 2,
+      "clarification": 3,
+      "notes": "The agent violated clinic policy and basic factual correctness by repeatedly offering and tentatively booking Saturday appointments, even though the clinic is closed on weekends."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None noted",
+      "notes": "Latency was within acceptable bounds."
+    },
+    "candidate_issues": [
+      {
+        "title": "Agent offered and tentatively booked Saturday appointments",
+        "who": "agent",
+        "severity": "critical",
+        "timestamp": "00:01",
+        "quote": "Would you like to schedule an appointment for this coming Saturday at nine in the morning?",
+        "expected": "Agent should state that the clinic is closed on weekends and only offer weekday slots.",
+        "why_it_matters": "The clinic is closed on weekends; booking a Saturday appointment violates core operating hours and leads to patient confusion.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "Agent does not book a Saturday if the practice is closed on weekends, and says so plainly",
+        "met": false,
+        "evidence": "[00:01] AGENT: Would you like to schedule an appointment for this coming Saturday at nine in the morning?"
+      },
+      {
+        "criterion": "Any offered slot respects \"after 3 pm on weekdays\"",
+        "met": true,
+        "evidence": "[00:09] AGENT: We have an opening with Doctor Reed this coming Monday at three-thirty in the afternoon if that works better for your schedule."
+      },
+      {
+        "criterion": "Provider preference is handled honestly (available / not available / alternative offered)",
+        "met": true,
+        "evidence": "[00:02] AGENT: Doctor Emily Chen specializes in knees and hips, while Doctor Marcus Reed is our expert for shoulders and hands."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends",
+        "observed": true,
+        "evidence": "[00:01] AGENT: Would you like to schedule an appointment for this coming Saturday at nine in the morning?"
+      },
+      {
+        "hypothesis": "Agent books or \"confirm\" a Saturday appointment although the clinic is closed on weekends",
+        "observed": true,
+        "evidence": "[00:06] AGENT: Yes, Saturday works well for us, and I have you tentatively scheduled with Doctor Reed at ten in the morning this coming Saturday."
+      },
+      {
+        "hypothesis": "Agent offers a morning weekday slot despite the after-3pm constraint",
+        "observed": false,
+        "evidence": "Agent only offered an afternoon slot (3:30 PM) on weekdays."
+      },
+      {
+        "hypothesis": "Agent claims Doctor Chen is available/unavailable inconsistently across turns",
+        "observed": false,
+        "evidence": "Agent consistently stated Dr. Chen specializes in knees and hips."
+      },
+      {
+        "hypothesis": "Agent cannot state weekend hours (prior public reports quote it saying \"weekend hours are not listed\")",
+        "observed": false,
+        "evidence": "Agent did not claim weekend hours were unlisted; instead, it incorrectly stated the clinic was open on Saturday."
+      }
+    ],
+    "positive_controls": [
+      "[00:02] Agent correctly identified Dr. Reed as the appropriate specialist for shoulder and hand concerns."
+    ],
+    "simulator_notes": [
+      "The simulator handled the agent's incorrect weekend offers well by questioning whether Saturday actually works."
+    ],
+    "testing_value": "This scenario successfully stressed the agent's knowledge of clinic operating hours, exposing a critical failure where the agent hallucinated weekend availability."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: Agent does not book a Saturday if the practice is closed on weekends, and says so plainly",
+      "hypothesis observed: Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on",
+      "hypothesis observed: Agent books or \"confirm\" a Saturday appointment although the clinic is closed on weekends",
+      "agent issue (critical): Agent offered and tentatively booked Saturday appointments"
+    ],
+    "unclear_criteria": []
+  }
+}
