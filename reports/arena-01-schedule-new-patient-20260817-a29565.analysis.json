@@ -1,31 +1,37 @@
 {
   "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
     "turns": {
       "AGENT": 4,
       "PATIENT": 3
     },
-    "patient_response_latency": {
+    "patient_response": {
       "n": 3,
-      "median_s": 1.77,
-      "p90_s": 1.77,
+      "p50_s": 1.77,
       "max_s": 4.58,
       "min_s": 1.49
     },
-    "agent_response_latency": {
+    "agent_response": {
       "n": 3,
-      "median_s": 1.97,
-      "p90_s": 1.97,
+      "p50_s": 1.97,
       "max_s": 2.19,
       "min_s": 1.88
     },
-    "overlaps": [],
-    "long_silences": [
+    "dead_air": [
       {
-        "after": "AGENT",
         "at": 54.2,
-        "silence_s": 4.58
+        "gap_s": 4.58,
+        "slow_party": "PATIENT",
+        "after": "AGENT"
       }
     ],
+    "overlaps": [],
+    "intra_turn_pauses": [],
     "talk_share": {
       "AGENT": 0.47,
       "PATIENT": 0.33
@@ -34,7 +40,7 @@
     "brain": {
       "turns": 4,
       "llm_latency_ms": {
-        "median": 519,
+        "p50": 519,
         "max": 3527
       },
       "providers": [
@@ -45,18 +51,31 @@
         "first": 688,
         "last": 878
       }
-    },
-    "vapi_user_interrupted_events": 0
+    }
   },
+  "measured_issues": [
+    {
+      "title": "Dead air: 4.58 s before the caller responded",
+      "who": "simulator",
+      "severity": "medium",
+      "timestamp": "00:54",
+      "quote": "(silence)",
+      "expected": "A response within ~1\u20132 s; >3 s reads as the line dropping.",
+      "why_it_matters": "Long silences make callers repeat themselves or hang up; measured from the recording, not the transcript.",
+      "confidence": "high",
+      "matches_hypothesis": "",
+      "measured": true
+    }
+  ],
   "judge": {
-    "summary": "The patient, Maya Thompson, successfully booked a new patient appointment for knee pain with Dr. Emily Chen at Sunrise Orthopedics. The agent confirmed the appointment for Tuesday at 9 a.m. and provided instructions for the patient to arrive 15 minutes early with a photo ID and insurance card. The call ended naturally after the patient said goodbye.",
+    "summary": "The patient, Maya Thompson, successfully booked a new patient appointment with Dr. Emily Chen for knee pain. The appointment was scheduled for Tuesday at 9 a.m. The agent confirmed the appointment details and provided instructions for the patient's first visit. The call ended naturally after the patient said goodbye.",
     "objective_outcome": "achieved",
     "conversation_quality": {
       "coherence": 5,
       "naturalness_of_patient": 5,
-      "turn_taking": 5,
+      "turn_taking": 4,
       "pacing": 5,
-      "notes": "The conversation flowed smoothly, with the agent and patient taking turns and responding to each other's statements in a natural and coherent manner."
+      "notes": "The conversation flowed smoothly, and the patient's responses were natural and coherent."
     },
     "agent_quality": {
       "correctness": 5,
@@ -64,23 +83,21 @@
       "consistency": 5,
       "policy_safety": 5,
       "clarification": 5,
-      "notes": "The agent correctly scheduled the appointment, provided accurate information, and followed the clinic's policies and procedures."
+      "notes": "The agent correctly scheduled the appointment, provided accurate information, and followed the clinic's policies."
     },
     "technical_quality": {
-      "latency": 5,
-      "audio_or_asr_issues": "None",
-      "notes": "There were no technical issues or latency problems during the call."
+      "latency": 4,
+      "audio_or_asr_issues": "None reported",
+      "notes": "The audio quality was good, and there were no reported issues with speech recognition."
     },
     "candidate_issues": [],
     "positive_controls": [
-      "The agent used the patient's name and DOB correctly.",
-      "The agent provided accurate information about the clinic's providers and scheduling.",
-      "The agent confirmed the appointment details with the patient."
+      "The agent used the patient's name and DOB correctly (00:23)",
+      "The agent provided clear instructions for the first visit (00:46)"
     ],
     "simulator_notes": [
-      "The patient provided a clear and concise reason for the call.",
-      "The patient responded naturally to the agent's questions and instructions."
+      "The patient could have asked more questions about the appointment or the clinic's policies."
     ],
-    "testing_value": "This scenario effectively tested the agent's ability to schedule a new patient appointment and provide accurate information about the clinic's policies and procedures."
+    "testing_value": "This scenario effectively tested the agent's ability to schedule a new patient appointment and provide clear instructions for the first visit."
   }
 }

@@ -52,6 +52,8 @@ def cmd_simulate(args) -> None:
     settings = load_settings()
     scenario = find_scenario(settings.scenarios_dir, args.scenario)
     target = find_target(settings.targets_dir, args.target)
+    if target.kind == "websocket":
+        raise SystemExit(f"target {target.id}: websocket targets are planned (roadmap P5) and not runnable yet")
     if target.kind != "local":
         raise SystemExit(f"target {target.id} is a {target.kind} target — `simulate` needs a local target")
     if args.mode == "text":
