@@ -40,7 +40,7 @@ targets/*.yaml    (the agent under test + ground truth about the business it rep
 ## Quick start
 
 ```bash
-git clone <your-repo-url> && cd voxprobe
+git clone https://github.com/Divya1S/voxprobe.git && cd voxprobe
 cp .env.example .env          # add GROQ_API_KEY and GOOGLE_API_KEY (both free, no card)
 uv sync --extra dev
 uv run pytest -q
