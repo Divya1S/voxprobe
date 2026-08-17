@@ -46,6 +46,12 @@ class LocalConnection(BaseModel):
 
     kind: Literal["local"] = "local"
     planted_bugs: list[str] = Field(default_factory=list, description="e.g. weekend_booking, fabricated_dob, phi_leak")
+    interruptions: bool = Field(
+        default=True, description="Whether the sample agent stops talking when the caller barges in"
+    )
+    voice: str = Field(
+        default="", description="Deepgram Aura-2 voice for the sample agent (audio arena), e.g. aura-2-athena-en"
+    )
 
 
 class WebsocketConnection(BaseModel):

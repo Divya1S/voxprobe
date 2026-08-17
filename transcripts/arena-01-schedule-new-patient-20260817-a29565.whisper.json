@@ -1,0 +1,67 @@
+{
+  "stem": "arena-01-schedule-new-patient-20260817-a29565",
+  "model": "whisper-large-v3-turbo",
+  "timing": "ffmpeg silencedetect per channel",
+  "segments": [
+    {
+      "start": 2.2,
+      "end": 8.05,
+      "speaker": "AGENT",
+      "text": "Just so you know, this call may be recorded. Could you please give me your first and last name, your date of birth,"
+    },
+    {
+      "start": 8.59,
+      "end": 9.84,
+      "speaker": "AGENT",
+      "text": "And the reason for your call today?"
+    },
+    {
+      "start": 11.61,
+      "end": 21.99,
+      "speaker": "PATIENT",
+      "text": "My name's Maya Thompson. I was born March 12, 1991, and I'm calling because my right knee's been hurting for about two weeks, and I'd like to book a first appointment."
+    },
+    {
+      "start": 23.96,
+      "end": 36.57,
+      "speaker": "AGENT",
+      "text": "Welcome to Sunrise Orthopedics, Maya. Since you're dealing with knee pain, I can schedule you with Dr. Emily Chen, who specializes in knees and hips. We have an opening this coming Tuesday at 9 a.m. or Wednesday at 2 p.m."
+    },
+    {
+      "start": 37.02,
+      "end": 38.35,
+      "speaker": "AGENT",
+      "text": "Would either of those work for you?"
+    },
+    {
+      "start": 39.84,
+      "end": 44.27,
+      "speaker": "PATIENT",
+      "text": "Tuesday at 9 sounds good. Does that appointment with Dr. Chen confirm for then?"
+    },
+    {
+      "start": 46.15,
+      "end": 54.18,
+      "speaker": "AGENT",
+      "text": "You are all set for Tuesday at 9 a.m. with Dr. Chen. Since you're a new patient, please arrive 15 minutes early with a photo ID and your insurance card."
+    },
+    {
+      "start": 58.76,
+      "end": 66.51,
+      "speaker": "PATIENT",
+      "text": "I've got a Blue Shield PPO, so I'll bring that card with me, and I'll make sure to get there a little before nine then. Thanks. Goodbye."
+    },
+    {
+      "start": 68.7,
+      "end": 69.64,
+      "speaker": "AGENT",
+      "text": "You're very welcome, Maya."
+    },
+    {
+      "start": 70.18,
+      "end": 70.6,
+      "speaker": "AGENT",
+      "text": "Goodbye."
+    }
+  ]
+}

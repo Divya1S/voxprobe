@@ -1,0 +1,77 @@
+{
+  "stem": "arena-01-schedule-new-patient-20260817-a29565",
+  "scenario_id": "01-schedule-new-patient",
+  "target_id": "local-clinic",
+  "transcript": [
+    {
+      "t": 10.9,
+      "speaker": "AGENT",
+      "text": "Just so you know, this call may be recorded. Could you please give me your first and last name? Your date of birth, and the reason for your call today?",
+      "source": "caller-stt"
+    },
+    {
+      "t": 22.3,
+      "speaker": "CALLER",
+      "text": "My name's Maya Thompson, I was born March twelfth, nineteen ninety-one, and I'm calling because my right knee's been hurting for about two weeks and I'd like to book a first appointment.",
+      "source": "caller-llm",
+      "interrupted": false
+    },
+    {
+      "t": 39.37,
+      "speaker": "AGENT",
+      "text": "Welcome to Sunrise Orthopaedics, Maya. Dealing with knee pain, I can schedule you with Doctor. Emily Chen, who specializes in knees and hips. We have an opening this coming Tuesday at nine AM or Wednesday at two PM. We either of those work for you?",
+      "source": "caller-stt"
+    },
+    {
+      "t": 44.56,
+      "speaker": "CALLER",
+      "text": "Tuesday at nine sounds good, does that appointment with Doctor Chen confirm for then?",
+      "source": "caller-llm",
+      "interrupted": false
+    },
+    {
+      "t": 55.21,
+      "speaker": "AGENT",
+      "text": "You are all set for Tuesday at nine AM with Chen. Since you're a new patient, please arrive fifteen minutes early with a photo ID and your insurance card.",
+      "source": "caller-stt"
+    },
+    {
+      "t": 66.79,
+      "speaker": "CALLER",
+      "text": "I've got a Blue Shield PPO, so I'll bring that card with me, and I'll make sure to get there a little before nine then, thanks, goodbye.",
+      "source": "caller-llm",
+      "interrupted": false
+    },
+    {
+      "t": 71.53,
+      "speaker": "AGENT",
+      "text": "You're very welcome, Maya.",
+      "source": "caller-stt"
+    },
+    {
+      "t": 72.56,
+      "speaker": "CALLER",
+      "text": "Bye.",
+      "source": "caller-llm",
+      "interrupted": false
+    },
+    {
+      "t": 91.58,
+      "speaker": "AGENT",
+      "text": "Goodbye.",
+      "source": "caller-stt"
+    }
+  ],
+  "caller_latencies_s": [
+    1.47,
+    1.387,
+    4.532,
+    1.268
+  ],
+  "agent_latencies_s": [
+    1.751,
+    1.687,
+    1.792,
+    2.344
+  ]
+}
