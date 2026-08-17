@@ -15,7 +15,8 @@ from openai import OpenAI
 
 from .brain import GEMINI_BASE_URL, GROQ_BASE_URL
 from .config import Settings
-from .metrics import compute, load_events, render_md as metrics_md
+from .metrics import compute, load_events
+from .metrics import render_md as metrics_md
 from .retranscribe import retranscribe
 from .scenarios import Scenario, find_scenario
 from .targets import Target, find_target
@@ -62,19 +63,21 @@ def _judge_client(settings: Settings) -> tuple[OpenAI, str]:
 
 
 def _scenario_block(s: Scenario, target: Target) -> str:
-    return "\n".join([
-        "=== GROUND TRUTH ABOUT THE BUSINESS UNDER TEST (treat as fact) ===",
-        target.business.as_ground_truth(),
-        "",
-        f"Scenario {s.id}: {s.title}",
-        f"Category: {s.category}. Capability tested: {s.capability_tested}",
-        f"Patient: {s.patient.name}, DOB {s.patient.dob_spoken}. Reason: {s.patient.reason}",
-        "Facts the patient may share: " + "; ".join(s.patient.facts_known),
-        f"Objective: {s.objective}",
-        "Success criteria: " + " | ".join(s.success_criteria),
-        "Bug hypotheses (to check, not to assume): " + " | ".join(s.bug_hypotheses),
-        f"Barge-in scenario: {s.barge_in}",
-    ])
+    return "\n".join(
+        [
+            "=== GROUND TRUTH ABOUT THE BUSINESS UNDER TEST (treat as fact) ===",
+            target.business.as_ground_truth(),
+            "",
+            f"Scenario {s.id}: {s.title}",
+            f"Category: {s.category}. Capability tested: {s.capability_tested}",
+            f"Patient: {s.patient.name}, DOB {s.patient.dob_spoken}. Reason: {s.patient.reason}",
+            "Facts the patient may share: " + "; ".join(s.patient.facts_known),
+            f"Objective: {s.objective}",
+            "Success criteria: " + " | ".join(s.success_criteria),
+            "Bug hypotheses (to check, not to assume): " + " | ".join(s.bug_hypotheses),
+            f"Barge-in scenario: {s.barge_in}",
+        ]
+    )
 
 
 def judge(settings: Settings, scenario: Scenario, target: Target, transcript_md: str, metrics: dict) -> dict:
@@ -97,29 +100,47 @@ def judge(settings: Settings, scenario: Scenario, target: Target, transcript_md:
 
 
 def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict, verdict: dict) -> str:
-    L = [f"# Analysis — {stem}", "", f"**{scenario.title}**  ", f"Objective: {scenario.objective}", "",
-         f"- Call id `{meta.get('call_id')}` · {meta.get('started_at')} · ended: `{meta.get('ended_reason')}` · cost ${meta.get('cost_usd')}",
-         f"- Recording: `{meta['files'].get('recording_mp3')}` · Transcript (Vapi): `{meta['files'].get('transcript_md')}` · Transcript (Whisper): `transcripts/{stem}.whisper.md`",
-         "", "## Turn-taking & latency", "", metrics_md(metrics), "",
-         "## LLM-judge draft (to be verified against audio before anything enters BUG_REPORT.md)", "",
-         f"**Summary:** {verdict.get('summary','')}", "", f"**Objective outcome:** {verdict.get('objective_outcome','')}", ""]
+    L = [
+        f"# Analysis — {stem}",
+        "",
+        f"**{scenario.title}**  ",
+        f"Objective: {scenario.objective}",
+        "",
+        f"- Call id `{meta.get('call_id')}` · {meta.get('started_at')} · ended: `{meta.get('ended_reason')}` · cost ${meta.get('cost_usd')}",
+        f"- Recording: `{meta['files'].get('recording_mp3')}` · Transcript (Vapi): `{meta['files'].get('transcript_md')}` · Transcript (Whisper): `transcripts/{stem}.whisper.md`",
+        "",
+        "## Turn-taking & latency",
+        "",
+        metrics_md(metrics),
+        "",
+        "## LLM-judge draft (to be verified against audio before anything enters BUG_REPORT.md)",
+        "",
+        f"**Summary:** {verdict.get('summary', '')}",
+        "",
+        f"**Objective outcome:** {verdict.get('objective_outcome', '')}",
+        "",
+    ]
     for key in ("conversation_quality", "agent_quality", "technical_quality"):
         v = verdict.get(key) or {}
         if v:
             scores = ", ".join(f"{k} {val}" for k, val in v.items() if k != "notes" and not isinstance(val, str))
-            L += [f"**{key.replace('_', ' ').title()}:** {scores}. {v.get('notes','')}", ""]
+            L += [f"**{key.replace('_', ' ').title()}:** {scores}. {v.get('notes', '')}", ""]
     issues = verdict.get("candidate_issues") or []
     L += ["### Candidate issues", ""]
     if not issues:
         L.append("_none flagged_")
     for i, it in enumerate(issues, 1):
-        L += [f"{i}. **[{it.get('severity','?').upper()} · {it.get('who','?')} · conf {it.get('confidence','?')}] {it.get('title','')}** @ {it.get('timestamp','')}",
-              f"   - Quote: “{it.get('quote','')}”", f"   - Expected: {it.get('expected','')}", f"   - Why it matters: {it.get('why_it_matters','')}"]
+        L += [
+            f"{i}. **[{it.get('severity', '?').upper()} · {it.get('who', '?')} · conf {it.get('confidence', '?')}] {it.get('title', '')}** @ {it.get('timestamp', '')}",
+            f"   - Quote: “{it.get('quote', '')}”",
+            f"   - Expected: {it.get('expected', '')}",
+            f"   - Why it matters: {it.get('why_it_matters', '')}",
+        ]
         if it.get("matches_hypothesis"):
             L.append(f"   - Matches hypothesis: {it['matches_hypothesis']}")
     L += ["", "### Positive controls", ""] + [f"- {p}" for p in verdict.get("positive_controls") or []] or ["- _none_"]
     L += ["", "### Simulator notes (our bot)", ""] + [f"- {p}" for p in verdict.get("simulator_notes") or []]
-    L += ["", f"**Testing value:** {verdict.get('testing_value','')}", ""]
+    L += ["", f"**Testing value:** {verdict.get('testing_value', '')}", ""]
     return "\n".join(L)
 
 
@@ -140,7 +161,9 @@ def analyze_call(settings: Settings, stem: str) -> Path:
     metrics = compute(tx["segments"], events, meta.get("performance_metrics"))
     verdict = judge(settings, scenario, target, transcript_md, metrics)
 
-    (settings.reports_dir / f"{stem}.analysis.json").write_text(json.dumps({"metrics": metrics, "judge": verdict}, indent=2))
+    (settings.reports_dir / f"{stem}.analysis.json").write_text(
+        json.dumps({"metrics": metrics, "judge": verdict}, indent=2)
+    )
     out = settings.reports_dir / f"{stem}.analysis.md"
     out.write_text(render_analysis_md(stem, scenario, meta, metrics, verdict))
     return out

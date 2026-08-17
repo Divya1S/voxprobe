@@ -27,11 +27,11 @@ from .brain import GROQ_BASE_URL
 from .config import Settings
 
 WHISPER_MODEL = "whisper-large-v3-turbo"
-SILENCE_DB = -32          # below this is "silence" (phone audio is quiet; tune if a channel is very hot/cold)
-MIN_SILENCE_S = 0.45      # a pause shorter than this does not split a turn
-MIN_SPEECH_S = 0.35       # ignore blips shorter than this
-PAD_S = 0.15              # padding around each clip so Whisper hears word onsets/offsets
-MIN_REQUEST_GAP_S = 3.1   # Groq free tier: ~20 Whisper requests/min
+SILENCE_DB = -32  # below this is "silence" (phone audio is quiet; tune if a channel is very hot/cold)
+MIN_SILENCE_S = 0.45  # a pause shorter than this does not split a turn
+MIN_SPEECH_S = 0.35  # ignore blips shorter than this
+PAD_S = 0.15  # padding around each clip so Whisper hears word onsets/offsets
+MIN_REQUEST_GAP_S = 3.1  # Groq free tier: ~20 Whisper requests/min
 
 
 @dataclass
@@ -47,26 +47,64 @@ def split_stereo(mp3: Path, out_dir: Path) -> tuple[Path, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     left, right = out_dir / f"{mp3.stem}-L.wav", out_dir / f"{mp3.stem}-R.wav"
     subprocess.run(
-        ["ffmpeg", "-y", "-v", "error", "-i", str(mp3),
-         "-filter_complex", "[0:a]channelsplit=channel_layout=stereo[L][R]",
-         "-map", "[L]", "-ar", "16000", "-ac", "1", str(left),
-         "-map", "[R]", "-ar", "16000", "-ac", "1", str(right)],
+        [
+            "ffmpeg",
+            "-y",
+            "-v",
+            "error",
+            "-i",
+            str(mp3),
+            "-filter_complex",
+            "[0:a]channelsplit=channel_layout=stereo[L][R]",
+            "-map",
+            "[L]",
+            "-ar",
+            "16000",
+            "-ac",
+            "1",
+            str(left),
+            "-map",
+            "[R]",
+            "-ar",
+            "16000",
+            "-ac",
+            "1",
+            str(right),
+        ],
         check=True,
     )
     return left, right
 
 
 def _duration(wav: Path) -> float:
-    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(wav)],
-                         capture_output=True, text=True, check=True).stdout.strip()
+    out = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(wav)],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
     return float(out or 0)
 
 
-def speech_regions(wav: Path, silence_db: int = SILENCE_DB, min_silence_s: float = MIN_SILENCE_S) -> list[tuple[float, float]]:
+def speech_regions(
+    wav: Path, silence_db: int = SILENCE_DB, min_silence_s: float = MIN_SILENCE_S
+) -> list[tuple[float, float]]:
     """Speech regions (start, end) from ffmpeg silencedetect — the inverse of the silence intervals."""
     proc = subprocess.run(
-        ["ffmpeg", "-v", "info", "-i", str(wav), "-af", f"silencedetect=noise={silence_db}dB:d={min_silence_s}", "-f", "null", "-"],
-        capture_output=True, text=True,
+        [
+            "ffmpeg",
+            "-v",
+            "info",
+            "-i",
+            str(wav),
+            "-af",
+            f"silencedetect=noise={silence_db}dB:d={min_silence_s}",
+            "-f",
+            "null",
+            "-",
+        ],
+        capture_output=True,
+        text=True,
     )
     log_text = proc.stderr
     starts = [float(x) for x in re.findall(r"silence_start: ([\d.]+)", log_text)]
@@ -89,8 +127,26 @@ def speech_regions(wav: Path, silence_db: int = SILENCE_DB, min_silence_s: float
 
 def _cut(wav: Path, start: float, end: float, out: Path) -> Path:
     s = max(0.0, start - PAD_S)
-    subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{s:.3f}", "-t", f"{end - s + PAD_S:.3f}", "-i", str(wav),
-                    "-ar", "16000", "-ac", "1", str(out)], check=True)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-v",
+            "error",
+            "-ss",
+            f"{s:.3f}",
+            "-t",
+            f"{end - s + PAD_S:.3f}",
+            "-i",
+            str(wav),
+            "-ar",
+            "16000",
+            "-ac",
+            "1",
+            str(out),
+        ],
+        check=True,
+    )
     return out
 
 
@@ -110,8 +166,14 @@ def transcribe_clip(client: OpenAI, clip: Path, prompt: str, pacer: _Pacer) -> s
         pacer.wait()
         try:
             with clip.open("rb") as f:
-                resp = client.audio.transcriptions.create(model=WHISPER_MODEL, file=f, response_format="json",
-                                                          language="en", temperature=0.0, prompt=prompt or None)
+                resp = client.audio.transcriptions.create(
+                    model=WHISPER_MODEL,
+                    file=f,
+                    response_format="json",
+                    language="en",
+                    temperature=0.0,
+                    prompt=prompt or None,
+                )
             return (resp.text or "").strip()
         except RateLimitError:
             time.sleep(10 * (attempt + 1))
@@ -141,11 +203,15 @@ def merge(agent: list[Segment], patient: list[Segment]) -> list[Segment]:
 
 
 def render_md(stem: str, segments: list[Segment]) -> str:
-    lines = [f"# {stem} — authoritative transcript (Whisper per speech region, per channel)", "",
-             "Timestamps = seconds into the recording, from the audio energy of each channel. "
-             "AGENT = left channel (target agent); PATIENT = right channel (our bot).", ""]
+    lines = [
+        f"# {stem} — authoritative transcript (Whisper per speech region, per channel)",
+        "",
+        "Timestamps = seconds into the recording, from the audio energy of each channel. "
+        "AGENT = left channel (target agent); PATIENT = right channel (our bot).",
+        "",
+    ]
     for s in segments:
-        lines.append(f"[{int(s.start)//60:02d}:{int(s.start)%60:02d}] {s.speaker:7s}: {s.text}")
+        lines.append(f"[{int(s.start) // 60:02d}:{int(s.start) % 60:02d}] {s.speaker:7s}: {s.text}")
     return "\n".join(lines) + "\n"
 
 
@@ -163,7 +229,11 @@ def retranscribe(settings: Settings, mp3: Path, stem: str, hint: str = "") -> di
     merged = merge(agent, patient)
     md_path = settings.transcripts_dir / f"{stem}.whisper.md"
     md_path.write_text(render_md(stem, merged))
-    data = {"stem": stem, "model": WHISPER_MODEL, "timing": "ffmpeg silencedetect per channel",
-            "segments": [asdict(s) for s in merged]}
+    data = {
+        "stem": stem,
+        "model": WHISPER_MODEL,
+        "timing": "ffmpeg silencedetect per channel",
+        "segments": [asdict(s) for s in merged],
+    }
     (settings.transcripts_dir / f"{stem}.whisper.json").write_text(json.dumps(data, indent=2, ensure_ascii=False))
     return data

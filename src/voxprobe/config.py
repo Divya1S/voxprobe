@@ -109,8 +109,11 @@ class Settings:
         return self.repo_root / "targets"
 
     def require_vapi(self) -> None:
-        missing = [n for n, v in (("VAPI_API_KEY", self.vapi_api_key), ("VAPI_PHONE_NUMBER_ID", self.vapi_phone_number_id))
-                   if not v]
+        missing = [
+            n
+            for n, v in (("VAPI_API_KEY", self.vapi_api_key), ("VAPI_PHONE_NUMBER_ID", self.vapi_phone_number_id))
+            if not v
+        ]
         if missing:
             raise RuntimeError(f"Vapi phone adapter needs {missing} (see .env.example)")
 

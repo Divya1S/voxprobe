@@ -100,7 +100,9 @@ class VapiClient:
         if not isinstance(target.connection, VapiConnection):
             raise RuntimeError(f"target {target.id} is not a vapi phone target")
         self.settings.require_vapi()
-        to = assert_allowed_target(target.connection.phone_number, self.settings.allowed_numbers)  # the single choke point
+        to = assert_allowed_target(
+            target.connection.phone_number, self.settings.allowed_numbers
+        )  # the single choke point
         payload = {
             "name": f"{scenario.id}@{target.id}",
             "phoneNumberId": self.settings.vapi_phone_number_id,
@@ -111,8 +113,13 @@ class VapiClient:
         if r.status_code >= 300:
             raise RuntimeError(f"Vapi create call failed {r.status_code}: {r.text[:800]}")
         call = r.json()
-        log.info("call created id=%s status=%s from=%s to=%s", call.get("id"), call.get("status"),
-                 self.settings.caller_number, to)
+        log.info(
+            "call created id=%s status=%s from=%s to=%s",
+            call.get("id"),
+            call.get("status"),
+            self.settings.caller_number,
+            to,
+        )
         return call
 
     async def get_call(self, call_id: str) -> dict:

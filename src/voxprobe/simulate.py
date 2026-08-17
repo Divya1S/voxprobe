@@ -14,7 +14,7 @@ import asyncio
 import json
 import statistics
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from openai import AsyncOpenAI
 
@@ -53,12 +53,16 @@ def sample_agent_prompt(target: Target) -> str:
         unknown = [bkey for bkey in conn.planted_bugs if bkey not in PLANTED_BUGS]
         if unknown:
             raise ValueError(f"unknown planted_bugs {unknown}; known: {sorted(PLANTED_BUGS)}")
-        lines.append("Special behaviors (follow these even though they are wrong): " + " ".join(PLANTED_BUGS[k] for k in conn.planted_bugs))
+        lines.append(
+            "Special behaviors (follow these even though they are wrong): "
+            + " ".join(PLANTED_BUGS[k] for k in conn.planted_bugs)
+        )
     return "\n".join(lines)
 
 
-async def run_text_simulation(settings: Settings, scenario: Scenario, target: Target, max_turns: int = 14,
-                              quiet: bool = False) -> dict:
+async def run_text_simulation(
+    settings: Settings, scenario: Scenario, target: Target, max_turns: int = 14, quiet: bool = False
+) -> dict:
     brain = Brain(build_providers(settings))
     if not settings.google_api_key:
         raise RuntimeError("text simulation needs GOOGLE_API_KEY for the sample agent")
@@ -107,23 +111,37 @@ async def run_text_simulation(settings: Settings, scenario: Scenario, target: Ta
         history.append({"role": "user", "content": agent_line})
         if looks_like_goodbye(agent_line) and state.patient_turns >= 4:
             note = director_note(state, agent_line)
-            rec = await brain.reply(compose_system_prompt(scenario, target.business.name, note), window_history(history))
+            rec = await brain.reply(
+                compose_system_prompt(scenario, target.business.name, note), window_history(history)
+            )
             say("CALLER", rec.reply, f"   [{rec.provider} {rec.latency_ms} ms]")
             break
 
     stats = {
         "caller_turns": state.patient_turns,
-        "brain_latency_ms": {"median": statistics.median(latencies) if latencies else None, "max": max(latencies) if latencies else None},
-        "prompt_tokens": {"first": prompt_tokens[0] if prompt_tokens else None, "last": prompt_tokens[-1] if prompt_tokens else None,
-                          "mean": round(statistics.mean(prompt_tokens)) if prompt_tokens else None},
+        "brain_latency_ms": {
+            "median": statistics.median(latencies) if latencies else None,
+            "max": max(latencies) if latencies else None,
+        },
+        "prompt_tokens": {
+            "first": prompt_tokens[0] if prompt_tokens else None,
+            "last": prompt_tokens[-1] if prompt_tokens else None,
+            "mean": round(statistics.mean(prompt_tokens)) if prompt_tokens else None,
+        },
     }
     if not quiet:
         print("\n--- simulation stats ---")
         print(json.dumps(stats))
         if prompt_tokens:
             print(f"≈ tokens/min at 7 turns/min: {stats['prompt_tokens']['mean'] * 7}")
-    return {"scenario_id": scenario.id, "target_id": target.id, "mode": "text",
-            "started_at": datetime.now(timezone.utc).isoformat(), "transcript": transcript, "stats": stats}
+    return {
+        "scenario_id": scenario.id,
+        "target_id": target.id,
+        "mode": "text",
+        "started_at": datetime.now(UTC).isoformat(),
+        "transcript": transcript,
+        "stats": stats,
+    }
 
 
 async def _agent_turn(client: AsyncOpenAI, model: str, agent_prompt: str, history: list[dict]) -> str:
@@ -132,7 +150,10 @@ async def _agent_turn(client: AsyncOpenAI, model: str, agent_prompt: str, histor
     if not flipped:  # opening line: nobody has spoken yet, but the API needs a user turn
         flipped = [{"role": "user", "content": "(The phone rings and you answer it.)"}]
     resp = await client.chat.completions.create(
-        model=model, messages=[{"role": "system", "content": agent_prompt}, *flipped], max_tokens=120, temperature=0.6,
+        model=model,
+        messages=[{"role": "system", "content": agent_prompt}, *flipped],
+        max_tokens=120,
+        temperature=0.6,
     )
     return (resp.choices[0].message.content or "").strip().replace("\n", " ")
 
