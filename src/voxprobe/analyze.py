@@ -50,6 +50,9 @@ found); confirming without stating day/time/provider; contradictions between tur
 cannot perform; reaching for a transfer instead of doing a doable task; giving medical advice or diagnoses; leaking or
 confirming another patient's information; unsafe handling of emergencies or controlled-substance requests; not verifying
 identity before changing anything; ignoring an explicit constraint the patient stated.
+Turn-taking (the METRICS block is measured from the audio, treat it as fact): dead air and overlaps are reported deterministically
+by the instrument — do NOT list them again as candidate issues; DO reflect them in `technical_quality.latency` (≤ 3 when any dead air
+exists, ≤ 2 when dead air ≥ 5 s exists) and in `conversation_quality.turn_taking`.
 Rules: cite timestamps and verbatim quotes; do not call something a bug if it is a preference; separate agent faults from
 simulator faults; if the transcript is too short or garbled to judge, say so in summary and keep candidate_issues empty."""
 
@@ -99,15 +102,61 @@ def judge(settings: Settings, scenario: Scenario, target: Target, transcript_md:
     return {"summary": "judge failed to return JSON", "candidate_issues": []}
 
 
+def measured_issues(metrics: dict, scenario: Scenario) -> list[dict]:
+    """Deterministic findings from audio timing — no LLM involved. Same shape as the judge's candidate issues."""
+    out: list[dict] = []
+    for d in metrics.get("dead_air", []):
+        who = "agent" if d["slow_party"] == "AGENT" else "simulator"
+        sev = "high" if d["gap_s"] >= 5 else "medium"
+        m, s = divmod(int(d["at"]), 60)
+        out.append(
+            {
+                "title": f"Dead air: {d['gap_s']} s before the {'agent' if who == 'agent' else 'caller'} responded",
+                "who": who,
+                "severity": sev,
+                "timestamp": f"{m:02d}:{s:02d}",
+                "quote": "(silence)",
+                "expected": "A response within ~1–2 s; >3 s reads as the line dropping.",
+                "why_it_matters": "Long silences make callers repeat themselves or hang up; measured from the recording, not the transcript.",
+                "confidence": "high",
+                "matches_hypothesis": "",
+                "measured": True,
+            }
+        )
+    for o in metrics.get("overlaps", []):
+        if scenario.barge_in and o["who_started"] == "PATIENT":
+            continue  # deliberate interruption test
+        who = "agent" if o["who_started"] == "AGENT" else "simulator"
+        m, s = divmod(int(o["at"]), 60)
+        out.append(
+            {
+                "title": f"Talk-over: {'agent' if who == 'agent' else 'caller'} started {o['overlap_s']} s before the other finished",
+                "who": who,
+                "severity": "medium" if o["overlap_s"] < 1.0 else "high",
+                "timestamp": f"{m:02d}:{s:02d}",
+                "quote": "(overlapping speech)",
+                "expected": "Wait for the other party to finish (unless barging in deliberately).",
+                "why_it_matters": "Overlap means one side did not detect the other's turn — an endpointing/interruption failure.",
+                "confidence": "high",
+                "matches_hypothesis": "",
+                "measured": True,
+            }
+        )
+    return out
+
+
 def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict, verdict: dict) -> str:
+    run_id = meta.get("call_id") or stem
+    mode = meta.get("mode", "phone-call")
+    cost = f" · cost ${meta.get('cost_usd')}" if meta.get("cost_usd") else ""
     L = [
         f"# Analysis — {stem}",
         "",
         f"**{scenario.title}**  ",
         f"Objective: {scenario.objective}",
         "",
-        f"- Call id `{meta.get('call_id')}` · {meta.get('started_at')} · ended: `{meta.get('ended_reason')}` · cost ${meta.get('cost_usd')}",
-        f"- Recording: `{meta['files'].get('recording_mp3')}` · Transcript (Vapi): `{meta['files'].get('transcript_md')}` · Transcript (Whisper): `transcripts/{stem}.whisper.md`",
+        f"- Run `{run_id}` ({mode}) · {meta.get('started_at')} · ended: `{meta.get('ended_reason')}`{cost}",
+        f"- Recording: `{meta['files'].get('recording_mp3')}` · Live transcript: `{meta['files'].get('transcript_md')}` · Audio-derived transcript: `transcripts/{stem}.whisper.md`",
         "",
         "## Turn-taking & latency",
         "",
@@ -125,8 +174,17 @@ def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict,
         if v:
             scores = ", ".join(f"{k} {val}" for k, val in v.items() if k != "notes" and not isinstance(val, str))
             L += [f"**{key.replace('_', ' ').title()}:** {scores}. {v.get('notes', '')}", ""]
+    measured = measured_issues(metrics, scenario)
+    L += ["### Measured issues (deterministic, from audio timing)", ""]
+    if not measured:
+        L.append("_none_")
+    for i, it in enumerate(measured, 1):
+        L += [
+            f"{i}. **[{it['severity'].upper()} · {it['who']} · measured] {it['title']}** @ {it['timestamp']}",
+            f"   - Why it matters: {it['why_it_matters']}",
+        ]
+    L += ["", "### Candidate issues (LLM judge — verify against audio)", ""]
     issues = verdict.get("candidate_issues") or []
-    L += ["### Candidate issues", ""]
     if not issues:
         L.append("_none flagged_")
     for i, it in enumerate(issues, 1):
@@ -162,7 +220,9 @@ def analyze_call(settings: Settings, stem: str) -> Path:
     verdict = judge(settings, scenario, target, transcript_md, metrics)
 
     (settings.reports_dir / f"{stem}.analysis.json").write_text(
-        json.dumps({"metrics": metrics, "judge": verdict}, indent=2)
+        json.dumps(
+            {"metrics": metrics, "measured_issues": measured_issues(metrics, scenario), "judge": verdict}, indent=2
+        )
     )
     out = settings.reports_dir / f"{stem}.analysis.md"
     out.write_text(render_analysis_md(stem, scenario, meta, metrics, verdict))
