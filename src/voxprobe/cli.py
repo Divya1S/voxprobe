@@ -15,6 +15,7 @@ import logging
 import re
 import subprocess
 import time
+from pathlib import Path
 
 import httpx
 import uvicorn
@@ -186,6 +187,21 @@ def cmd_bench(args) -> None:
     print((out / "summary.md").read_text())
 
 
+def cmd_calibrate(args) -> None:
+    from . import calibrate
+
+    settings = load_settings()
+    if args.action == "sample":
+        out = calibrate.sample(settings, args.name, n=args.n, seed=args.seed, pattern=args.pattern)
+        print(
+            f"● labelling sheet → {out.relative_to(settings.repo_root)}  (fill the 'Human:' lines, then `voxprobe calibrate score {out}`)"
+        )
+    else:
+        import json as _json
+
+        print(_json.dumps(calibrate.score(Path(args.name)), indent=2))
+
+
 def cmd_analyze(args) -> None:
     from .analyze import analyze_call
 
@@ -226,6 +242,16 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--max-turns", type=int, default=12)
     p.add_argument("--no-resume", action="store_true")
     p.set_defaults(fn=cmd_bench)
+
+    p = sub.add_parser(
+        "calibrate", help="judge calibration: sample claims into a labelling sheet, then score human agreement"
+    )
+    p.add_argument("action", choices=["sample", "score"])
+    p.add_argument("name", help="sheet name (sample) or path to the filled sheet (score)")
+    p.add_argument("-n", type=int, default=25)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--pattern", default="*.analysis.json", help="which analyses to sample from (glob under reports/)")
+    p.set_defaults(fn=cmd_calibrate)
 
     p = sub.add_parser("analyze", help="re-transcribe + metrics + judge draft for recorded call(s) by artifact stem")
     p.add_argument("stems", nargs="+")
