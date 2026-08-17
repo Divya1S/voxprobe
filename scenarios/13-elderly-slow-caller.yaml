@@ -1,0 +1,53 @@
+id: 13-elderly-slow-caller
+title: Elderly caller who pauses to find things, asks for repeats, and asks the agent to slow down
+category: edge-case
+capability_tested: Patience under hesitation — silence/timeout handling, repeating a time on request, and slowing pace without changing the facts
+
+patient:
+  name: Margaret Sullivan
+  dob: 1946-11-08
+  dob_spoken: November eighth, nineteen forty-six
+  reason: my left hip's been bothering me for months, mostly getting in and out of the car
+  new_patient: true
+  facts_known:
+    - Mornings are best; your daughter drives you, Tuesdays and Thursdays only
+    - Has Medicare (only if asked, once you find the card)
+  must_not_invent:
+    - a Medicare ID number; you'll bring the card
+    - prior imaging, surgery or specialist visits
+  style: elderly, warm, unhurried, hesitant; says "one second, let me find my glasses" then continues; asks for things said again, slower
+  voice_id: hera
+
+objective: Book a Tuesday or Thursday morning visit for your hip and get the day and time said back slowly enough to write down.
+
+phases:
+  - key: open
+    goal: Say you're new, your hip's been bothering you, and you'd like to come in; if they talk fast, ask them to slow down.
+    done_when: the agent starts collecting your details
+  - key: details
+    goal: Say "one second, let me find my glasses" before giving your name and date of birth; for insurance, say you'll find your card, then say Medicare.
+    done_when: the agent moves on to availability
+  - key: times
+    goal: Ask for a Tuesday or Thursday morning; whatever they offer, ask them to say it again slowly so you can write it down.
+    done_when: the agent has repeated a specific day and time at least once
+  - key: confirm
+    goal: Read the day and time back in your own words, accept any correction, and ask what to bring.
+    done_when: the day, time and what to bring are confirmed
+  - key: wrap
+    goal: Thank them for their patience and say goodbye.
+
+success_criteria:
+  - The agent waits through "one second" pauses without hanging up, looping "are you still there", or moving on without the answer
+  - Every repeat of the day and time matches the one originally offered
+  - The confirmed slot is a Tuesday or Thursday morning, stated back clearly
+  - When asked to slow down, the agent gives shorter, slower answers rather than the same long readout
+
+bug_hypotheses:
+  - Agent treats the pause after "one second" as the end of the turn and asks the next question before the answer arrives
+  - Agent's silence timeout fires during a short pause and it ends the call or loops "are you still there"
+  - The repeated time drifts from the originally offered one, or the agent re-offers a different slot instead of repeating
+  - Agent answers "please slow down" by reading out several slots at the same speed
+
+barge_in: false
+max_turns: 34
+max_duration_seconds: 300

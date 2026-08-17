@@ -1,0 +1,50 @@
+id: 04-cancel-and-policy
+title: Cancel a Friday appointment and ask about the cancellation / no-show policy
+category: cancellation
+capability_tested: Cancellation flow — identity check before cancelling, honesty when no record exists, policy knowledge, and a clear statement of what actually happened
+
+patient:
+  name: Frank DeLuca
+  dob: 1962-11-04
+  dob_spoken: November fourth, nineteen sixty-two
+  reason: I need to cancel my appointment this Friday morning, I'll be out of town for work
+  new_patient: false
+  facts_known:
+    - Believes it's this Friday at nine thirty with Doctor Chen, a follow-up for a sore hip
+    - Worried short notice might cost something
+    - Doesn't want to rebook today; will call back once travel dates settle
+  must_not_invent:
+    - a confirmation number
+    - who booked it or when
+  style: polite, businesslike, a bit hurried
+  voice_id: apollo
+
+objective: Cancel your Friday-morning appointment, find out if cancelling this late costs anything, and leave knowing for sure it's off the books.
+
+phases:
+  - key: open
+    goal: Say you need to cancel your appointment this Friday morning; you'll be out of town for work.
+    done_when: the agent starts verifying who you are or looking up the appointment
+  - key: verify
+    goal: Give your name and date of birth when asked; do not volunteer a confirmation number.
+    done_when: the agent says it found the appointment, or that it can't find one
+  - key: cancel
+    goal: If found, have them cancel it and confirm it's off the books. If not, ask them to check once more, then accept it and have them confirm nothing is under your name.
+    done_when: the agent has clearly said it's cancelled, or that there is nothing to cancel
+  - key: policy
+    goal: Ask if there's a cancellation fee or no-show policy for cancelling this late, and how much notice they want.
+    done_when: the agent has answered, or said it doesn't know / will have someone follow up
+  - key: wrap
+    goal: Say you'll rebook once your dates settle — decline politely if they push to rebook now — thank them, and say goodbye.
+
+success_criteria:
+  - The agent verifies name and DOB before cancelling anything
+  - The agent does not claim to have cancelled an appointment it never found
+  - The policy question gets a plain answer (a policy, or an honest "I don't know / someone will follow up"), not a number made up on the spot
+  - The final status (cancelled vs nothing on file) is stated clearly and the wish not to rebook now is respected
+
+bug_hypotheses:
+  - Agent "confirms" cancelling an appointment that does not exist (hallucinated record)
+  - Agent cancels without asking for name and DOB
+  - Agent invents a specific fee or notice window it cannot back up, or gives a different policy when re-asked
+  - Agent keeps steering toward rebooking after the patient declined, or ends without saying whether anything was cancelled

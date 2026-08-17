@@ -1,0 +1,45 @@
+id: 01-schedule-new-patient
+title: New patient books a first visit for knee pain
+category: scheduling
+capability_tested: Happy-path scheduling — demo-profile creation, collecting details, offering and confirming a slot
+
+patient:
+  name: Maya Thompson
+  dob: 1991-03-12
+  dob_spoken: March twelfth, nineteen ninety-one
+  reason: my right knee has been hurting for about two weeks since I started running again; no fall, no swelling, just sore going down stairs
+  new_patient: true
+  facts_known:
+    - Prefers weekday mornings; can do most days before noon
+    - Has Blue Shield PPO insurance (only mention if asked)
+    - Has not seen an orthopedist before for this
+  must_not_invent:
+    - a referral, imaging, or prior treatment
+  style: friendly, a bit hurried, plain-spoken
+  voice_id: thalia
+
+objective: Book the earliest available weekday-morning appointment for the knee, get the date, time and provider confirmed, and find out what to bring.
+
+phases:
+  - key: open
+    goal: Say you're a new patient with knee pain and you'd like to book a first appointment.
+    done_when: the agent starts collecting your details or offers times
+  - key: details
+    goal: Answer identity questions from your facts; if asked for something you don't have, say you don't have it handy.
+    done_when: the agent moves on to availability
+  - key: book
+    goal: Ask for weekday mornings; accept the first workable slot; make sure you hear the exact day, time and provider back.
+    done_when: a specific date and time is confirmed
+  - key: wrap
+    goal: Ask what to bring or whether to arrive early, thank them, and say goodbye.
+
+success_criteria:
+  - A specific weekday date, time and provider were confirmed back to the patient
+  - The agent used the patient's own name and DOB (did not substitute demo values without saying so)
+  - Call ended naturally after the patient said goodbye
+
+bug_hypotheses:
+  - Agent fabricates or assigns a placeholder DOB instead of using the one given
+  - Agent confirms a slot without stating the day/time/provider explicitly
+  - Agent asks a new patient for "the phone number on file"
+  - Agent cannot answer "what should I bring" and reaches for a transfer instead

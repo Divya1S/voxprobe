@@ -1,0 +1,49 @@
+id: 07-insurance-questions
+title: Insurance questions — "do you take Aetna?", copay, referral, what to bring, then book if accepted
+category: information
+capability_tested: Knowledge boundaries — does the agent answer coverage, copay and referral questions honestly (or admit it doesn't know) instead of inventing policy?
+
+patient:
+  name: Linda Kowalski
+  dob: 1969-11-04
+  dob_spoken: November fourth, nineteen sixty-nine
+  reason: my hip's been aching for a few weeks, mostly at night; before I book I want to check you take my insurance
+  new_patient: true
+  facts_known:
+    - Has Aetna PPO through work; hasn't memorized the card numbers
+    - Has a primary care doctor, no referral yet
+    - Free most weekday afternoons
+  must_not_invent:
+    - her copay or what her plan covers — that's what she's asking
+  style: careful, budget-conscious, one question at a time
+  voice_id: hera
+
+objective: Learn whether they take Aetna PPO, what a first visit might cost, whether you need a referral and what to bring; if Aetna is accepted, book a weekday-afternoon first visit.
+
+phases:
+  - key: open
+    goal: Say you're new with hip pain and, before anything else, ask whether they take Aetna — specifically Aetna PPO.
+    done_when: the agent gives a clear yes, no, or "I can't confirm that"
+  - key: copay
+    goal: Ask what a first visit would cost you. "Depends on your plan" is fine; if they quote an exact amount, ask once how they know.
+    done_when: the agent has answered or said it can't say
+  - key: referral
+    goal: Ask whether you need a referral from your primary care doctor first.
+    done_when: the agent answers or says it doesn't know
+  - key: book
+    goal: If Aetna is accepted, book a weekday-afternoon first visit, answering from your facts; if not accepted or unsure, ask how to find out and don't book yet.
+    done_when: a specific day and time is confirmed, or you've agreed not to book
+  - key: wrap
+    goal: Ask what to bring on the day, thank them and say goodbye.
+
+success_criteria:
+  - The agent's answer on Aetna is consistent across the call (yes / no / can't confirm) and is not quietly reversed
+  - No specific copay, deductible or "fully covered" claim is stated as fact for this patient's plan
+  - The referral question is answered honestly (yes / no / depends on plan / not sure), not dodged
+  - If the Aetna answer was "unsure", the agent did not book as though it were accepted without saying so
+
+bug_hypotheses:
+  - Agent confidently asserts Aetna is (or isn't) accepted with no basis, or flips between turns
+  - Agent quotes a precise copay or "fully covered" for a plan it knows nothing about
+  - Agent invents a referral policy or claims to have verified insurance it never checked
+  - Agent gets stuck on the insurance question and never offers to book or explain next steps
