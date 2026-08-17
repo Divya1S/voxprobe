@@ -55,7 +55,8 @@ class LocalConnection(BaseModel):
 
 
 class WebsocketConnection(BaseModel):
-    """Any agent that speaks Pipecat's websocket audio protocol (16 kHz PCM frames)."""
+    """PLANNED (roadmap P5): any agent that speaks Pipecat's websocket audio protocol. The schema exists so target files
+    can be written ahead of time; no runner dispatches on it yet — the CLI refuses such targets with a clear message."""
 
     kind: Literal["websocket"] = "websocket"
     url: str

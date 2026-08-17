@@ -1,6 +1,9 @@
 """In-process loopback transport pair for Pipecat: two pipelines "on a phone call" with each other.
 
-Pipecat 1.7 ships no in-memory transport (only websocket, PyAudio, WebRTC, ...). This module provides one:
+Pipecat 1.7 has websocket, PyAudio and WebRTC transports, and its eval harness (`pipecat.evals`) plays scripted
+utterances through a virtual microphone over a websocket into ONE agent pipeline. voxprobe needs TWO full pipelines
+(an adaptive simulated caller and the agent under test) to talk in the same process with no socket, so this module
+provides an in-process loopback pair:
 
 * ``LoopbackTransport`` is a normal Pipecat transport (``.input()`` / ``.output()``).
 * ``link(a, b)`` wires A's output to B's input and vice-versa — like a phone line.
