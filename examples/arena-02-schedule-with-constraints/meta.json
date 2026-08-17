@@ -1,0 +1,31 @@
+{
+  "stem": "arena-02-schedule-with-constraints-20260817-5f0510",
+  "scenario_id": "02-schedule-with-constraints",
+  "target_id": "local-clinic-buggy",
+  "title": "Scheduling with constraints \u2014 asks for Saturday, needs after 3 pm, wants a specific doctor",
+  "mode": "audio-arena",
+  "started_at": "2026-08-17T06:47:29.966169+00:00",
+  "duration_s": 104.0,
+  "ended_reason": "caller-said-goodbye",
+  "caller_response_latency_s": [
+    1.367,
+    1.366,
+    1.301,
+    1.267,
+    1.23
+  ],
+  "agent_response_latency_s": [
+    12.849,
+    1.605,
+    1.461,
+    1.603
+  ],
+  "cost_usd": 0,
+  "performance_metrics": null,
+  "files": {
+    "recording_mp3": "recordings/arena-02-schedule-with-constraints-20260817-5f0510.mp3",
+    "transcript_md": "transcripts/arena-02-schedule-with-constraints-20260817-5f0510.md",
+    "call_json": "transcripts/arena-02-schedule-with-constraints-20260817-5f0510.json",
+    "events_jsonl": "reports/events/arena-02-schedule-with-constraints-20260817-5f0510.jsonl"
+  }
+}

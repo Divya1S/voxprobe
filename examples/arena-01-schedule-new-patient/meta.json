@@ -1,0 +1,30 @@
+{
+  "stem": "arena-01-schedule-new-patient-20260817-a29565",
+  "scenario_id": "01-schedule-new-patient",
+  "target_id": "local-clinic",
+  "title": "New patient books a first visit for knee pain",
+  "mode": "audio-arena",
+  "started_at": "2026-08-17T06:41:09.247439+00:00",
+  "duration_s": 91.6,
+  "ended_reason": "caller-said-goodbye",
+  "caller_response_latency_s": [
+    1.47,
+    1.387,
+    4.532,
+    1.268
+  ],
+  "agent_response_latency_s": [
+    1.751,
+    1.687,
+    1.792,
+    2.344
+  ],
+  "cost_usd": 0,
+  "performance_metrics": null,
+  "files": {
+    "recording_mp3": "recordings/arena-01-schedule-new-patient-20260817-a29565.mp3",
+    "transcript_md": "transcripts/arena-01-schedule-new-patient-20260817-a29565.md",
+    "call_json": "transcripts/arena-01-schedule-new-patient-20260817-a29565.json",
+    "events_jsonl": "reports/events/arena-01-schedule-new-patient-20260817-a29565.jsonl"
+  }
+}

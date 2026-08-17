@@ -28,3 +28,12 @@ transcripts/*synthetic*
 reports/*synthetic*
 reports/events/synthetic-*
 reports/events/test-*
+
+# run outputs are local; curated demo runs live in examples/
+recordings/*.mp3
+transcripts/arena-*
+transcripts/call-*
+reports/arena-*
+reports/call-*
+reports/events/arena-*
+reports/events/call-*
