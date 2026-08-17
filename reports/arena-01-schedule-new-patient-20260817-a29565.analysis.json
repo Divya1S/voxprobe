@@ -1,0 +1,86 @@
+{
+  "metrics": {
+    "turns": {
+      "AGENT": 4,
+      "PATIENT": 3
+    },
+    "patient_response_latency": {
+      "n": 3,
+      "median_s": 1.77,
+      "p90_s": 1.77,
+      "max_s": 4.58,
+      "min_s": 1.49
+    },
+    "agent_response_latency": {
+      "n": 3,
+      "median_s": 1.97,
+      "p90_s": 1.97,
+      "max_s": 2.19,
+      "min_s": 1.88
+    },
+    "overlaps": [],
+    "long_silences": [
+      {
+        "after": "AGENT",
+        "at": 54.2,
+        "silence_s": 4.58
+      }
+    ],
+    "talk_share": {
+      "AGENT": 0.47,
+      "PATIENT": 0.33
+    },
+    "duration_s": 68.4,
+    "brain": {
+      "turns": 4,
+      "llm_latency_ms": {
+        "median": 519,
+        "max": 3527
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 688,
+        "last": 878
+      }
+    },
+    "vapi_user_interrupted_events": 0
+  },
+  "judge": {
+    "summary": "The patient, Maya Thompson, successfully booked a new patient appointment for knee pain with Dr. Emily Chen at Sunrise Orthopedics. The agent confirmed the appointment for Tuesday at 9 a.m. and provided instructions for the patient to arrive 15 minutes early with a photo ID and insurance card. The call ended naturally after the patient said goodbye.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 5,
+      "pacing": 5,
+      "notes": "The conversation flowed smoothly, with the agent and patient taking turns and responding to each other's statements in a natural and coherent manner."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent correctly scheduled the appointment, provided accurate information, and followed the clinic's policies and procedures."
+    },
+    "technical_quality": {
+      "latency": 5,
+      "audio_or_asr_issues": "None",
+      "notes": "There were no technical issues or latency problems during the call."
+    },
+    "candidate_issues": [],
+    "positive_controls": [
+      "The agent used the patient's name and DOB correctly.",
+      "The agent provided accurate information about the clinic's providers and scheduling.",
+      "The agent confirmed the appointment details with the patient."
+    ],
+    "simulator_notes": [
+      "The patient provided a clear and concise reason for the call.",
+      "The patient responded naturally to the agent's questions and instructions."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to schedule a new patient appointment and provide accurate information about the clinic's policies and procedures."
+  }
+}

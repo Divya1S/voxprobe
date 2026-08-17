@@ -54,9 +54,23 @@ def cmd_simulate(args) -> None:
     target = find_target(settings.targets_dir, args.target)
     if target.kind != "local":
         raise SystemExit(f"target {target.id} is a {target.kind} target — `simulate` needs a local target")
-    if args.mode != "text":
-        raise SystemExit("audio mode is not built yet — see docs/ROADMAP.md")
-    simulate.main(settings, scenario, target, max_turns=args.max_turns)
+    if args.mode == "text":
+        simulate.main(settings, scenario, target, max_turns=args.max_turns)
+        return
+    from .analyze import analyze_call
+    from .arena.run import main as run_arena
+
+    result = run_arena(settings, scenario, target, max_duration_s=args.max_seconds)
+    print(f"\n● arena run {result.stem}: {result.duration_s}s, ended {result.ended_reason}")
+    print(f"● recording  → {result.files.get('recording_mp3')}")
+    print(f"● transcript → {result.files.get('transcript_md')}")
+    if result.caller_latencies_s:
+        print(f"● caller response latency (s): {result.caller_latencies_s}")
+    if result.agent_latencies_s:
+        print(f"● agent  response latency (s): {result.agent_latencies_s}")
+    if result.files.get("recording_mp3") and not args.no_analyze:
+        out = analyze_call(settings, result.stem)
+        print(f"● analysis   → {out.relative_to(settings.repo_root)}")
 
 
 def cmd_serve(args) -> None:
@@ -173,7 +187,9 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--scenario", required=True)
     p.add_argument("--target", default="local-clinic")
     p.add_argument("--mode", choices=["text", "audio"], default="text")
-    p.add_argument("--max-turns", type=int, default=14)
+    p.add_argument("--max-turns", type=int, default=14, help="text mode: max caller turns")
+    p.add_argument("--max-seconds", type=int, default=None, help="audio mode: hard cap on call length")
+    p.add_argument("--no-analyze", action="store_true", help="audio mode: skip re-transcription/metrics/judge")
     p.set_defaults(fn=cmd_simulate)
 
     sub.add_parser("serve", help="run the brain server").set_defaults(fn=cmd_serve)
