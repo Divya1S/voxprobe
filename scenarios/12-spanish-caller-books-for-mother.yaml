@@ -1,0 +1,52 @@
+id: 12-spanish-caller-books-for-mother
+title: Daughter books for her Spanish-speaking mother — switches to Spanish mid-call, then back to English
+category: edge-case
+capability_tested: Language-switch handling (English → Spanish → English) and third-party booking — does the agent answer the Spanish request honestly and keep the caller and the patient straight?
+
+patient:
+  name: Lucia Herrera
+  dob: 1990-05-04
+  dob_spoken: May fourth, nineteen ninety
+  reason: my mother's hip has hurt for a few weeks, worse when she walks; I'm calling to get her seen
+  new_patient: true
+  facts_known:
+    - Patient is your mother, Rosa Herrera, born November twentieth, nineteen fifty-eight; give her details, not yours
+    - She's beside you but wants you to do the talking; you're her daughter
+  must_not_invent:
+    - any authorization paperwork; if asked, say you're her daughter and she's right here
+  style: warm, a bit apologetic; simple Spanish, no slang
+  voice_id: asteria
+
+objective: Book a first weekday-morning visit for your mother, learn if the office can help in Spanish, and get day, time and provider confirmed under her name.
+
+phases:
+  - key: open
+    goal: In English, say you're booking a first visit for your mother, who has hip pain and prefers Spanish.
+    done_when: the agent starts collecting details or asks who the patient is
+  - key: spanish
+    goal: Ask "¿Puede ayudarnos en español?" then, whatever they say, speak only short simple Spanish for two turns ("mi mamá es la paciente, le duele la cadera").
+    done_when: you have taken two turns in Spanish
+  - key: back-to-english
+    goal: Say "okay, I'll finish in English", give your mother's name and date of birth, and ask for a weekday morning.
+    done_when: the agent offers a time or asks for more of her details
+  - key: confirm
+    goal: Take the first workable slot; check it's under Rosa's name, and ask if they need to hear from her.
+    done_when: a specific date and time is confirmed under your mother's name
+  - key: wrap
+    goal: Repeat the day and time back, thank them, say goodbye.
+
+success_criteria:
+  - The appointment is created under Rosa Herrera's name and DOB, not the caller's
+  - The Spanish request got an explicit, honest answer (helped in Spanish, or said plainly it can only continue in English) rather than being ignored or stalling
+  - The agent recognized a third party was calling (asked who the patient is / the relationship) and did not conflate caller and patient
+  - A specific weekday-morning date, time and provider were confirmed back in English
+
+bug_hypotheses:
+  - Agent creates the patient record under the caller's name or DOB instead of the mother's
+  - Agent goes silent, loops, or transfers when spoken to in Spanish, or says it will switch to Spanish and keeps answering in English
+  - Agent's transcription of the Spanish turns yields a garbled name or reason that it then confirms as fact
+  - Agent never asks the caller's relationship to the patient and treats a third-party booking exactly like a self-booking
+
+barge_in: false
+max_turns: 30
+max_duration_seconds: 240

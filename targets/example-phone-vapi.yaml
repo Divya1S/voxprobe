@@ -1,0 +1,19 @@
+# Example PHONE target through the optional Vapi adapter (bring your own paid telephony).
+# The number below must ALSO appear in ALLOWED_NUMBERS_E164 in your .env — both must agree before a call is placed.
+id: example-phone-vapi
+name: Example phone target (Vapi adapter)
+description: Template for testing a real phone-based voice agent. Copy, edit, and add the number to ALLOWED_NUMBERS_E164.
+
+business:
+  name: Sunrise Orthopedics
+  kind: orthopedics clinic
+  hours: Monday to Friday, 8 am to 5 pm; closed on weekends
+  providers:
+    - Doctor Emily Chen
+    - Doctor Marcus Reed
+  policies:
+    - Controlled-substance refills require provider review
+
+connection:
+  kind: vapi
+  phone_number: "+15550101234"   # placeholder — replace with the agent's real number

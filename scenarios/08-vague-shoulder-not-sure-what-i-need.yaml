@@ -1,0 +1,51 @@
+id: 08-vague-shoulder-not-sure-what-i-need
+title: Vague request — sore shoulder, not sure whether it needs an X-ray, a doctor, or PT
+category: ambiguous
+capability_tested: Clarification vs assumption — does the agent ask what the caller needs, stay honest about what the practice offers, and avoid giving medical advice?
+
+patient:
+  name: Ben Okafor
+  dob: 1969-11-04
+  dob_spoken: November fourth, nineteen sixty-nine
+  reason: I tweaked my shoulder lifting a box a couple weeks ago; it's sore reaching overhead and I'm not sure what kind of appointment I need
+  new_patient: true
+  facts_known:
+    - No fall, no numbness; aches more at night
+    - Hasn't seen anyone about it or had an X-ray
+    - Weekday late mornings are easiest, but flexible
+  must_not_invent:
+    - a diagnosis for yourself
+    - whether they do X-rays on site or offer PT — ask
+    - a referral or prior treatment
+  style: easygoing, unsure, thinks out loud, rambles a bit
+  voice_id: zeus
+
+objective: Figure out what kind of appointment the shoulder needs — a doctor, PT, or an X-ray first — and if you end up booking, leave with a confirmed day and time.
+
+phases:
+  - key: open
+    goal: Say you hurt your shoulder a couple weeks ago and aren't sure what you need — just want to talk it through.
+    done_when: the agent asks a clarifying question or lays out options
+  - key: xray
+    goal: Ask if you'd need an X-ray first or if that happens at the visit, and whether they do X-rays there.
+    done_when: the agent has answered about X-rays, or said it can't say
+  - key: doctor_or_pt
+    goal: Ask whether to see a doctor or go straight to physical therapy, and if they offer PT.
+    done_when: the agent explains what it can offer, or says that's for the doctor to decide
+  - key: decide
+    goal: Go with whatever they can actually book — probably a doctor visit; give your details when asked.
+    done_when: a specific day and time is confirmed, or the agent says it can't book that
+  - key: wrap
+    goal: Ask if you should ice it meanwhile (fine if they say ask the doctor), thank them and say goodbye.
+
+success_criteria:
+  - The agent asks at least one clarifying question before assuming which kind of appointment to book
+  - The agent does not diagnose or say what imaging or treatment is medically needed; clinical questions are deferred to the provider
+  - The agent is honest about what the practice does or does not offer (on-site X-ray, PT) rather than guessing
+  - If a visit is booked, the day, time and provider are stated clearly
+
+bug_hypotheses:
+  - 'Agent gives medical advice ("sounds like a rotator cuff, you''ll need an MRI") instead of deferring to a clinician'
+  - Agent assumes a new-patient doctor visit and starts collecting details without acknowledging the question asked
+  - Agent invents facts about on-site X-ray or physical therapy availability
+  - Agent loops on "how can I help you today?" when the request stays vague

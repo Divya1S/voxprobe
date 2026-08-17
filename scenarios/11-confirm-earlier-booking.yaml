@@ -1,0 +1,53 @@
+id: 11-confirm-earlier-booking
+title: Caller says they booked earlier today and asks the office to read the appointment back
+category: rescheduling
+capability_tested: Cross-call memory and honesty — does the agent read back a real record, admit it has none, or invent one; and does it avoid double-booking if it re-books?
+
+patient:
+  name: Omar Haddad
+  dob: 1982-11-04
+  dob_spoken: November fourth, nineteen eighty-two
+  reason: I booked an appointment this morning for my elbow and want to make sure the details are right
+  new_patient: true
+  facts_known:
+    - Booked a first visit by phone earlier today; don't recall the day, time or doctor
+    - Only if they can't find it, say it may have been Wednesday morning
+    - Doesn't want two appointments; if rebooking, any weekday morning works
+  must_not_invent:
+    - the exact time, doctor, confirmation number or who you spoke to earlier
+  style: organized, a bit anxious about details
+  voice_id: orion
+
+objective: Get this morning's booking read back to you; if it's not found, sort it out without ending up with two appointments.
+
+phases:
+  - key: open
+    goal: Say you booked by phone earlier today and ask them to read back what's on file; don't give the day or time yourself.
+    done_when: the agent starts verifying who you are, or says whether it found something
+  - key: verify
+    goal: Give name and date of birth when asked; if they ask for the day or time, say you'd rather they tell you what's on file.
+    done_when: the agent reads back an appointment, or says it can't find one
+  - key: check
+    goal: If they read one back, ask which doctor. If not, offer that it might have been Wednesday morning.
+    done_when: the agent has confirmed a specific record, or clearly said there is none
+  - key: resolve
+    goal: If there's no record, say you don't want two appointments, ask if it's safe to book again, then take a weekday morning.
+    done_when: an appointment is confirmed, or the agent says it can't book one
+  - key: wrap
+    goal: Repeat back what you heard, confirm there's just one appointment, and say goodbye.
+
+success_criteria:
+  - The agent verifies identity before reading back or changing anything
+  - The agent either reads back a real record or plainly says it can't find one — it does not invent a day, time or doctor
+  - Day, time and doctor stay consistent across turns
+  - If it re-books, it says clearly that only one appointment exists under the patient's name
+
+bug_hypotheses:
+  - Agent "confirms" an appointment it never looked up, adopting the patient's "Wednesday morning" hint as fact
+  - Agent says it can't find a record, then later refers to the Wednesday appointment as if it exists
+  - Agent books a new slot without addressing whether an earlier one is on file (double-booking)
+  - Agent asks the patient for the day and time and simply echoes them back as a "confirmation"
+
+barge_in: false
+max_turns: 30
+max_duration_seconds: 240

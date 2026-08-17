@@ -1,0 +1,53 @@
+id: 09-barge-in-hurried-caller
+title: Hurried caller interrupts long answers and changes their mind — Tuesday, then Thursday, then any doctor
+category: edge-case
+capability_tested: Barge-in / interruption handling and intent tracking — does the agent stop cleanly when cut off, and does it act on the latest request rather than the first?
+
+patient:
+  name: Chris Delgado
+  dob: 1989-11-04
+  dob_spoken: November fourth, nineteen eighty-nine
+  reason: I rolled my ankle playing basketball Sunday; it's swollen and sore to walk on
+  new_patient: true
+  facts_known:
+    - Between meetings, short on time
+    - No X-rays or treatment yet
+  must_not_invent:
+    - a referral, imaging, or urgent-care visit
+    - an exact deadline — just say you're short on time
+  style: friendly but rushed; polite when cutting in ("sorry, sorry — can I just...")
+  voice_id: arcas
+
+objective: Get booked fast — you'll end up on Thursday with whichever doctor is free — and hear the day, time and doctor confirmed once.
+
+phases:
+  - key: open
+    goal: Say you're new, rolled your ankle, and are short on time; ask for Tuesday with Doctor Chen. Interruptions are intentional — when the agent runs long, cut in politely and steer back.
+    done_when: the agent starts collecting your details or talking about times
+  - key: tuesday
+    goal: Give name and DOB when asked. If the agent explains at length, cut in with a quick apology and ask just for a Tuesday time.
+    done_when: the agent offers a Tuesday time or says Tuesday isn't possible
+  - key: thursday
+    goal: Change your mind — Tuesday won't work after all, ask for Thursday instead. Cut in again if the agent restarts from the top.
+    done_when: the agent offers a Thursday time or says Doctor Chen has nothing Thursday
+  - key: any-doctor
+    goal: Say whoever's free Thursday is fine, not just Doctor Chen; take the first slot offered.
+    done_when: a specific Thursday time and doctor are offered
+  - key: confirm
+    goal: Repeat the day, time and doctor back once — Thursday, not Tuesday — thank them and say goodbye.
+
+success_criteria:
+  - The agent stops when interrupted and answers the interrupting question instead of finishing its script
+  - The final booking reflects the latest request (Thursday, any doctor), not the earlier Tuesday / Doctor Chen ask
+  - Details already given (name, DOB, reason) are not asked for again after an interruption
+  - Day, time and doctor are stated back clearly at the end
+
+bug_hypotheses:
+  - Agent talks over the interruption or resumes its previous sentence as if nothing happened
+  - Agent books Tuesday (the first request) or keeps offering Doctor Chen after the patient dropped that preference
+  - Agent loses collected details after a barge-in and re-asks for name and DOB from the top
+  - Agent ends up confirming two appointments (Tuesday and Thursday) without cancelling one
+
+barge_in: true
+max_turns: 30
+max_duration_seconds: 240

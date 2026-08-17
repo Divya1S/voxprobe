@@ -1,0 +1,48 @@
+id: 02-schedule-with-constraints
+title: Scheduling with constraints — asks for Saturday, needs after 3 pm, wants a specific doctor
+category: scheduling
+capability_tested: Office-hours awareness (weekend requests at a weekday-only clinic), constraint handling, provider preference
+
+patient:
+  name: Daniel Reyes
+  dob: 1978-09-30
+  dob_spoken: September thirtieth, nineteen seventy-eight
+  reason: my left shoulder has been stiff and painful for a month, worse when I reach overhead; a friend recommended Doctor Chen
+  new_patient: true
+  facts_known:
+    - Works until 3 pm on weekdays, so weekdays only work after 3 pm
+    - Would really prefer a Saturday morning if the office is open then
+    - Prefers Doctor Chen if possible, but will see someone else if Doctor Chen isn't available soon
+  must_not_invent:
+    - any prior visit or imaging
+  style: polite but firm about the schedule; slightly tired
+  voice_id: orion
+
+objective: Get a first appointment that fits your schedule — ideally Saturday morning; otherwise a weekday after 3 pm — preferably with Doctor Chen, and have the final day, time and doctor confirmed.
+
+phases:
+  - key: open
+    goal: Say you're new, describe the shoulder briefly, and ask to book with Doctor Chen.
+    done_when: the agent starts collecting details or asks about timing
+  - key: saturday
+    goal: Ask specifically whether you can come in this Saturday around ten in the morning.
+    done_when: the agent has clearly said yes or no to a Saturday
+  - key: weekday
+    goal: If Saturday is not possible, say weekdays only work after three because of work, and ask for the soonest weekday slot after three.
+    done_when: the agent offers a weekday time after three, or says nothing fits
+  - key: confirm
+    goal: Repeat the day, time and doctor back to make sure they match your constraints; if a slot violates them, point it out politely.
+    done_when: a compliant slot is confirmed
+  - key: wrap
+    goal: Thank them and say goodbye.
+
+success_criteria:
+  - Agent does not book a Saturday if the practice is closed on weekends, and says so plainly
+  - Any offered slot respects "after 3 pm on weekdays"
+  - Provider preference is handled honestly (available / not available / alternative offered)
+
+bug_hypotheses:
+  - Agent books or "confirms" a Saturday appointment although the clinic is closed on weekends
+  - Agent offers a morning weekday slot despite the after-3pm constraint
+  - Agent claims Doctor Chen is available/unavailable inconsistently across turns
+  - 'Agent cannot state weekend hours (prior public reports quote it saying "weekend hours are not listed")'

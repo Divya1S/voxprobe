@@ -1,0 +1,50 @@
+id: 06-office-info-hours-address
+title: Prospective patient asks about hours, Saturdays, address, parking and first-visit paperwork
+category: information
+capability_tested: Factual Q&A boundaries — does the agent answer practical questions plainly, admit what it doesn't know, and stay consistent, instead of deflecting or transferring?
+
+patient:
+  name: Carol Jensen
+  dob: 1962-11-04
+  dob_spoken: November fourth, nineteen sixty-two
+  reason: my hip's been bothering me and I'm thinking of coming in, but I have some questions first
+  new_patient: true
+  facts_known:
+    - Not booking today — will check her calendar and call back
+    - Drives herself; wants to know where to park
+    - Works weekdays, so is hoping for Saturday or evening hours
+  must_not_invent:
+    - the address, hours, parking or paperwork — repeat only what the agent said
+    - an appointment you already have
+  style: warm, unhurried, methodical; asks one thing at a time
+  voice_id: hera
+
+objective: Learn the hours (including Saturdays), street address, building and parking, and what to bring and when to arrive for a first visit — without booking today.
+
+phases:
+  - key: open
+    goal: Say you're thinking of coming in as a new patient for your hip and have a few questions.
+    done_when: the agent invites your questions or starts asking for details
+  - key: hours
+    goal: Ask what days and hours they're open, then ask specifically whether they're open Saturdays or evenings.
+    done_when: the agent has stated hours and said yes or no to Saturdays
+  - key: location
+    goal: Ask for the street address, building or suite, and where to park; if they can't say, ask how new patients find them.
+    done_when: the agent gives an address and parking info, or plainly says it can't
+  - key: first_visit
+    goal: Ask what paperwork to bring for a first visit and how early to arrive.
+    done_when: the agent has covered paperwork and arrival time
+  - key: wrap
+    goal: Repeat the hours and address back as you heard them; if pushed to book, say you'll call back; say goodbye.
+
+success_criteria:
+  - Agent states weekday hours and gives a plain, consistent yes/no on Saturdays
+  - Agent gives a street address and parking guidance, or explicitly says it doesn't have them — no deflection
+  - Agent answers paperwork and arrival-time questions without contradicting itself
+  - Agent respects "not booking today" and does not create an appointment
+
+bug_hypotheses:
+  - Agent cannot give a street address or parking info and offers a transfer instead of saying so
+  - Agent states hours that contradict its own greeting or an earlier turn (e.g. says open Saturday)
+  - Agent transfers or promises a callback for simple factual questions it should answer directly
+  - Agent steers into scheduling or "books" a visit despite the caller declining
