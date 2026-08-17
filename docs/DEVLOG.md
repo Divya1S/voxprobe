@@ -31,3 +31,23 @@ preference" (medium). Targets now carry business ground truth (hours, providers,
 **Tunnel lesson (phone adapter):** cloudflared quick tunnels print their URL before the connection is registered and can take ~80 s to become
 routable; the runner now waits for "Registered tunnel connection" and polls `/health` for up to 120 s. Round-trip through the tunnel added
 ≈185 ms on top of the LLM.
+
+## 2026-08-17 — Milestone 2: the audio arena works
+
+**No in-memory transport in Pipecat 1.7** (only websocket/PyAudio/WebRTC/...) and the API had moved a lot since older docs
+(task→worker, VAD on the aggregator params, `TranscriptProcessor` gone, `add_workers` is async). Read the installed source rather
+than memory; wrote `arena/loopback.py`: output side paces writes like a sound card (one 20 ms chunk per 20 ms; interruption flushes the
+peer's unplayed audio), input side is a virtual microphone ticking every 20 ms with silence between utterances (VAD needs a continuous stream).
+
+**POC first**: caller TTS → line → agent VAD/STT/recorder. Result: exact transcript, turn start/stop 5 s apart in wall-clock time, stereo
+capture — pacing proven. (Bug found on the way: `runner.add_workers()` must be awaited; nothing runs otherwise, silently.)
+
+**First full runs** (Deepgram nova-3 + aura-2 both sides; caller brain = our persona/director on Groq 70B; sample agent on Gemini flash-lite):
+- scenario 01 vs clean agent: 90 s conversation, 4/3 turns, caller median response 1.77 s (agent-stops → caller-starts, VAD-corrected),
+  agent 1.97 s, 0 overlaps, one 4.6 s silence (a 3.5 s Groq outlier). Judge: no issues — correct.
+- scenario 02 vs planted-bug agent: agent confirmed **Saturday 10 am** at a Mon–Fri clinic; judge flagged HIGH @ 01:00 with the verbatim
+  quote and matched the scenario's hypothesis; metrics exposed a 13 s first-response silence (Gemini cold start).
+- Recording convention holds: LEFT = agent, RIGHT = caller; per-channel loudness −24/−28 dB; Whisper-per-region transcript clean.
+
+**Open items:** deliberate barge-in driver for scenario 09; smart-turn (ONNX) instead of speech-timeout; local Kokoro/Whisper option;
+teardown warnings from Deepgram STT connection cancel; the judge should weigh long silences more heavily.
