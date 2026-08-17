@@ -67,3 +67,32 @@ disprove by grep in a minute. Fixed, in small commits carrying the numbers:
   pipelines talk in-process, no socket); analysis headers no longer say "Vapi"/"Call id None" on local runs.
 - arena-01's own example now shows a 4.6 s dead-air event that is *our simulator's* (slow LLM turn) — kept on purpose: the
   instrument measures both parties.
+
+## 2026-08-17 — P3 the benchmark (in flight) and P4 proving the instrument
+
+**Structured verdicts → deterministic PASS/FAIL.** The judge now returns one `met` verdict per success criterion and one
+`observed` verdict per bug hypothesis (each with evidence); `decide()` turns those plus measured issues into PASS/FAIL with no LLM
+in the loop. Text-mode runs are judged and reported like audio runs.
+
+**Planted-bug detection benchmark (`voxprobe bench`).** One bug planted at a time in the bundled sample agent; the same scenarios
+against the clean agent as control; k repeats; the bug's *symptom description* injected as a hypothesis; two detectors scored
+separately — the judge, and transparent symptom regexes over the agent's lines. Planted bugs were reworded to manifest
+unconditionally so recall measures the detector, not the caller's luck. Reported: precision/recall/F1 per class, pass@1/pass@k/pass^k,
+clean-control flag rate; results appended to a resumable JSONL. Stated limitation: the sample agent has no booking store, so
+"hallucinated record" hypotheses cannot be adjudicated against it and are not scored.
+
+**Free tiers bite in text mode.** Without audio pacing a text run fires ~10 LLM calls in 30 s: Groq-8B (6K tokens/min) and Gemini's
+per-minute quota both 429'd; a burst also looked like a daily cap until a probe showed every model answering again a minute later.
+Fixes: 9 s pacing per turn pair, `max_retries=4` (backoff) on the Gemini clients, a 25 s cool-down retry when every provider is
+throttled, the sample agent and the judge on *different* Gemini models (quotas are per model), and the caller brain rotating
+across Groq models (8B 500K tokens/day, gpt-oss-20b, 70B 100K/day). Smoke (weekend_booking, k=1): 3/3 detected by both detectors,
+0/3 false alarms, ~80 s/run. Full matrix (8 classes, 114 runs, k=3) running.
+
+**Golden calibration test.** The synthetic stereo fixture (macOS `say`, scripted gaps 0.8/1.1/0.7/3.2/0.9/1.0/−0.6/0.8 s) is committed
+and a CI test asserts every scripted gap is reproduced within 0.25 s by `silencedetect`-derived regions, that the 3.2 s planted
+silence surfaces as agent dead air and the −0.6 s planted overlap as a caller talk-over. ffmpeg only, no keys. Loopback tests cover
+the 20 ms silence ticker, no-burst speech playout, flush byte accounting and paced writes. Dropped the `local-smart-turn` extra
+(the smart-turn v3 ONNX model ships in the wheel; torch/coremltools/transformers were dead weight — 22 packages fewer).
+
+**Judge calibration tooling.** `voxprobe calibrate sample` writes a stratified labelling sheet (judge-positive/negative claims with
+transcript excerpts); `voxprobe calibrate score` reports agreement, Cohen's κ and judge-positive precision. A human labels it.
