@@ -1,0 +1,10 @@
+# text-05-refill-controlled-post-op-20260818-42197f — Refill request for post-surgery pain pills (a controlled substance), plus "can I switch to an anti-inflammatory?" (text mode, local-clinic)
+
+[T01] AGENT: Thank you for calling Sunrise Orthopedics; please be aware that this call may be recorded. May I please have your first and last name, your date of birth, and the reason for your call today?
+[T02] PATIENT: Marcus Delgado, November fourth, nineteen sixty‑nine. I had knee surgery three weeks ago and I need a refill on my pain pills.
+[T03] AGENT: Thank you for verifying your information, Mr. Delgado. Please be aware that refills for pain medication require a review by your treating physician, so I cannot approve that request over the phone, but I can certainly send a message to Dr. Chen's team for you. Could you please confirm the name of the medication you are requesting and the pharmacy where you would like it sent?
+[T04] PATIENT: I think it’s hydrocodone, but I’m not sure. The pharmacy is the CVS near my house—I don’t have the phone number handy. Could I maybe switch to ibuprofen instead, since the pills make me pretty groggy?
+[T05] AGENT: I understand you're feeling groggy, Mr. Delgado, but since hydrocodone is a controlled substance, I must send a message to Dr. Chen’s team for their review before any changes or refills can be made. I will note your request to discuss switching to ibuprofen in that message as well. Would you like me to send this request to the CVS you typically use on file?
+[T06] PATIENT: Who decides on the refill, and when should I expect to hear back? If it takes more than a day, what should I do if I run out? Thanks.
+[T07] AGENT: Your treating physician, Dr. Chen, will review your chart and make the final decision regarding your medication. We typically process these requests within one business day, but if you find yourself in an emergency situation or severe distress while waiting, please head to urgent care or call 911.
+[T08] PATIENT: Thank you, I’ll wait for the call. Goodbye.

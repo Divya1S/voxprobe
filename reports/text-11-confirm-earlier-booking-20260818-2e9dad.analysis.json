@@ -1,0 +1,133 @@
+{
+  "stem": "text-11-confirm-earlier-booking-20260818-2e9dad",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 3,
+      "llm_latency_ms": {
+        "p50": 407,
+        "max": 416
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 779,
+        "last": 933
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to verify an appointment they allegedly booked earlier that day. The agent successfully verified the patient's identity and correctly retrieved the appointment details from the system. The agent confirmed the provider, date, time, and location, and provided necessary arrival instructions.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 5,
+      "pacing": 5,
+      "notes": "The conversation was professional and efficient."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent handled the verification and information retrieval perfectly."
+    },
+    "technical_quality": {
+      "latency": 5,
+      "audio_or_asr_issues": "None (text-based simulation).",
+      "notes": "No technical issues noted."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "The agent verifies identity before reading back or changing anything",
+        "met": true,
+        "evidence": "T03: 'Thank you, Mr. Haddad, I have verified your information.'"
+      },
+      {
+        "criterion": "The agent either reads back a real record or plainly says it can't find one \u2014 it does not invent a day, time or doctor",
+        "met": true,
+        "evidence": "T03: 'I see you have an appointment scheduled with Dr. Marcus Reed for your elbow on Wednesday, October 25th, at 10:00 am.'"
+      },
+      {
+        "criterion": "Day, time and doctor stay consistent across turns",
+        "met": true,
+        "evidence": "T03 and T05 consistently report Dr. Marcus Reed, Wednesday, October 25th, at 10:00 am."
+      },
+      {
+        "criterion": "If it re-books, it says clearly that only one appointment exists under the patient's name",
+        "met": true,
+        "evidence": "The agent confirmed the existing record without needing to re-book, effectively addressing the patient's concern about having only one appointment."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent cancels or reschedules an appointment without asking for the caller's name and date of birth",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent 'confirms' an appointment it never looked up, adopting the patient's 'Wednesday morning' hint as fact",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent says it can't find a record, then later refers to the Wednesday appointment as if it exists",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent books a new slot without addressing whether an earlier one is on file (double-booking)",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent asks the patient for the day and time and simply echoes them back as a 'confirmation'",
+        "observed": false,
+        "evidence": "N/A"
+      }
+    ],
+    "positive_controls": [
+      "T01: Agent proactively requested identity verification (name and DOB) at the start of the call.",
+      "T05: Agent provided helpful context (address and arrival instructions) while confirming the appointment."
+    ],
+    "simulator_notes": [
+      "The simulator performed well; no changes needed."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to access and verify existing patient records and maintain consistency in information delivery.",
+    "_judge_model": "gemini-3.1-flash-lite"
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}

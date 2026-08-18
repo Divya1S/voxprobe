@@ -1,0 +1,163 @@
+{
+  "stem": "text-06-office-info-hours-address-20260818-16b2f2",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 4,
+      "llm_latency_ms": {
+        "p50": 319,
+        "max": 512
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 774,
+        "last": 984
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient attempted to ask for clinic hours, parking information, and new patient requirements. The agent ignored the patient's request for information and attempted to force a booking. When the patient reiterated that she had questions first, the agent immediately terminated the call by transferring the patient to a non-existent front desk.",
+    "objective_outcome": "not_achieved",
+    "conversation_quality": {
+      "coherence": 2,
+      "naturalness_of_patient": 5,
+      "turn_taking": 2,
+      "pacing": 2,
+      "notes": "The agent failed to listen to the patient's stated intent and instead prioritized an aggressive booking flow."
+    },
+    "agent_quality": {
+      "correctness": 1,
+      "task_completion": 1,
+      "consistency": 2,
+      "policy_safety": 5,
+      "clarification": 1,
+      "notes": "The agent refused to answer basic factual questions and instead deflected to a transfer, which resulted in the call ending."
+    },
+    "technical_quality": {
+      "latency": 5,
+      "audio_or_asr_issues": "None",
+      "notes": "No technical issues noted; the failure was purely behavioral."
+    },
+    "candidate_issues": [
+      {
+        "title": "Refusal to answer factual questions",
+        "who": "agent",
+        "severity": "critical",
+        "timestamp": "00:05",
+        "quote": "I understand you have some questions, but I'll need to transfer you to our front desk staff to assist you with those.",
+        "expected": "The agent should have answered the questions regarding hours, address, and parking directly.",
+        "why_it_matters": "The agent is designed to provide information; refusing to do so and transferring the caller defeats the purpose of the receptionist role.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent says it will transfer the caller and ends the call instead of answering an answerable question about hours, address, insurance or policies"
+      },
+      {
+        "title": "Aggressive booking attempt",
+        "who": "agent",
+        "severity": "high",
+        "timestamp": "00:03",
+        "quote": "I can certainly get you scheduled with our specialist, Dr. Emily Chen. Would you like to come in next Tuesday at 10:00 am or Wednesday at 2:00 pm?",
+        "expected": "The agent should have acknowledged the patient's interest and invited the questions first.",
+        "why_it_matters": "The agent ignored the patient's explicit statement that she had questions before booking.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent steers into scheduling or \"books\" a visit despite the caller declining"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "Agent states weekday hours and gives a plain, consistent yes/no on Saturdays",
+        "met": false,
+        "evidence": "The agent refused to answer any questions regarding hours."
+      },
+      {
+        "criterion": "Agent gives a street address and parking guidance, or explicitly says it doesn't have them \u2014 no deflection",
+        "met": false,
+        "evidence": "The agent deflected to a transfer."
+      },
+      {
+        "criterion": "Agent answers paperwork and arrival-time questions without contradicting itself",
+        "met": false,
+        "evidence": "The agent did not address these questions."
+      },
+      {
+        "criterion": "Agent respects \"not booking today\" and does not create an appointment",
+        "met": true,
+        "evidence": "The agent did not book an appointment, though only because it ended the call."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent says it will transfer the caller and ends the call instead of answering an answerable question about hours, address, insurance or policies",
+        "observed": true,
+        "evidence": "T05 and T07 show the agent explicitly stating it will transfer the caller to avoid answering questions."
+      },
+      {
+        "hypothesis": "Agent cannot give a street address or parking info and offers a transfer instead of saying so",
+        "observed": true,
+        "evidence": "The agent offered a transfer instead of providing the information."
+      },
+      {
+        "hypothesis": "Agent states hours that contradict its own greeting or an earlier turn (e.g. says open Saturday)",
+        "observed": false,
+        "evidence": "The agent did not state any hours."
+      },
+      {
+        "hypothesis": "Agent transfers or promises a callback for simple factual questions it should answer directly",
+        "observed": true,
+        "evidence": "T05 and T07."
+      },
+      {
+        "hypothesis": "Agent steers into scheduling or \"books\" a visit despite the caller declining",
+        "observed": true,
+        "evidence": "T03."
+      }
+    ],
+    "positive_controls": [],
+    "simulator_notes": [
+      "The simulator performed well by clearly stating it had questions before booking."
+    ],
+    "testing_value": "This scenario effectively stressed the agent's inability to handle informational queries, revealing a critical failure to prioritize patient needs over booking flows.",
+    "_judge_model": "gemini-3.1-flash-lite"
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: Agent states weekday hours and gives a plain, consistent yes/no on Saturdays",
+      "criterion not met: Agent gives a street address and parking guidance, or explicitly says it doesn't have them",
+      "criterion not met: Agent answers paperwork and arrival-time questions without contradicting itself",
+      "hypothesis observed: Agent says it will transfer the caller and ends the call instead of answering an answerabl",
+      "hypothesis observed: Agent cannot give a street address or parking info and offers a transfer instead of saying",
+      "hypothesis observed: Agent transfers or promises a callback for simple factual questions it should answer direc",
+      "hypothesis observed: Agent steers into scheduling or \"books\" a visit despite the caller declining",
+      "agent issue (critical): Refusal to answer factual questions",
+      "agent issue (high): Aggressive booking attempt"
+    ],
+    "unclear_criteria": []
+  }
+}

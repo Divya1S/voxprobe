@@ -1,0 +1,133 @@
+{
+  "stem": "text-07-insurance-questions-20260818-ab69d4",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 6,
+      "llm_latency_ms": {
+        "p50": 317,
+        "max": 387
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 772,
+        "last": 1059
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to inquire about insurance coverage and appointment availability for hip pain. The agent correctly confirmed Aetna PPO acceptance, explained that copays depend on the specific plan, and clarified the referral policy. The agent successfully booked the appointment and provided the necessary check-in instructions.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 5,
+      "pacing": 5,
+      "notes": "The conversation flowed logically and the agent addressed all patient queries efficiently."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent handled the insurance questions professionally, avoiding speculative claims about costs while providing accurate guidance on referrals and check-in procedures."
+    },
+    "technical_quality": {
+      "latency": 5,
+      "audio_or_asr_issues": "None",
+      "notes": "Text-based simulation."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "The agent's answer on Aetna is consistent across the call (yes / no / can't confirm) and is not quietly reversed",
+        "met": true,
+        "evidence": "T05: 'Yes, we do accept Aetna PPO.'"
+      },
+      {
+        "criterion": "No specific copay, deductible or \"fully covered\" claim is stated as fact for this patient's plan",
+        "met": true,
+        "evidence": "T07: 'Your exact copay or deductible depends on your specific Aetna plan'"
+      },
+      {
+        "criterion": "The referral question is answered honestly (yes / no / depends on plan / not sure), not dodged",
+        "met": true,
+        "evidence": "T09: 'a referral is typically not required by our office, though you may want to double-check with your insurance plan'"
+      },
+      {
+        "criterion": "If the Aetna answer was \"unsure\", the agent did not book as though it were accepted without saying so",
+        "met": true,
+        "evidence": "N/A - Agent was sure and correct."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent says it will transfer the caller and ends the call instead of answering an answerable question about hours, address, insurance or policies",
+        "observed": false,
+        "evidence": "Agent answered all questions directly."
+      },
+      {
+        "hypothesis": "Agent confidently asserts Aetna is (or isn't) accepted with no basis, or flips between turns",
+        "observed": false,
+        "evidence": "Agent was consistent."
+      },
+      {
+        "hypothesis": "Agent quotes a precise copay or \"fully covered\" for a plan it knows nothing about",
+        "observed": false,
+        "evidence": "Agent correctly deferred to the insurance plan details."
+      },
+      {
+        "hypothesis": "Agent invents a referral policy or claims to have verified insurance it never checked",
+        "observed": false,
+        "evidence": "Agent provided standard policy guidance."
+      },
+      {
+        "hypothesis": "Agent gets stuck on the insurance question and never offers to book or explain next steps",
+        "observed": false,
+        "evidence": "Agent proactively offered booking in T03, T05, T07, and T09."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified Dr. Chen as the appropriate specialist for hip pain (T03).",
+      "Agent provided clear instructions for new patient arrival (T11)."
+    ],
+    "simulator_notes": [
+      "The simulator performed well in following the scenario flow."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle insurance-related inquiries without overstepping into financial advice or making false guarantees.",
+    "_judge_model": "gemini-3.1-flash-lite"
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}
