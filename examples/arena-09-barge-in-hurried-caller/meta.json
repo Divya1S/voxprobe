@@ -1,0 +1,49 @@
+{
+  "stem": "arena-09-barge-in-hurried-caller-20260818-b5348b",
+  "scenario_id": "09-barge-in-hurried-caller",
+  "target_id": "local-clinic",
+  "title": "Hurried caller interrupts long answers and changes their mind \u2014 Tuesday, then Thursday, then any doctor",
+  "mode": "audio-arena",
+  "started_at": "2026-08-18T07:29:04.075728+00:00",
+  "duration_s": 80.0,
+  "ended_reason": "caller-said-goodbye",
+  "caller_response_latency_s": [
+    1.383,
+    1.379,
+    1.188,
+    1.202,
+    1.221
+  ],
+  "agent_response_latency_s": [
+    1.547,
+    1.54,
+    1.575,
+    1.386
+  ],
+  "barge_ins": [
+    {
+      "triggered_at": 32.99,
+      "phrase": "Sorry, sorry \u2014 can I jump in for a second?",
+      "agent_speaking_for_s": 4.04,
+      "agent_stopped_at": 34.74,
+      "yield_from_trigger_s": 1.75,
+      "unheard_agent_speech_s": 0.02
+    },
+    {
+      "triggered_at": 46.27,
+      "phrase": "Sorry to cut in \u2014",
+      "agent_speaking_for_s": 4.07,
+      "agent_stopped_at": 47.76,
+      "yield_from_trigger_s": 1.49,
+      "unheard_agent_speech_s": 0.04
+    }
+  ],
+  "cost_usd": 0,
+  "performance_metrics": null,
+  "files": {
+    "recording_mp3": "recordings/arena-09-barge-in-hurried-caller-20260818-b5348b.mp3",
+    "transcript_md": "transcripts/arena-09-barge-in-hurried-caller-20260818-b5348b.md",
+    "call_json": "transcripts/arena-09-barge-in-hurried-caller-20260818-b5348b.json",
+    "events_jsonl": "reports/events/arena-09-barge-in-hurried-caller-20260818-b5348b.jsonl"
+  }
+}

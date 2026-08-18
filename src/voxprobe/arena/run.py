@@ -204,8 +204,9 @@ async def run_audio_arena(
 
     # ---- agent pipeline (the bundled sample receptionist) — only for local targets ----
     agent = None
+    agent_asst_agg = None
     if is_local:
-        agent, _agent_user_agg, _agent_asst_agg = build_sample_agent_pipeline(settings, target, agent_tx)
+        agent, _agent_user_agg, agent_asst_agg = build_sample_agent_pipeline(settings, target, agent_tx)
 
     # ---- events: transcript, latency, ending ----
     caller_done = asyncio.Event()
@@ -228,13 +229,14 @@ async def run_audio_arena(
                     "agent_stopped_at": now(),
                     # measured from the moment we queued the interjection: includes our own TTS time-to-first-byte
                     "yield_from_trigger_s": round(time.monotonic() - pending_barge["t"], 2),
-                    # only measurable when we own the agent's transport (loopback); n/a over websocket
-                    "unheard_agent_speech_s": round(flushed / (2 * SAMPLE_RATE), 2) if flushed is not None else None,
+                    # audio that had reached the caller's mic buffer but was flushed on interruption. On a paced line this
+                    # is at most one 20 ms chunk by construction — kept for completeness, not as a headline metric.
+                    "dropped_buffer_s": round(flushed / (2 * SAMPLE_RATE), 2) if flushed is not None else None,
                 }
             )
             logger.info(
                 f"[{now():6.2f}s] BARGE-IN: agent yielded {result.barge_ins[-1]['yield_from_trigger_s']} s after the trigger; "
-                f"unheard agent speech: {result.barge_ins[-1]['unheard_agent_speech_s']} s"
+                f"agent turn marked interrupted: {result.barge_ins[-1].get('agent_turn_interrupted', 'pending')}"
             )
             pending_barge["t"] = None
         text = (getattr(message, "content", "") or "").strip()
@@ -255,6 +257,15 @@ async def run_audio_arena(
             logger.info(f"[{now():6.2f}s] CALLER : {text}{'  (interrupted)' if interrupted else ''}")
         if caller_llm.log.said_goodbye:
             caller_done.set()
+
+    if agent_asst_agg is not None:  # loopback only: Pipecat's own verdict on whether the agent's turn was cut short
+
+        @agent_asst_agg.event_handler("on_assistant_turn_stopped")
+        async def _agent_turn_stopped(agg, message):
+            if bool(getattr(message, "interrupted", False)) and result.barge_ins:
+                last = result.barge_ins[-1]
+                if "agent_turn_interrupted" not in last:
+                    last["agent_turn_interrupted"] = True
 
     caller_latency = UserBotLatencyObserver()
     agent_latency = UserBotLatencyObserver()

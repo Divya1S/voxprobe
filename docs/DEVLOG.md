@@ -122,3 +122,30 @@ line for Pipecat's `WebsocketClientTransport` (Protobuf frames, 16 kHz), so any 
 way; `voxprobe serve-agent` exposes the bundled sample agent over `SingleClientWebsocketServerTransport` for the smoke test.
 Known limitation to verify: without the loopback's silence ticker the caller's VAD relies on Pipecat's 1 s audio-idle timeout to
 close the agent's turns (adds up to ~1 s to measured agent gaps over websocket).
+
+## 2026-08-18 — benchmark landed, review fixes, barge-in and websocket live
+
+**Benchmark (114 runs, k=3, 8 classes).** Strict detector: precision 1.0, recall 0.93 (53/57), F1 0.964, 0 false alarms on the
+clean control. Every remaining miss is a run where the planted bug did not manifest (the capable LLM agent overrode "never ask for
+name/DOB"; scenario 12 has no PHI request) — so the sheet now carries a *manifested* column and recall given manifestation (1.0 where
+measurable). Two earlier misses were the detector's fault, not the judge's: it had marked the scenario's own equivalent hypothesis
+("assigns a placeholder DOB") observed with the right quote; the detector now resolves the judge's hypothesis by nearest text among
+the ones it was given plus a curated same-class list — still no free-text keywords.
+
+**A skeptical review pass (17 agents) before publishing** found: CI red for five pushes (one unformatted line); a metrics bug where a
+short interjection *inside* a long turn was scored as fake dead air of the other party (the barge-in case!) — fixed with a
+frontier-based gap walk + regression test; bench `duration_s` including queue wait; model rotation keyed on list position (planted vs
+clean arms got different model mixes) → keyed on the cell; judge failures recorded as successful non-detections → now errors; the
+detector's keyword fallback (too loose) → demoted to a diagnostic column; policy thresholds and text-mode pacing sleeps leaking into
+the judge's evidence → removed; plus small fixes (negative flush count, odd-byte interleave, 404 failover, no silent overwrite of a
+labelled calibration sheet). All numbers above are post-fix, rescored from the stored judge JSON.
+
+**Barge-in, live.** Scenario 09 in the loopback arena: the caller cut in after ~4 s twice; the agent yielded 1.5–1.75 s after the
+trigger (includes our TTS TTFB) and Pipecat's `interrupted` flag confirmed both; the instrument measured the two overlaps (+0.33 s,
++0.32 s) and no false dead air; the call still completed (80 s, PASS). Dropped the "unheard speech" metric: on a paced line at most one
+20 ms chunk is ever buffered, so it is ~0.02 s by construction. A second run showed the harness in action the other way: the sample
+agent over-triaged a rolled ankle to urgent care, refused to schedule, and stalled 17.7 s → FAIL with measured evidence.
+
+**Websocket adapter, live.** `voxprobe serve-agent` + `ws-local-clinic`: connect → greeting → turns → stereo recording → analysis all
+worked; the run FAILED honestly because the remote agent kept missing the caller's birth year — the caller's audio reaches a websocket
+agent unpaced (client output at half real-time, no receiving-side virtual mic), so its STT/turn logic saw bursty audio. Tracked.

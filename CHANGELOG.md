@@ -20,7 +20,8 @@ rebuilt from the audio, turn-taking/latency is measured for both parties, and fi
   `SegmentationPolicy` (response gaps p50/p95, dead air, overlaps, intra-turn pauses), deterministic *measured issues*,
   LLM judge with structured per-criterion / per-hypothesis verdicts, `decide()` PASS/FAIL without an LLM.
 - **Planted-bug detection benchmark** (`voxprobe bench`): one bug at a time vs a clean control, k repeats, strict
-  near-verbatim judge detector + transparent symptom rules, precision/recall/F1, pass@1/pass@k/pass^k, resumable, models recorded per run.
+  nearest-text judge detector + transparent symptom rules, precision/recall/F1, pass@1/pass@k/pass^k, *manifested* column, resumable,
+  models recorded per run. Result on 2026-08-17/18: **114 runs, P 1.0 / R 0.93 (53/57) / F1 0.964, 0 false alarms**.
 - **Judge calibration** (`voxprobe calibrate`): stratified labelling sheet, agreement + Cohen's κ. human-01: 25 claims, 25/25 agree.
 - **Golden calibration test** on a committed synthetic stereo fixture (scripted gaps reproduced within 0.25 s, ffmpeg-only, in CI).
 - Docs: README with an annotated stereo-waveform hero, ARCHITECTURE.md (Mermaid), ADR-001/002, ROADMAP, DEVLOG.
