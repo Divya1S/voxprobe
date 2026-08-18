@@ -96,3 +96,29 @@ the 20 ms silence ticker, no-burst speech playout, flush byte accounting and pac
 
 **Judge calibration tooling.** `voxprobe calibrate sample` writes a stratified labelling sheet (judge-positive/negative claims with
 transcript excerpts); `voxprobe calibrate score` reports agreement, Cohen's κ and judge-positive precision. A human labels it.
+
+## 2026-08-17 (evening) — model drift, day 2; barge-in driver; websocket adapter
+
+**Free-tier models change under you.** Overnight the benchmark hit a *daily* 429 wall from run 39 (63 of 114 cells errored and
+were recorded for resume). Probing in the evening: `gemini-flash-lite-latest` at its daily cap, and Groq now returns **404 for
+`llama-3.3-70b-versatile` and `llama-3.1-8b-instant`** — retired for free keys since yesterday. Survivors with usable limits:
+`openai/gpt-oss-120b` / `-20b` (1000 req/day, 8K TPM each). Changes: defaults → gpt-oss-120b primary, 20b fallback; the sample
+agent and the judge now **fail over across Gemini models** on 429 (daily caps are per model); the bench rotates the agent across
+four Gemini models and records `caller_model / agent_model / judge_model` per run so the mixed-model matrix is transparent.
+
+**Two regressions the swap exposed, both fixed by measurement:** (1) Gemini 3.x flash models spend the token budget on hidden
+reasoning — with `max_tokens=120` the sample agent's replies came out as "Hi", "I can get"; now 500 tokens + `reasoning_effort=low`
++ one retry on empty. (2) `gpt-oss-20b` as the caller sometimes wrote *both* sides of the dialogue and invented a "Dr. Patel";
+replies are now cut at the first newline / role label and the persona says "write only your own next line". Prompt budget guard
+raised 700 → 760 est. tokens (≈950/turn with history, inside 8K TPM at the paced 6–7 turns/min).
+
+**Deliberate barge-in driver (scenario 09).** When the agent has spoken ≥4 s, the caller cuts in ("Sorry, sorry — can I jump in?"),
+at most twice; we record how long the agent took to yield and how much of its speech went **unheard** (bytes the caller's virtual
+mic dropped on interruption — a metric that falls out of the loopback design). A one-shot director note makes the caller state its
+new request right after. Live validation queued behind the benchmark (same free-tier quotas).
+
+**Websocket target adapter (P5, code).** The caller pipeline is transport-agnostic now: a `websocket` target swaps the loopback
+line for Pipecat's `WebsocketClientTransport` (Protobuf frames, 16 kHz), so any Pipecat websocket agent can be tested the same
+way; `voxprobe serve-agent` exposes the bundled sample agent over `SingleClientWebsocketServerTransport` for the smoke test.
+Known limitation to verify: without the loopback's silence ticker the caller's VAD relies on Pipecat's 1 s audio-idle timeout to
+close the agent's turns (adds up to ~1 s to measured agent gaps over websocket).
