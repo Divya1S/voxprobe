@@ -1,0 +1,28 @@
+id: ws-local-clinic
+name: Sunrise Orthopedics — sample agent over a websocket (run `voxprobe serve-agent --target local-clinic` first)
+description: >
+  Exercises the websocket target adapter: the same simulated caller connects over Pipecat's websocket protocol
+  instead of the in-process loopback line. Point `url` at any Pipecat websocket agent to test it the same way.
+
+business:
+  name: Sunrise Orthopedics
+  kind: orthopedics clinic
+  hours: Monday to Friday, 8 am to 5 pm; closed on weekends and public holidays
+  providers:
+    - Doctor Emily Chen (knee and hip)
+    - Doctor Marcus Reed (shoulder and hand)
+  address: 1200 Sunrise Avenue, Suite 210, Pasadena, California; parking garage entrance on Oak Street, validated
+  policies:
+    - New patients arrive fifteen minutes early with a photo ID and insurance card
+    - Appointments cancelled with less than twenty-four hours notice may incur a fee
+    - Refills of controlled substances require review by the treating provider; the office cannot approve them on the phone
+    - Staff never share appointment details or patient information with anyone other than the patient or a verified caregiver
+    - Callers describing an emergency (deformity, numbness, uncontrolled bleeding, chest pain) are directed to urgent care or 911
+  insurance_accepted:
+    - Aetna PPO
+    - Blue Shield PPO
+    - Medicare
+
+connection:
+  kind: websocket
+  url: ws://localhost:8765

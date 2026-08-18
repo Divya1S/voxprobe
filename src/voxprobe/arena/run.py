@@ -6,6 +6,9 @@ Agent pipeline:   mic ← caller | Deepgram STT → user aggregator → OpenAI-c
 Recording is taken in the CALLER pipeline so the file follows voxprobe's convention: LEFT = the agent under test
 (what the caller hears), RIGHT = the simulated caller. Transcript lines come from the aggregators' turn events;
 response latencies from Pipecat's UserBotLatencyObserver on each side (VAD-hangover-corrected).
+
+Targets: a LOCAL target runs the bundled sample agent in-process over the loopback line; a WEBSOCKET target connects the
+same caller pipeline to any agent that speaks Pipecat's websocket protocol (Protobuf frames), e.g. `voxprobe serve-agent`.
 """
 
 from __future__ import annotations
@@ -29,9 +32,15 @@ from pipecat.pipeline.worker import PipelineParams, PipelineWorker
 from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair, LLMUserAggregatorParams
 from pipecat.processors.audio.audio_buffer_processor import AudioBufferProcessor
+from pipecat.serializers.protobuf import ProtobufFrameSerializer
 from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.deepgram.tts import DeepgramTTSService
 from pipecat.services.openai.llm import OpenAILLMService
+from pipecat.transports.websocket.client import WebsocketClientParams, WebsocketClientTransport
+from pipecat.transports.websocket.server import (
+    SingleClientWebsocketServerParams,
+    SingleClientWebsocketServerTransport,
+)
 from pipecat.turns.user_start.vad_user_turn_start_strategy import VADUserTurnStartStrategy
 from pipecat.turns.user_stop.speech_timeout_user_turn_stop_strategy import SpeechTimeoutUserTurnStopStrategy
 from pipecat.turns.user_turn_strategies import UserTurnStrategies
@@ -42,7 +51,7 @@ from ..config import Settings
 from ..director import looks_like_goodbye
 from ..scenarios import Scenario
 from ..simulate import sample_agent_prompt
-from ..targets import LocalConnection, Target
+from ..targets import LocalConnection, Target, WebsocketConnection
 from .caller_brain import CallerBrainLLM
 from .loopback import SAMPLE_RATE, LoopbackTransport, link
 
@@ -90,6 +99,46 @@ def _voice_for(scenario: Scenario) -> str:
     return v if v.startswith("aura-") else f"aura-2-{v}-en"
 
 
+def _ws_params(**overrides) -> dict:
+    return dict(
+        serializer=ProtobufFrameSerializer(),
+        audio_in_enabled=True,
+        audio_in_sample_rate=SAMPLE_RATE,
+        audio_in_channels=1,
+        audio_in_passthrough=True,
+        audio_out_enabled=True,
+        audio_out_sample_rate=SAMPLE_RATE,
+        audio_out_channels=1,
+        **overrides,
+    )
+
+
+def build_sample_agent_pipeline(settings: Settings, target: Target, transport) -> tuple[Pipeline, object, object]:
+    """The bundled sample receptionist: Deepgram STT → Gemini (with planted bugs) → Deepgram TTS, on any transport."""
+    conn = target.connection
+    assert isinstance(conn, LocalConnection)
+    stt = DeepgramSTTService(
+        api_key=settings.deepgram_api_key,
+        settings=DeepgramSTTService.Settings(model="nova-3", language="en", interim_results=True, smart_format=False),
+    )
+    ctx = LLMContext(
+        messages=[
+            {"role": "system", "content": sample_agent_prompt(target)},
+            {"role": "user", "content": "(The call connects. Greet the caller.)"},
+        ]
+    )
+    user_agg, asst_agg = LLMContextAggregatorPair(
+        ctx, user_params=_user_params(enable_interruptions=conn.interruptions)
+    )
+    llm = OpenAILLMService(api_key=settings.google_api_key, base_url=GEMINI_BASE_URL, model=settings.gemini_model)
+    tts = DeepgramTTSService(
+        api_key=settings.deepgram_api_key,
+        sample_rate=SAMPLE_RATE,
+        settings=DeepgramTTSService.Settings(voice=conn.voice or AGENT_VOICE),
+    )
+    return Pipeline([transport.input(), stt, user_agg, llm, tts, transport.output(), asst_agg]), user_agg, asst_agg
+
+
 async def run_audio_arena(
     settings: Settings, scenario: Scenario, target: Target, max_duration_s: int | None = None
 ) -> ArenaResult:
@@ -97,8 +146,9 @@ async def run_audio_arena(
         raise RuntimeError("audio arena needs DEEPGRAM_API_KEY (STT/TTS for both sides)")
     if not settings.google_api_key:
         raise RuntimeError("audio arena needs GOOGLE_API_KEY (the sample agent's LLM)")
-    if not isinstance(target.connection, LocalConnection):
-        raise RuntimeError(f"target {target.id} is not a local target")
+    if not isinstance(target.connection, (LocalConnection, WebsocketConnection)):
+        raise RuntimeError(f"target {target.id} is a {target.kind} target — the audio arena needs local or websocket")
+    is_local = isinstance(target.connection, LocalConnection)
     max_duration_s = max_duration_s or scenario.max_duration_seconds
 
     day = datetime.now(UTC).strftime("%Y%m%d")
@@ -115,9 +165,13 @@ async def run_audio_arena(
     def now() -> float:
         return round(time.monotonic() - t0, 2)
 
-    # ---- virtual phone line ----
-    caller_tx, agent_tx = LoopbackTransport(name="caller-line"), LoopbackTransport(name="agent-line")
-    link(caller_tx, agent_tx)
+    # ---- the line: in-process loopback pair (local target) or a websocket to an external agent ----
+    if is_local:
+        caller_tx, agent_tx = LoopbackTransport(name="caller-line"), LoopbackTransport(name="agent-line")
+        link(caller_tx, agent_tx)
+    else:
+        caller_tx = WebsocketClientTransport(target.connection.url, params=WebsocketClientParams(**_ws_params()))
+        agent_tx = None
 
     # ---- caller pipeline ----
     caller_stt = DeepgramSTTService(
@@ -148,29 +202,10 @@ async def run_audio_arena(
         ]
     )
 
-    # ---- agent pipeline (the sample receptionist under test) ----
-    agent_stt = DeepgramSTTService(
-        api_key=settings.deepgram_api_key,
-        settings=DeepgramSTTService.Settings(model="nova-3", language="en", interim_results=True, smart_format=False),
-    )
-    agent_ctx = LLMContext(
-        messages=[
-            {"role": "system", "content": sample_agent_prompt(target)},
-            {"role": "user", "content": "(The call connects. Greet the caller.)"},
-        ]
-    )
-    agent_user_agg, agent_asst_agg = LLMContextAggregatorPair(
-        agent_ctx, user_params=_user_params(enable_interruptions=target.connection.interruptions)
-    )
-    agent_llm = OpenAILLMService(api_key=settings.google_api_key, base_url=GEMINI_BASE_URL, model=settings.gemini_model)
-    agent_tts = DeepgramTTSService(
-        api_key=settings.deepgram_api_key,
-        sample_rate=SAMPLE_RATE,
-        settings=DeepgramTTSService.Settings(voice=target.connection.voice or AGENT_VOICE),
-    )
-    agent = Pipeline(
-        [agent_tx.input(), agent_stt, agent_user_agg, agent_llm, agent_tts, agent_tx.output(), agent_asst_agg]
-    )
+    # ---- agent pipeline (the bundled sample receptionist) — only for local targets ----
+    agent = None
+    if is_local:
+        agent, _agent_user_agg, _agent_asst_agg = build_sample_agent_pipeline(settings, target, agent_tx)
 
     # ---- events: transcript, latency, ending ----
     caller_done = asyncio.Event()
@@ -187,7 +222,7 @@ async def run_audio_arena(
     async def _agent_said(agg, strategy, message):  # what the CALLER heard the AGENT say
         agent_speaking_since["t"] = None
         if pending_barge["t"] is not None:  # the agent stopped after our deliberate interruption
-            flushed = agent_tx.output().bytes_flushed_at_peer - pending_barge["flushed_before"]
+            flushed = (agent_tx.output().bytes_flushed_at_peer - pending_barge["flushed_before"]) if agent_tx else 0
             result.barge_ins[-1].update(
                 {
                     "agent_stopped_at": now(),
@@ -245,16 +280,20 @@ async def run_audio_arena(
         cancel_runner_on_idle_timeout=False,
         observers=[caller_latency],
     )
-    agent_worker = PipelineWorker(
-        agent,
-        params=params,
-        enable_rtvi=False,
-        idle_timeout_secs=None,
-        cancel_runner_on_idle_timeout=False,
-        observers=[agent_latency],
-    )
     runner = WorkerRunner(handle_sigint=False)
-    await runner.add_workers(caller_worker, agent_worker)
+    if agent is not None:
+        agent_worker = PipelineWorker(
+            agent,
+            params=params,
+            enable_rtvi=False,
+            idle_timeout_secs=None,
+            cancel_runner_on_idle_timeout=False,
+            observers=[agent_latency],
+        )
+        await runner.add_workers(caller_worker, agent_worker)
+    else:
+        agent_worker = None
+        await runner.add_workers(caller_worker)
 
     async def barge_in_driver():
         """Scenario 09: when the agent talks for a while, the caller cuts in — and we measure how the agent yields."""
@@ -266,7 +305,9 @@ async def run_audio_arena(
             if time.monotonic() - since < BARGE_IN_AFTER_S:
                 continue
             phrase = BARGE_IN_PHRASES[len(result.barge_ins) % len(BARGE_IN_PHRASES)]
-            pending_barge.update({"t": time.monotonic(), "flushed_before": agent_tx.output().bytes_flushed_at_peer})
+            pending_barge.update(
+                {"t": time.monotonic(), "flushed_before": agent_tx.output().bytes_flushed_at_peer if agent_tx else 0}
+            )
             result.barge_ins.append(
                 {"triggered_at": now(), "phrase": phrase, "agent_speaking_for_s": round(time.monotonic() - since, 2)}
             )
@@ -280,7 +321,8 @@ async def run_audio_arena(
 
     async def conductor():
         await asyncio.sleep(1.0)  # both pipelines up
-        await agent_worker.queue_frames([LLMRunFrame()])  # the receptionist answers the phone
+        if agent_worker is not None:
+            await agent_worker.queue_frames([LLMRunFrame()])  # the receptionist answers the phone
         driver = asyncio.create_task(barge_in_driver()) if scenario.barge_in else None
         try:
             await asyncio.wait_for(caller_done.wait(), timeout=max_duration_s)
@@ -420,3 +462,35 @@ def _interleave(left: bytes, right: bytes) -> bytes:
 
 def main(settings: Settings, scenario: Scenario, target: Target, max_duration_s: int | None = None) -> ArenaResult:
     return asyncio.run(run_audio_arena(settings, scenario, target, max_duration_s))
+
+
+async def serve_sample_agent(settings: Settings, target: Target, host: str = "localhost", port: int = 8765) -> None:
+    """Expose the bundled sample agent over Pipecat's websocket protocol so the WEBSOCKET target adapter (and anyone's
+    Pipecat client) can call it: `voxprobe serve-agent --target local-clinic --port 8765` then a target with
+    url ws://localhost:8765. The agent greets on connect. Runs until Ctrl-C."""
+    if not isinstance(target.connection, LocalConnection):
+        raise RuntimeError("serve-agent needs a local target (the bundled sample agent)")
+    transport = SingleClientWebsocketServerTransport(
+        SingleClientWebsocketServerParams(**_ws_params()), host=host, port=port
+    )
+    pipeline, _user_agg, _asst_agg = build_sample_agent_pipeline(settings, target, transport)
+    params = PipelineParams(audio_in_sample_rate=SAMPLE_RATE, audio_out_sample_rate=SAMPLE_RATE, enable_metrics=True)
+    worker = PipelineWorker(pipeline, params=params, enable_rtvi=False, idle_timeout_secs=None)
+
+    @transport.event_handler("on_client_connected")
+    async def _connected(tx, websocket):
+        logger.info(f"sample agent: caller connected — greeting ({target.id})")
+        await worker.queue_frames([LLMRunFrame()])
+
+    @transport.event_handler("on_client_disconnected")
+    async def _disconnected(tx, websocket):
+        logger.info("sample agent: caller disconnected")
+
+    runner = WorkerRunner(handle_sigint=True)
+    await runner.add_workers(worker)
+    logger.info(f"sample agent listening on ws://{host}:{port} (target {target.id})")
+    await runner.run(auto_end=False)
+
+
+def serve_main(settings: Settings, target: Target, host: str, port: int) -> None:
+    asyncio.run(serve_sample_agent(settings, target, host, port))
