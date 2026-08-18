@@ -72,7 +72,9 @@ class VirtualMicrophone:
 
     def flush(self) -> int:
         """Drop everything not yet played (used on interruption). Returns bytes dropped."""
-        dropped = len(self._pcm) - self._offset if self._pcm else 0
+        dropped = (
+            max(0, len(self._pcm) - self._offset) if self._pcm else 0
+        )  # offset can pass the end after a padded tail
         while not self._queue.empty():
             dropped += len(self._queue.get_nowait())
         self._pcm, self._offset = b"", 0

@@ -90,7 +90,12 @@ def collect_claims(settings: Settings, pattern: str = "*.analysis.json") -> list
     return claims
 
 
-def sample(settings: Settings, name: str, n: int = 25, seed: int = 0, pattern: str = "*.analysis.json") -> Path:
+def sample(
+    settings: Settings, name: str, n: int = 25, seed: int = 0, pattern: str = "*.analysis.json", force: bool = False
+) -> Path:
+    existing = settings.reports_dir / "calibration" / f"{name}.md"
+    if existing.exists() and not force:
+        raise FileExistsError(f"{existing} exists (it may hold hand labels) — choose another name or pass force=True")
     claims = collect_claims(settings, pattern)
     rng = random.Random(seed)
     pos = [c for c in claims if c.judge_positive]

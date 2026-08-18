@@ -11,7 +11,7 @@ import json
 import logging
 from pathlib import Path
 
-from openai import OpenAI, RateLimitError
+from openai import APIStatusError, OpenAI, RateLimitError
 
 from .brain import GEMINI_BASE_URL, GROQ_BASE_URL
 from .config import Settings
@@ -104,11 +104,22 @@ JUDGE_ALTERNATES = {
 }
 
 
+def _metrics_for_judge(metrics: dict) -> dict:
+    """What the judge may treat as measured. Thresholds (policy) are configuration, not observations; text-mode runs
+    have no audio timing at all, so only the caller-LLM latency is passed and the judge is told so."""
+    m = {k: v for k, v in metrics.items() if k != "policy"}
+    if not (metrics.get("turns") or {}).get("AGENT") and not (metrics.get("turns") or {}).get("PATIENT"):
+        keep = {k: m[k] for k in ("brain",) if k in m}
+        keep["note"] = "text-mode run: no audio, no turn timing was measured; [Tnn] labels are turn numbers, not times"
+        return keep
+    return m
+
+
 def judge(settings: Settings, scenario: Scenario, target: Target, transcript_md: str, metrics: dict) -> dict:
     client, model = _judge_client(settings)
     provider = "gemini" if "generativelanguage" in str(client.base_url) else "groq"
     models = [model, *[m for m in JUDGE_ALTERNATES[provider] if m != model]]
-    user = f"{_scenario_block(scenario, target)}\n\n=== AUTHORITATIVE TRANSCRIPT ===\n{transcript_md}\n\n=== METRICS ===\n{json.dumps(metrics)}"
+    user = f"{_scenario_block(scenario, target)}\n\n=== AUTHORITATIVE TRANSCRIPT ===\n{transcript_md}\n\n=== METRICS ===\n{json.dumps(_metrics_for_judge(metrics))}"
     for m in models:
         for attempt in range(2):
             try:
@@ -119,8 +130,8 @@ def judge(settings: Settings, scenario: Scenario, target: Target, transcript_md:
                     max_tokens=2000,
                     response_format={"type": "json_object"},
                 )
-            except RateLimitError:
-                log.warning("judge model %s rate-limited — trying the next", m)
+            except (RateLimitError, APIStatusError) as e:  # 429 quota, 404 retired model, 5xx: try the next model
+                log.warning("judge model %s failed (%s) — trying the next", m, type(e).__name__)
                 break  # next model
             text = resp.choices[0].message.content or ""
             try:
@@ -131,7 +142,7 @@ def judge(settings: Settings, scenario: Scenario, target: Target, transcript_md:
                 log.warning("judge returned non-JSON (attempt %d)", attempt + 1)
         else:
             continue
-    return {"summary": "judge failed (rate limits or non-JSON on every model)", "candidate_issues": []}
+    return {"summary": "judge failed (rate limits or non-JSON on every model)", "candidate_issues": [], "_failed": True}
 
 
 def measured_issues(metrics: dict, scenario: Scenario) -> list[dict]:
@@ -211,7 +222,15 @@ def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict,
         f"Objective: {scenario.objective}",
         "",
         f"- Run `{run_id}` ({mode}) · {meta.get('started_at')} · ended: `{meta.get('ended_reason')}`{cost}",
-        f"- Recording: `{meta['files'].get('recording_mp3')}` · Live transcript: `{meta['files'].get('transcript_md')}` · Audio-derived transcript: `transcripts/{stem}.whisper.md`",
+        (
+            f"- Recording: `{meta['files'].get('recording_mp3')}` · Live transcript: `{meta['files'].get('transcript_md')}`"
+            + (
+                f" · Audio-derived transcript: `transcripts/{stem}.whisper.md`"
+                if meta.get("files", {}).get("recording_mp3")
+                else ""
+            )
+            + ("" if meta.get("files", {}).get("recording_mp3") else " · text-mode run (no audio)")
+        ),
         "",
         "## Turn-taking & latency",
         "",
@@ -235,13 +254,14 @@ def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict,
         L += [
             "## Deliberate barge-ins (measured)",
             "",
-            "| # | agent had spoken | caller cut in with | agent yielded after | agent speech unheard |",
+            "| # | agent had spoken | caller cut in with | agent yielded (from trigger, incl. our TTS TTFB) | agent speech unheard (loopback only) |",
             "|---|---|---|---|---|",
         ]
         for i, b in enumerate(meta["barge_ins"], 1):
             L.append(
                 f"| {i} | {b.get('agent_speaking_for_s', '?')} s | {b.get('phrase', '')} | "
-                f"{b.get('yield_s', 'did not yield')} s | {b.get('unheard_agent_speech_s', '-')} s |"
+                f"{b.get('yield_from_trigger_s', 'did not yield')} s | "
+                f"{'n/a' if b.get('unheard_agent_speech_s') is None else str(b.get('unheard_agent_speech_s')) + ' s'} |"
             )
         L.append("")
     L += [f"## Verdict: {'PASS' if decision['pass'] else 'FAIL'}", ""]
@@ -271,7 +291,9 @@ def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict,
         ]
         if it.get("matches_hypothesis"):
             L.append(f"   - Matches hypothesis: {it['matches_hypothesis']}")
-    L += ["", "### Positive controls", ""] + [f"- {p}" for p in verdict.get("positive_controls") or []] or ["- _none_"]
+    L += ["", "### Positive controls", ""] + (
+        [f"- {p}" for p in verdict.get("positive_controls") or []] or ["- _none_"]
+    )
     L += ["", "### Simulator notes (our bot)", ""] + [f"- {p}" for p in verdict.get("simulator_notes") or []]
     L += ["", f"**Testing value:** {verdict.get('testing_value', '')}", ""]
     return "\n".join(L)
@@ -282,6 +304,8 @@ def judge_and_report(
 ) -> dict:
     """Judge a transcript, decide PASS/FAIL, write reports/<stem>.analysis.{json,md}. Returns the analysis dict."""
     verdict = judge(settings, scenario, target, transcript_md, metrics)
+    if verdict.get("_failed"):
+        raise RuntimeError("judge failed on every model (rate limits or invalid JSON) — no verdict written")
     measured = measured_issues(metrics, scenario)
     decision = decide(verdict, measured)
     settings.reports_dir.mkdir(parents=True, exist_ok=True)

@@ -222,17 +222,19 @@ async def run_audio_arena(
     async def _agent_said(agg, strategy, message):  # what the CALLER heard the AGENT say
         agent_speaking_since["t"] = None
         if pending_barge["t"] is not None:  # the agent stopped after our deliberate interruption
-            flushed = (agent_tx.output().bytes_flushed_at_peer - pending_barge["flushed_before"]) if agent_tx else 0
+            flushed = (agent_tx.output().bytes_flushed_at_peer - pending_barge["flushed_before"]) if agent_tx else None
             result.barge_ins[-1].update(
                 {
                     "agent_stopped_at": now(),
-                    "yield_s": round(time.monotonic() - pending_barge["t"], 2),
-                    "unheard_agent_speech_s": round(flushed / (2 * SAMPLE_RATE), 2),
+                    # measured from the moment we queued the interjection: includes our own TTS time-to-first-byte
+                    "yield_from_trigger_s": round(time.monotonic() - pending_barge["t"], 2),
+                    # only measurable when we own the agent's transport (loopback); n/a over websocket
+                    "unheard_agent_speech_s": round(flushed / (2 * SAMPLE_RATE), 2) if flushed is not None else None,
                 }
             )
             logger.info(
-                f"[{now():6.2f}s] BARGE-IN: agent yielded after {result.barge_ins[-1]['yield_s']} s; "
-                f"{result.barge_ins[-1]['unheard_agent_speech_s']} s of its speech went unheard"
+                f"[{now():6.2f}s] BARGE-IN: agent yielded {result.barge_ins[-1]['yield_from_trigger_s']} s after the trigger; "
+                f"unheard agent speech: {result.barge_ins[-1]['unheard_agent_speech_s']} s"
             )
             pending_barge["t"] = None
         text = (getattr(message, "content", "") or "").strip()
@@ -453,6 +455,10 @@ def _interleave(left: bytes, right: bytes) -> bytes:
     """Interleave two mono PCM16 streams into stereo (L, R, L, R ...)."""
     import array
 
+    left, right = (
+        left[: len(left) - len(left) % 2],
+        right[: len(right) - len(right) % 2],
+    )  # PCM16 needs even byte counts
     la, ra = array.array("h", left), array.array("h", right)
     out = array.array("h", bytes(len(la) * 4))
     out[0::2] = la

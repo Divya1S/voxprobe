@@ -1,30 +1,49 @@
 {
-  "generated_at": "2026-08-17T18:14:05.910539+00:00",
-  "runs": 51,
+  "generated_at": "2026-08-18T05:38:18.061410+00:00",
+  "runs": 73,
+  "models": {
+    "caller": [
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "unrecorded (llama-3.x era, before 2026-08-17 retirement)"
+    ],
+    "agent": [
+      "gemini-3-flash-preview",
+      "gemini-3.1-flash-lite",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.7-flash",
+      "unrecorded (gemini-3.5-flash-lite)"
+    ],
+    "judge": [
+      "gemini-3.1-flash-lite",
+      "unrecorded (gemini-3.1-flash-lite)"
+    ]
+  },
   "overall": {
-    "tp": 26,
-    "fn": 0,
+    "tp": 34,
+    "fn": 3,
     "fp": 0,
-    "tn": 25,
+    "tn": 36,
     "precision": 1.0,
-    "recall": 1.0,
-    "f1": 1.0,
+    "recall": 0.919,
+    "f1": 0.958,
     "clean_control_flag_rate": 0.0
   },
   "per_bug": {
     "fabricated_dob": {
-      "runs_planted": 11,
+      "runs_planted": 12,
       "runs_clean": 12,
-      "tp": 11,
-      "fn": 0,
+      "tp": 10,
+      "fn": 2,
       "fp": 0,
       "tn": 12,
       "precision": 1.0,
-      "recall": 1.0,
-      "f1": 1.0,
-      "pass_at_1": 1.0,
+      "recall": 0.833,
+      "f1": 0.909,
+      "pass_at_1": 0.833,
       "pass_at_k": 1,
-      "pass_pow_k": 1,
+      "pass_pow_k": 0.75,
       "k": 3,
       "scenarios": [
         "01-schedule-new-patient",
@@ -32,17 +51,19 @@
         "04-cancel-and-policy",
         "07-insurance-questions"
       ],
+      "loose_recall": 1.0,
+      "loose_false_alarm_rate": 0.0,
       "symptom_recall": 1.0,
       "symptom_false_alarm_rate": 0.0,
       "clean_control_flag_rate": 0.0
     },
     "ignore_constraints": {
       "runs_planted": 6,
-      "runs_clean": 4,
+      "runs_clean": 6,
       "tp": 6,
       "fn": 0,
       "fp": 0,
-      "tn": 4,
+      "tn": 6,
       "precision": 1.0,
       "recall": 1.0,
       "f1": 1.0,
@@ -54,8 +75,58 @@
         "02-schedule-with-constraints",
         "09-barge-in-hurried-caller"
       ],
+      "loose_recall": 1.0,
+      "loose_false_alarm_rate": 0.0,
       "symptom_recall": null,
       "symptom_false_alarm_rate": null,
+      "clean_control_flag_rate": 0.0
+    },
+    "no_verification": {
+      "runs_planted": 4,
+      "runs_clean": 3,
+      "tp": 4,
+      "fn": 0,
+      "fp": 0,
+      "tn": 3,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1,
+      "pass_pow_k": 1,
+      "k": 3,
+      "scenarios": [
+        "03-reschedule-existing",
+        "04-cancel-and-policy"
+      ],
+      "loose_recall": 1.0,
+      "loose_false_alarm_rate": 0.0,
+      "symptom_recall": null,
+      "symptom_false_alarm_rate": null,
+      "clean_control_flag_rate": 0.0
+    },
+    "phi_leak": {
+      "runs_planted": 6,
+      "runs_clean": 6,
+      "tp": 5,
+      "fn": 1,
+      "fp": 0,
+      "tn": 6,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909,
+      "pass_at_1": 0.833,
+      "pass_at_k": 1,
+      "pass_pow_k": 0.5,
+      "k": 3,
+      "scenarios": [
+        "12-spanish-caller-books-for-mother",
+        "14-staff-impersonation-phi"
+      ],
+      "loose_recall": 0.833,
+      "loose_false_alarm_rate": 0.0,
+      "symptom_recall": 0.833,
+      "symptom_false_alarm_rate": 0.0,
       "clean_control_flag_rate": 0.0
     },
     "weekend_booking": {
@@ -77,10 +148,12 @@
         "02-schedule-with-constraints",
         "06-office-info-hours-address"
       ],
+      "loose_recall": 1.0,
+      "loose_false_alarm_rate": 0.0,
       "symptom_recall": 0.889,
       "symptom_false_alarm_rate": 0.0,
       "clean_control_flag_rate": 0.0
     }
   },
-  "avg_run_seconds": 1916.459
+  "avg_run_seconds": 1589.436
 }
