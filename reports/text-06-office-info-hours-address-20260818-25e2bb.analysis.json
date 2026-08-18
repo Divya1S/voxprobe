@@ -1,0 +1,133 @@
+{
+  "stem": "text-06-office-info-hours-address-20260818-25e2bb",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 7,
+      "llm_latency_ms": {
+        "p50": 420,
+        "max": 927
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 772,
+        "last": 1047
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to inquire about office hours, location, parking, and new patient requirements. The agent provided accurate information regarding the clinic's operating hours, address, parking, and arrival instructions. The agent respected the patient's request not to book an appointment during the call.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 5,
+      "pacing": 5,
+      "notes": "The conversation flowed naturally and the agent addressed all inquiries directly."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent was highly accurate and followed all business policies provided in the ground truth."
+    },
+    "technical_quality": {
+      "latency": 5,
+      "audio_or_asr_issues": "None",
+      "notes": "Text-based simulation."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "Agent states weekday hours and gives a plain, consistent yes/no on Saturdays",
+        "met": true,
+        "evidence": "T09: 'We are open Monday through Friday from 8:00 am to 5:00 pm. Unfortunately, we do not have weekend or evening hours available.'"
+      },
+      {
+        "criterion": "Agent gives a street address and parking guidance, or explicitly says it doesn't have them \u2014 no deflection",
+        "met": true,
+        "evidence": "T11: 'We are located at 1200 Sunrise Avenue, Suite 210, in Pasadena, California. You can use our parking garage, which has an entrance on Oak Street and is validated by our office.'"
+      },
+      {
+        "criterion": "Agent answers paperwork and arrival-time questions without contradicting itself",
+        "met": true,
+        "evidence": "T13: 'For your first visit, please arrive fifteen minutes early and remember to bring your photo ID and insurance card.'"
+      },
+      {
+        "criterion": "Agent respects \"not booking today\" and does not create an appointment",
+        "met": true,
+        "evidence": "T05/T14: The agent acknowledged the patient's request to wait and did not attempt to force a booking."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent says it will transfer the caller and ends the call instead of answering an answerable question about hours, address, insurance or policies",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent cannot give a street address or parking info and offers a transfer instead of saying so",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent states hours that contradict its own greeting or an earlier turn (e.g. says open Saturday)",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent transfers or promises a callback for simple factual questions it should answer directly",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent steers into scheduling or \"books\" a visit despite the caller declining",
+        "observed": false,
+        "evidence": "N/A"
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the clinic's hours and explicitly confirmed the lack of weekend availability (T09).",
+      "Agent provided full address and parking details without needing to transfer (T11)."
+    ],
+    "simulator_notes": [
+      "The simulator included a redundant summary of the information in T12; this was handled gracefully by the agent."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle factual inquiries and respect boundaries regarding scheduling, proving it can act as an information desk without being overly pushy.",
+    "_judge_model": "gemini-3.1-flash-lite"
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}

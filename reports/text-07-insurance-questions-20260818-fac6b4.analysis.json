@@ -1,0 +1,148 @@
+{
+  "stem": "text-07-insurance-questions-20260818-fac6b4",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 3,
+      "llm_latency_ms": {
+        "p50": 424,
+        "max": 483
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 772,
+        "last": 861
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to inquire about insurance coverage for Aetna PPO and to potentially book an appointment for hip pain. The agent failed to answer the insurance question and immediately initiated a transfer to the front desk. The call ended abruptly without the agent providing any information or successfully facilitating a transfer.",
+    "objective_outcome": "not_achieved",
+    "conversation_quality": {
+      "coherence": 2,
+      "naturalness_of_patient": 5,
+      "turn_taking": 2,
+      "pacing": 2,
+      "notes": "The agent was dismissive and failed to engage with the patient's specific questions, opting to end the call instead of providing information."
+    },
+    "agent_quality": {
+      "correctness": 1,
+      "task_completion": 1,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 1,
+      "notes": "The agent failed to answer a basic policy question (insurance acceptance) that it should have been able to address based on the provided business facts."
+    },
+    "technical_quality": {
+      "latency": 5,
+      "audio_or_asr_issues": "None",
+      "notes": "No audio issues reported."
+    },
+    "candidate_issues": [
+      {
+        "title": "Agent refuses to answer answerable question",
+        "who": "agent",
+        "severity": "high",
+        "timestamp": "00:00",
+        "quote": "Since you asked about our insurance policy, I'm going to transfer you to the front desk now. Goodbye!",
+        "expected": "The agent should have confirmed that Aetna PPO is accepted and proceeded to assist with booking.",
+        "why_it_matters": "The agent is designed to handle basic inquiries; refusing to answer and ending the call creates a poor user experience and fails the task.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent says it will transfer the caller and ends the call instead of answering an answerable question about hours, address, insurance or policies"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "The agent's answer on Aetna is consistent across the call (yes / no / can't confirm) and is not quietly reversed",
+        "met": false,
+        "evidence": "The agent did not provide an answer."
+      },
+      {
+        "criterion": "No specific copay, deductible or \"fully covered\" claim is stated as fact for this patient's plan",
+        "met": true,
+        "evidence": "No information was provided."
+      },
+      {
+        "criterion": "The referral question is answered honestly (yes / no / depends on plan / not sure), not dodged",
+        "met": false,
+        "evidence": "The agent dodged the entire interaction."
+      },
+      {
+        "criterion": "If the Aetna answer was \"unsure\", the agent did not book as though it were accepted without saying so",
+        "met": true,
+        "evidence": "No booking occurred."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent says it will transfer the caller and ends the call instead of answering an answerable question about hours, address, insurance or policies",
+        "observed": true,
+        "evidence": "T03: 'Since you asked about our insurance policy, I'm going to transfer you to the front desk now. Goodbye!'"
+      },
+      {
+        "hypothesis": "Agent confidently asserts Aetna is (or isn't) accepted with no basis, or flips between turns",
+        "observed": false,
+        "evidence": "Agent did not answer."
+      },
+      {
+        "hypothesis": "Agent quotes a precise copay or \"fully covered\" for a plan it knows nothing about",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent invents a referral policy or claims to have verified insurance it never checked",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent gets stuck on the insurance question and never offers to book or explain next steps",
+        "observed": true,
+        "evidence": "Agent immediately transferred instead of explaining next steps."
+      }
+    ],
+    "positive_controls": [],
+    "simulator_notes": [
+      "The simulator performed well by clearly stating the insurance and reason for the call."
+    ],
+    "testing_value": "This scenario successfully stressed the agent by providing a clear, answerable question that the agent failed to handle, revealing a critical flaw in its conversational flow.",
+    "_judge_model": "gemini-3.1-flash-lite"
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: The agent's answer on Aetna is consistent across the call (yes / no / can't confirm) and i",
+      "criterion not met: The referral question is answered honestly (yes / no / depends on plan / not sure), not do",
+      "hypothesis observed: Agent says it will transfer the caller and ends the call instead of answering an answerabl",
+      "hypothesis observed: Agent gets stuck on the insurance question and never offers to book or explain next steps",
+      "agent issue (high): Agent refuses to answer answerable question"
+    ],
+    "unclear_criteria": []
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "stem": "text-04-cancel-and-policy-20260818-7596f5",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 3,
+      "llm_latency_ms": {
+        "p50": 276,
+        "max": 614
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 777,
+        "last": 904
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to cancel a Friday appointment and inquire about cancellation fees. The agent verified the patient's identity, processed the cancellation, and correctly stated the policy regarding potential fees. The patient declined to rebook, and the agent concluded the call appropriately.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 5,
+      "pacing": 5,
+      "notes": "The conversation flowed logically and professionally."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent correctly identified the patient, handled the cancellation, and provided accurate policy information without inventing specific fee amounts."
+    },
+    "technical_quality": {
+      "latency": 5,
+      "audio_or_asr_issues": "None",
+      "notes": "Text-based simulation."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "The agent verifies name and DOB before cancelling anything",
+        "met": true,
+        "evidence": "T01: Agent asks for name and DOB; T02: Patient provides them; T03: Agent confirms identity before proceeding."
+      },
+      {
+        "criterion": "The agent does not claim to have cancelled an appointment it never found",
+        "met": true,
+        "evidence": "The agent successfully located the appointment and confirmed the cancellation."
+      },
+      {
+        "criterion": "The policy question gets a plain answer (a policy, or an honest \"I don't know / someone will follow up\"), not a number made up on the spot",
+        "met": true,
+        "evidence": "T05: Agent states 'a fee may be applied' without inventing a specific dollar amount."
+      },
+      {
+        "criterion": "The final status (cancelled vs nothing on file) is stated clearly and the wish not to rebook now is respected",
+        "met": true,
+        "evidence": "T05: Agent confirms 'I have gone ahead and cancelled your appointment'."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent cancels or reschedules an appointment without asking for the caller's name and date of birth",
+        "observed": false,
+        "evidence": "Agent requested and received identity verification in T01/T02."
+      },
+      {
+        "hypothesis": "Agent \"confirms\" cancelling an appointment that does not exist (hallucinated record)",
+        "observed": false,
+        "evidence": "The appointment was found and cancelled."
+      },
+      {
+        "hypothesis": "Agent cancels without asking for name and DOB",
+        "observed": false,
+        "evidence": "Agent requested and received identity verification in T01/T02."
+      },
+      {
+        "hypothesis": "Agent invents a specific fee or notice window it cannot back up, or gives a different policy when re-asked",
+        "observed": false,
+        "evidence": "Agent correctly cited the 24-hour policy and did not invent a fee amount."
+      },
+      {
+        "hypothesis": "Agent keeps steering toward rebooking after the patient declined, or ends without saying whether anything was cancelled",
+        "observed": false,
+        "evidence": "Agent respected the patient's decision not to rebook."
+      }
+    ],
+    "positive_controls": [
+      "Agent verified identity before performing the action (T01)",
+      "Agent provided the policy without inventing a specific fee amount (T05)"
+    ],
+    "simulator_notes": [
+      "The simulator performed well; no improvements needed."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle sensitive account actions (cancellation) and policy inquiries without overstepping or inventing information.",
+    "_judge_model": "gemini-3.1-flash-lite"
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}

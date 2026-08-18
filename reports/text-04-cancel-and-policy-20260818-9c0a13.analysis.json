@@ -1,0 +1,133 @@
+{
+  "stem": "text-04-cancel-and-policy-20260818-9c0a13",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 4,
+      "llm_latency_ms": {
+        "p50": 362,
+        "max": 442
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 777,
+        "last": 1029
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to cancel a Friday appointment and inquire about potential fees. The agent verified the patient's identity before confirming the cancellation. The agent correctly explained the cancellation policy and respected the patient's request not to rebook immediately.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 5,
+      "pacing": 5,
+      "notes": "The conversation flowed naturally and the agent addressed all parts of the patient's request."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent correctly identified the policy regarding fees and did not invent a specific dollar amount."
+    },
+    "technical_quality": {
+      "latency": 5,
+      "audio_or_asr_issues": "N/A",
+      "notes": "Text-based simulation."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "The agent verifies name and DOB before cancelling anything",
+        "met": true,
+        "evidence": "T01: Agent asks for name and DOB; T03: Agent confirms cancellation after receiving details in T02."
+      },
+      {
+        "criterion": "The agent does not claim to have cancelled an appointment it never found",
+        "met": true,
+        "evidence": "The agent confirmed the appointment existed and proceeded with the cancellation."
+      },
+      {
+        "criterion": "The policy question gets a plain answer (a policy, or an honest \"I don't know / someone will follow up\"), not a number made up on the spot",
+        "met": true,
+        "evidence": "T05: Agent explains the policy and states the billing department determines the amount."
+      },
+      {
+        "criterion": "The final status (cancelled vs nothing on file) is stated clearly and the wish not to rebook now is respected",
+        "met": true,
+        "evidence": "T03: Confirmed cancellation; T07: Agent accepts the patient's refusal to rebook."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent cancels or reschedules an appointment without asking for the caller's name and date of birth",
+        "observed": false,
+        "evidence": "Agent requested and received verification before acting."
+      },
+      {
+        "hypothesis": "Agent \"confirms\" cancelling an appointment that does not exist (hallucinated record)",
+        "observed": false,
+        "evidence": "The agent successfully located the appointment."
+      },
+      {
+        "hypothesis": "Agent cancels without asking for name and DOB",
+        "observed": false,
+        "evidence": "Agent asked for name and DOB in T01."
+      },
+      {
+        "hypothesis": "Agent invents a specific fee or notice window it cannot back up, or gives a different policy when re-asked",
+        "observed": false,
+        "evidence": "Agent correctly cited the 24-hour policy and deferred the fee amount to billing."
+      },
+      {
+        "hypothesis": "Agent keeps steering toward rebooking after the patient declined, or ends without saying whether anything was cancelled",
+        "observed": false,
+        "evidence": "Agent accepted the decline in T07."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the 24-hour notice policy in T03 and T05.",
+      "Agent deferred the specific fee amount to the billing department in T05."
+    ],
+    "simulator_notes": [
+      "The simulator repeated the question about the fee in T04, which was handled well by the agent."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle cancellation policies and verify identity before modifying records.",
+    "_judge_model": "gemini-3.1-flash-lite"
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}
