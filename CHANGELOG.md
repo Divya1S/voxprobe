@@ -15,7 +15,8 @@ rebuilt from the audio, turn-taking/latency is measured for both parties, and fi
 - **Caller brain**: persona composer + per-turn director + LLM with provider failover (Groq → Groq → Gemini).
 - **Audio arena**: two full Pipecat pipelines in one process over a custom loopback transport pair (paced output, virtual mic
   with silence, interruption flush); stereo recording; both-party response latency; deliberate **barge-in driver** with
-  yield latency and "unheard agent speech" metrics; **websocket target adapter** + `voxprobe serve-agent`.
+  yield latency and Pipecat's `interrupted` flag on the agent's turn; **websocket target adapter** + `voxprobe serve-agent`
+  (live-validated; known issue: unpaced audio to remote agents).
 - **Evidence pipeline**: audio-derived transcript (ffmpeg `silencedetect` regions → Whisper per region), metrics with a named
   `SegmentationPolicy` (response gaps p50/p95, dead air, overlaps, intra-turn pauses), deterministic *measured issues*,
   LLM judge with structured per-criterion / per-hypothesis verdicts, `decide()` PASS/FAIL without an LLM.
@@ -29,6 +30,6 @@ rebuilt from the audio, turn-taking/latency is measured for both parties, and fi
 ### Known limitations (stated on purpose)
 - The sample agent has no booking store: "hallucinated record" hypotheses cannot be adjudicated against it and are not benchmarked.
 - Free-tier models drift (two retirements in two days); defaults are pinned to what worked on the release date, with failover.
-- Barge-in "yield" is measured from the trigger and includes the caller's own TTS time-to-first-byte; "unheard speech" exists only over the loopback line.
+- Barge-in "yield" is measured from the trigger and includes the caller's own TTS time-to-first-byte; the `interrupted` flag is available only over the loopback line.
 - Text-mode runs are turn-paced for free-tier quotas and carry no timing; audio-mode runs do.
 - The phone adapter (Vapi) is experimental and requires paid telephony; every outbound number must be on `ALLOWED_NUMBERS_E164`.
