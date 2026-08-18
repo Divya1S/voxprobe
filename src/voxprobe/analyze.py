@@ -231,6 +231,19 @@ def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict,
             L += [f"**{key.replace('_', ' ').title()}:** {scores}. {v.get('notes', '')}", ""]
     measured = measured_issues(metrics, scenario)
     decision = decide(verdict, measured)
+    if meta.get("barge_ins"):
+        L += [
+            "## Deliberate barge-ins (measured)",
+            "",
+            "| # | agent had spoken | caller cut in with | agent yielded after | agent speech unheard |",
+            "|---|---|---|---|---|",
+        ]
+        for i, b in enumerate(meta["barge_ins"], 1):
+            L.append(
+                f"| {i} | {b.get('agent_speaking_for_s', '?')} s | {b.get('phrase', '')} | "
+                f"{b.get('yield_s', 'did not yield')} s | {b.get('unheard_agent_speech_s', '-')} s |"
+            )
+        L.append("")
     L += [f"## Verdict: {'PASS' if decision['pass'] else 'FAIL'}", ""]
     L += [f"- {r}" for r in decision["reasons"]] or [
         "- all success criteria met, no hypotheses observed, no high-severity agent issues"

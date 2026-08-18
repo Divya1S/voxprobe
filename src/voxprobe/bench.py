@@ -118,6 +118,9 @@ class RunRecord:
     caller_turns: int
     duration_s: float
     error: str | None = None
+    caller_model: str = ""
+    agent_model: str = ""
+    judge_model: str = ""
     ts: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
@@ -252,6 +255,9 @@ async def run_bench(
                     decision_pass=(analysis.get("decision") or {}).get("pass"),
                     caller_turns=res["stats"]["caller_turns"],
                     duration_s=round(time.monotonic() - t0, 1),
+                    caller_model=(res.get("brain_records") or [{}])[0].get("model", run_settings.groq_model),
+                    agent_model=run_settings.gemini_model,
+                    judge_model=(analysis.get("judge") or {}).get("_judge_model", run_settings.judge_model),
                 )
             except Exception as e:  # noqa: BLE001 — record and continue; resumable
                 rec = RunRecord(
@@ -335,9 +341,17 @@ def summarize(runs_path: Path) -> dict:
     tn = sum(b["tn"] for b in per_bug.values())
     prec = tp / (tp + fp) if tp + fp else None
     rec = tp / (tp + fn) if tp + fn else None
+    models = {
+        "caller": sorted(
+            {r.get("caller_model") or "unrecorded (llama-3.x era, before 2026-08-17 retirement)" for r in runs}
+        ),
+        "agent": sorted({r.get("agent_model") or "unrecorded (gemini-3.5-flash-lite)" for r in runs}),
+        "judge": sorted({r.get("judge_model") or "unrecorded (gemini-3.1-flash-lite)" for r in runs}),
+    }
     return {
         "generated_at": datetime.now(UTC).isoformat(),
         "runs": len(runs),
+        "models": models,
         "overall": {
             "tp": tp,
             "fn": fn,
@@ -377,6 +391,8 @@ def render_summary_md(name: str, s: dict) -> str:
             f"{b['symptom_false_alarm_rate'] if b['symptom_false_alarm_rate'] is not None else '—'} |"
         )
     L += [
+        "",
+        f"Models: caller {s.get('models', {}).get('caller')} · sample agent {s.get('models', {}).get('agent')} · judge {s.get('models', {}).get('judge')}",
         "",
         "Method: one bug planted at a time in the bundled sample agent; the same scenarios run against the clean agent as control; "
         "each cell repeated k times; the bug's symptom description is injected as a hypothesis and the judge must mark it observed with evidence "

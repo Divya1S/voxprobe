@@ -22,7 +22,7 @@ from uuid import uuid4
 from loguru import logger
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.audio.vad.vad_analyzer import VADParams
-from pipecat.frames.frames import LLMRunFrame
+from pipecat.frames.frames import LLMRunFrame, TTSSpeakFrame
 from pipecat.observers.user_bot_latency_observer import UserBotLatencyObserver
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.worker import PipelineParams, PipelineWorker
@@ -49,6 +49,15 @@ from .loopback import SAMPLE_RATE, LoopbackTransport, link
 AGENT_VOICE = "aura-2-athena-en"
 GOODBYE_GRACE_S = 7.0  # after the caller says goodbye, wait this long for the agent's goodbye before hanging up
 
+# Deliberate barge-in (scenario.barge_in = True): once the agent has been talking this long, the caller cuts in.
+BARGE_IN_AFTER_S = 4.0
+BARGE_IN_MAX = 2
+BARGE_IN_PHRASES = ["Sorry, sorry — can I jump in for a second?", "Sorry to cut in —"]
+BARGE_IN_FOLLOW_UP = (
+    "You just interrupted the receptionist mid-sentence on purpose. Now say, in one sentence, what you actually want next "
+    "according to your plan (change the day, the doctor, or take any available slot)."
+)
+
 
 @dataclass
 class ArenaResult:
@@ -61,6 +70,7 @@ class ArenaResult:
     caller_latencies_s: list[float] = field(default_factory=list)  # agent stops → caller starts
     agent_latencies_s: list[float] = field(default_factory=list)  # caller stops → agent starts
     brain_records: list[dict] = field(default_factory=list)
+    barge_ins: list[dict] = field(default_factory=list)  # deliberate interruptions and how the agent yielded
     files: dict = field(default_factory=dict)
     ended_reason: str = ""
 
@@ -166,8 +176,30 @@ async def run_audio_arena(
     caller_done = asyncio.Event()
     agent_goodbye = asyncio.Event()
 
+    agent_speaking_since: dict = {"t": None}  # from the caller's point of view (its "user" is the agent)
+    pending_barge: dict = {"t": None, "flushed_before": 0}
+
+    @caller_user_agg.event_handler("on_user_turn_started")
+    async def _agent_started(agg, *args):
+        agent_speaking_since["t"] = time.monotonic()
+
     @caller_user_agg.event_handler("on_user_turn_stopped")
     async def _agent_said(agg, strategy, message):  # what the CALLER heard the AGENT say
+        agent_speaking_since["t"] = None
+        if pending_barge["t"] is not None:  # the agent stopped after our deliberate interruption
+            flushed = agent_tx.output().bytes_flushed_at_peer - pending_barge["flushed_before"]
+            result.barge_ins[-1].update(
+                {
+                    "agent_stopped_at": now(),
+                    "yield_s": round(time.monotonic() - pending_barge["t"], 2),
+                    "unheard_agent_speech_s": round(flushed / (2 * SAMPLE_RATE), 2),
+                }
+            )
+            logger.info(
+                f"[{now():6.2f}s] BARGE-IN: agent yielded after {result.barge_ins[-1]['yield_s']} s; "
+                f"{result.barge_ins[-1]['unheard_agent_speech_s']} s of its speech went unheard"
+            )
+            pending_barge["t"] = None
         text = (getattr(message, "content", "") or "").strip()
         if text:
             result.transcript.append({"t": now(), "speaker": "AGENT", "text": text, "source": "caller-stt"})
@@ -224,9 +256,32 @@ async def run_audio_arena(
     runner = WorkerRunner(handle_sigint=False)
     await runner.add_workers(caller_worker, agent_worker)
 
+    async def barge_in_driver():
+        """Scenario 09: when the agent talks for a while, the caller cuts in — and we measure how the agent yields."""
+        while len(result.barge_ins) < BARGE_IN_MAX:
+            await asyncio.sleep(0.25)
+            since = agent_speaking_since["t"]
+            if since is None or caller_llm.state.patient_turns < 1 or pending_barge["t"] is not None:
+                continue
+            if time.monotonic() - since < BARGE_IN_AFTER_S:
+                continue
+            phrase = BARGE_IN_PHRASES[len(result.barge_ins) % len(BARGE_IN_PHRASES)]
+            pending_barge.update({"t": time.monotonic(), "flushed_before": agent_tx.output().bytes_flushed_at_peer})
+            result.barge_ins.append(
+                {"triggered_at": now(), "phrase": phrase, "agent_speaking_for_s": round(time.monotonic() - since, 2)}
+            )
+            caller_llm.state.pending_note = BARGE_IN_FOLLOW_UP
+            logger.info(
+                f"[{now():6.2f}s] BARGE-IN: caller cuts in ({phrase!r}) after the agent spoke "
+                f"{result.barge_ins[-1]['agent_speaking_for_s']} s"
+            )
+            await caller_worker.queue_frames([TTSSpeakFrame(phrase)])
+            await asyncio.sleep(6.0)  # give the exchange time before considering another interruption
+
     async def conductor():
         await asyncio.sleep(1.0)  # both pipelines up
         await agent_worker.queue_frames([LLMRunFrame()])  # the receptionist answers the phone
+        driver = asyncio.create_task(barge_in_driver()) if scenario.barge_in else None
         try:
             await asyncio.wait_for(caller_done.wait(), timeout=max_duration_s)
             result.ended_reason = "caller-said-goodbye"
@@ -237,6 +292,8 @@ async def run_audio_arena(
                 pass
         except TimeoutError:
             result.ended_reason = "max-duration"
+        if driver:
+            driver.cancel()
         try:
             await recorder.stop_recording()
         except Exception as e:  # noqa: BLE001
@@ -336,6 +393,7 @@ def _write_bundle(settings: Settings, scenario: Scenario, target: Target, r: Are
         "ended_reason": r.ended_reason,
         "caller_response_latency_s": r.caller_latencies_s,
         "agent_response_latency_s": r.agent_latencies_s,
+        "barge_ins": r.barge_ins,
         "cost_usd": 0,
         "performance_metrics": None,
         "files": {
