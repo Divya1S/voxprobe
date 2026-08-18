@@ -16,7 +16,7 @@ import statistics
 import time
 from datetime import UTC, datetime
 
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, RateLimitError
 
 from .brain import GEMINI_BASE_URL, Brain, build_providers, window_history
 from .config import Settings
@@ -218,18 +218,41 @@ def _judge_text_run(settings: Settings, scenario: Scenario, target: Target, resu
     return judge_and_report(settings, scenario, target, stem, meta, transcript_md, metrics)
 
 
+# Free-tier daily request caps are per model: when the configured Gemini model is exhausted, the sample agent moves on.
+GEMINI_ALTERNATES = [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.7-flash",
+    "gemini-3-flash-preview",
+    "gemini-3.1-flash-lite",
+]
+
+
 async def _agent_turn(client: AsyncOpenAI, model: str, agent_prompt: str, history: list[dict]) -> str:
     # flip roles: for the receptionist, the caller is "user" and the receptionist is "assistant"
     flipped = [{"role": "assistant" if m["role"] == "user" else "user", "content": m["content"]} for m in history]
     if not flipped:  # opening line: nobody has spoken yet, but the API needs a user turn
         flipped = [{"role": "user", "content": "(The phone rings and you answer it.)"}]
-    resp = await client.chat.completions.create(
-        model=model,
-        messages=[{"role": "system", "content": agent_prompt}, *flipped],
-        max_tokens=120,
-        temperature=0.6,
-    )
-    return (resp.choices[0].message.content or "").strip().replace("\n", " ")
+    last: Exception | None = None
+    for m in [model, *[a for a in GEMINI_ALTERNATES if a != model]]:
+        for _attempt in range(2):  # thinking models occasionally return empty content; one retry
+            try:
+                resp = await client.chat.completions.create(
+                    model=m,
+                    messages=[{"role": "system", "content": agent_prompt}, *flipped],
+                    max_tokens=500,  # Gemini 3.x "flash" models spend part of this on hidden reasoning
+                    temperature=0.6,
+                    extra_body={"reasoning_effort": "low"},
+                )
+            except RateLimitError as e:  # quota on this model: try the next one
+                last = e
+                break
+            text = (resp.choices[0].message.content or "").strip().replace("\n", " ")
+            if text:
+                return text
+        else:
+            continue
+    raise RuntimeError(f"sample agent: every Gemini model is rate-limited ({last})")
 
 
 def main(settings: Settings, scenario: Scenario, target: Target, max_turns: int = 14) -> dict:

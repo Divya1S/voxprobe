@@ -97,6 +97,8 @@ def shape_reply(text: str) -> str:
     t = t.replace('"', "").replace("“", "").replace("”", "").strip()
     # models sometimes prefix the speaker name — a phone caller never does
     t = re.sub(r"^(patient|caller|[A-Z][a-z]+ [A-Z][a-z]+):\s*", "", t)
+    # a caller says ONE line: cut anything after a newline or after a role label (some models write both sides)
+    t = re.split(r"\n|\s(?:AGENT|Agent|Receptionist|RECEPTIONIST|Assistant|CALLER|Caller|PATIENT|Patient)\s*:", t)[0]
     sentences = _SENT_SPLIT.split(t)
     if len(sentences) > MAX_SENTENCES:
         t = " ".join(sentences[:MAX_SENTENCES])

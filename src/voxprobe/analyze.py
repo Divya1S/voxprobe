@@ -11,7 +11,7 @@ import json
 import logging
 from pathlib import Path
 
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 
 from .brain import GEMINI_BASE_URL, GROQ_BASE_URL
 from .config import Settings
@@ -92,23 +92,46 @@ def _scenario_block(s: Scenario, target: Target) -> str:
     )
 
 
+JUDGE_ALTERNATES = {
+    "gemini": [
+        "gemini-3.1-flash-lite",
+        "gemini-3.5-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-3-flash-preview",
+    ],
+    "groq": ["openai/gpt-oss-120b", "openai/gpt-oss-20b"],
+}
+
+
 def judge(settings: Settings, scenario: Scenario, target: Target, transcript_md: str, metrics: dict) -> dict:
     client, model = _judge_client(settings)
+    provider = "gemini" if "generativelanguage" in str(client.base_url) else "groq"
+    models = [model, *[m for m in JUDGE_ALTERNATES[provider] if m != model]]
     user = f"{_scenario_block(scenario, target)}\n\n=== AUTHORITATIVE TRANSCRIPT ===\n{transcript_md}\n\n=== METRICS ===\n{json.dumps(metrics)}"
-    for attempt in range(2):
-        resp = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "system", "content": JUDGE_INSTRUCTIONS}, {"role": "user", "content": user}],
-            temperature=0.2,
-            max_tokens=2000,
-            response_format={"type": "json_object"},
-        )
-        text = resp.choices[0].message.content or ""
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            log.warning("judge returned non-JSON (attempt %d)", attempt + 1)
-    return {"summary": "judge failed to return JSON", "candidate_issues": []}
+    for m in models:
+        for attempt in range(2):
+            try:
+                resp = client.chat.completions.create(
+                    model=m,
+                    messages=[{"role": "system", "content": JUDGE_INSTRUCTIONS}, {"role": "user", "content": user}],
+                    temperature=0.2,
+                    max_tokens=2000,
+                    response_format={"type": "json_object"},
+                )
+            except RateLimitError:
+                log.warning("judge model %s rate-limited — trying the next", m)
+                break  # next model
+            text = resp.choices[0].message.content or ""
+            try:
+                out = json.loads(text)
+                out["_judge_model"] = m
+                return out
+            except json.JSONDecodeError:
+                log.warning("judge returned non-JSON (attempt %d)", attempt + 1)
+        else:
+            continue
+    return {"summary": "judge failed (rate limits or non-JSON on every model)", "candidate_issues": []}
 
 
 def measured_issues(metrics: dict, scenario: Scenario) -> list[dict]:

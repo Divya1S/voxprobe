@@ -64,8 +64,8 @@ class Settings:
 
     # LLM providers (simulator brain + judge). Groq primary, Groq fallback model, Gemini failover.
     groq_api_key: str = ""
-    groq_model: str = "llama-3.3-70b-versatile"
-    groq_fallback_model: str = "llama-3.1-8b-instant"
+    groq_model: str = "openai/gpt-oss-120b"  # Groq retired llama-3.x for free keys on 2026-08-17; gpt-oss models remain
+    groq_fallback_model: str = "openai/gpt-oss-20b"  # separate rate-limit bucket
     google_api_key: str = ""
     gemini_model: str = "gemini-3.5-flash-lite"
     judge_provider: str = "groq"  # "groq" | "gemini" — the LLM used for the post-call judge draft
@@ -127,8 +127,8 @@ def load_settings() -> Settings:
     caller = env("CALLER_NUMBER_E164", "").strip()
     return Settings(
         groq_api_key=env("GROQ_API_KEY", ""),
-        groq_model=env("GROQ_MODEL", "llama-3.3-70b-versatile"),
-        groq_fallback_model=env("GROQ_FALLBACK_MODEL", "llama-3.1-8b-instant"),
+        groq_model=env("GROQ_MODEL", "openai/gpt-oss-120b"),
+        groq_fallback_model=env("GROQ_FALLBACK_MODEL", "openai/gpt-oss-20b"),
         google_api_key=env("GOOGLE_API_KEY", ""),
         gemini_model=env("GEMINI_MODEL", "gemini-3.5-flash-lite"),
         judge_provider=env("JUDGE_PROVIDER", "groq"),

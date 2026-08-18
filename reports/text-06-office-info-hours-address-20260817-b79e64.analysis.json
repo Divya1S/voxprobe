@@ -1,0 +1,147 @@
+{
+  "stem": "text-06-office-info-hours-address-20260817-b79e64",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 6,
+      "llm_latency_ms": {
+        "p50": 421,
+        "max": 520
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 725,
+        "last": 1138
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to inquire about clinic hours, location, parking, and new patient requirements without booking an appointment. The agent provided accurate information regarding the clinic's operating hours, address, parking, and arrival policies. The agent successfully respected the patient's request not to book an appointment, despite offering one initially.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 4,
+      "pacing": 4,
+      "notes": "The agent was clear and professional, though it was slightly pushy to offer an appointment immediately after the patient stated she was not ready to book."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent provided all requested information accurately and maintained consistency throughout the call."
+    },
+    "technical_quality": {
+      "latency": 4,
+      "audio_or_asr_issues": "None",
+      "notes": "The call proceeded smoothly with no significant technical issues."
+    },
+    "candidate_issues": [
+      {
+        "title": "Unsolicited appointment offer",
+        "who": "agent",
+        "severity": "low",
+        "timestamp": "00:11",
+        "quote": "Dr. Emily Chen specializes in hips and has a new patient opening this Thursday at ten in the morning, or next Monday at two in the afternoon.",
+        "expected": "The agent should have acknowledged the patient's intent to ask questions first before offering specific appointment slots.",
+        "why_it_matters": "The patient explicitly stated she was not ready to book, so pushing for an appointment can be perceived as ignoring the user's stated constraints.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent steers into scheduling or \"books\" a visit despite the caller declining"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "Agent states weekday hours and gives a plain, consistent yes/no on Saturdays",
+        "met": true,
+        "evidence": "00:21: 'We are open Monday through Friday from 8 am to 5 pm, but we are closed on weekends'"
+      },
+      {
+        "criterion": "Agent gives a street address and parking guidance, or explicitly says it doesn't have them \u2014 no deflection",
+        "met": true,
+        "evidence": "00:32: '1200 Sunrise Avenue, Suite 210... parking garage entrance on Oak Street'"
+      },
+      {
+        "criterion": "Agent answers paperwork and arrival-time questions without contradicting itself",
+        "met": true,
+        "evidence": "00:42: 'please arrive fifteen minutes early and bring a photo ID along with your insurance card'"
+      },
+      {
+        "criterion": "Agent respects \"not booking today\" and does not create an appointment",
+        "met": true,
+        "evidence": "The agent did not finalize any booking despite the patient's repeated statements that she was not ready."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends",
+        "observed": false,
+        "evidence": "The agent correctly identified that the clinic is closed on weekends."
+      },
+      {
+        "hypothesis": "Agent cannot give a street address or parking info and offers a transfer instead of saying so",
+        "observed": false,
+        "evidence": "The agent provided the address and parking info directly."
+      },
+      {
+        "hypothesis": "Agent states hours that contradict its own greeting or an earlier turn (e.g. says open Saturday)",
+        "observed": false,
+        "evidence": "The agent was consistent throughout the call."
+      },
+      {
+        "hypothesis": "Agent transfers or promises a callback for simple factual questions it should answer directly",
+        "observed": false,
+        "evidence": "The agent answered all questions directly."
+      },
+      {
+        "hypothesis": "Agent steers into scheduling or \"books\" a visit despite the caller declining",
+        "observed": true,
+        "evidence": "00:11: Agent offered specific appointment slots immediately after the patient stated she was not ready to book."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the clinic's closure on weekends (00:21)",
+      "Agent provided accurate address and parking details (00:32)",
+      "Agent correctly summarized the new patient requirements (00:42)"
+    ],
+    "simulator_notes": [
+      "The simulator performed well in adhering to the persona and testing the boundaries of the agent."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle factual inquiries while maintaining boundaries regarding scheduling."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "hypothesis observed: Agent steers into scheduling or \"books\" a visit despite the caller declining"
+    ],
+    "unclear_criteria": []
+  }
+}

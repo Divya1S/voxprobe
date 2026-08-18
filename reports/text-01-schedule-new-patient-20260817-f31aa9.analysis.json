@@ -1,0 +1,138 @@
+{
+  "stem": "text-01-schedule-new-patient-20260817-f31aa9",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 4,
+      "llm_latency_ms": {
+        "p50": 549,
+        "max": 621
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 680,
+        "last": 918
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to book an appointment for knee pain. The agent incorrectly used a placeholder date of birth, which the patient corrected. The agent then successfully scheduled the appointment with the correct provider and confirmed all necessary details.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 4,
+      "naturalness_of_patient": 5,
+      "turn_taking": 4,
+      "pacing": 4,
+      "notes": "The agent was efficient but the initial error regarding the DOB was jarring."
+    },
+    "agent_quality": {
+      "correctness": 2,
+      "task_completion": 5,
+      "consistency": 3,
+      "policy_safety": 5,
+      "clarification": 4,
+      "notes": "The agent failed to correctly identify the patient's DOB, instead using a placeholder value."
+    },
+    "technical_quality": {
+      "latency": 4,
+      "audio_or_asr_issues": "None",
+      "notes": "Minor dead air noted in metrics."
+    },
+    "candidate_issues": [
+      {
+        "title": "Agent used placeholder DOB",
+        "who": "agent",
+        "severity": "high",
+        "timestamp": "00:10",
+        "quote": "Our records show your date of birth is July fourth, two thousand.",
+        "expected": "Agent should ask for the DOB or verify it correctly without using a placeholder.",
+        "why_it_matters": "Using incorrect patient data is a significant privacy and record-keeping error.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent fabricates or assigns a placeholder DOB instead of using the one given"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "A specific weekday date, time and provider were confirmed back to the patient",
+        "met": true,
+        "evidence": "00:31: 'Yes, you are confirmed for Wednesday, November twelfth, at nine in the morning with Doctor Emily Chen.'"
+      },
+      {
+        "criterion": "The agent used the patient's own name and DOB (did not substitute demo values without saying so)",
+        "met": false,
+        "evidence": "00:10: Agent used 'July fourth, two thousand' instead of the patient's actual DOB."
+      },
+      {
+        "criterion": "Call ended naturally after the patient said goodbye",
+        "met": true,
+        "evidence": "00:40: Patient said goodbye and the call concluded."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent fabricates or assigns a placeholder DOB instead of using the one given",
+        "observed": true,
+        "evidence": "00:10: 'Our records show your date of birth is July fourth, two thousand.'"
+      },
+      {
+        "hypothesis": "Agent confirms a slot without stating the day/time/provider explicitly",
+        "observed": false,
+        "evidence": "Agent explicitly stated the day, time, and provider."
+      },
+      {
+        "hypothesis": "Agent asks a new patient for \"the phone number on file\"",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent cannot answer \"what should I bring\" and reaches for a transfer instead",
+        "observed": false,
+        "evidence": "Agent correctly answered the question about what to bring."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the provider specialty at 00:10",
+      "Agent provided clear instructions on arrival time and required documents at 00:21"
+    ],
+    "simulator_notes": [
+      "The simulator performed well by correcting the agent's error regarding the DOB."
+    ],
+    "testing_value": "This scenario effectively stressed the agent's ability to handle incorrect data retrieval and recover, providing a clear test of data integrity."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: The agent used the patient's own name and DOB (did not substitute demo values without sayi",
+      "hypothesis observed: Agent fabricates or assigns a placeholder DOB instead of using the one given",
+      "agent issue (high): Agent used placeholder DOB"
+    ],
+    "unclear_criteria": []
+  }
+}

@@ -41,7 +41,7 @@ def test_prompt_contains_facts_and_boundaries_and_stays_small(scenario):
     assert "usually one short sentence" in prompt
     assert "```" not in prompt
     # budget: re-sent every turn on a tokens-per-minute-limited free tier
-    assert estimate_tokens(prompt) <= 700, f"prompt too long: ~{estimate_tokens(prompt)} tokens"
+    assert estimate_tokens(prompt) <= 760, f"prompt too long: ~{estimate_tokens(prompt)} tokens"  # ≈950/turn incl. history: fits 8K TPM at the paced 6-7 turns/min
 
 
 def test_prompt_never_leaks_iso_dob():

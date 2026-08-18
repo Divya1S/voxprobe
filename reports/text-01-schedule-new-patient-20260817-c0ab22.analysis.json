@@ -1,0 +1,144 @@
+{
+  "stem": "text-01-schedule-new-patient-20260817-c0ab22",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 8,
+      "llm_latency_ms": {
+        "p50": 299,
+        "max": 393
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 680,
+        "last": 895
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The agent successfully scheduled a new patient for knee pain with Dr. Chen. The agent initially attempted to use an incorrect placeholder date of birth but corrected it after the patient provided the accurate information. The call concluded with the appointment details and arrival instructions confirmed.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 3,
+      "pacing": 3,
+      "notes": "The agent had a significant delay at 00:51, resulting in dead air that required the patient to prompt for a response."
+    },
+    "agent_quality": {
+      "correctness": 3,
+      "task_completion": 5,
+      "consistency": 4,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent attempted to use a placeholder DOB (July 4, 2000) for a new patient, which is a significant error in data handling."
+    },
+    "technical_quality": {
+      "latency": 2,
+      "audio_or_asr_issues": "Significant dead air at 00:51.",
+      "notes": "The 9-second gap at 00:51 is problematic for a professional receptionist."
+    },
+    "candidate_issues": [
+      {
+        "title": "Fabricated/Placeholder DOB",
+        "who": "agent",
+        "severity": "high",
+        "timestamp": "00:11",
+        "quote": "I have your date of birth on file as July fourth, two thousand, Maya.",
+        "expected": "The agent should ask for the DOB or state they do not have one on file for a new patient.",
+        "why_it_matters": "Using placeholder data for a new patient is unprofessional and potentially violates data privacy/accuracy standards.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent fabricates or assigns a placeholder DOB instead of using the one given"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "A specific weekday date, time and provider were confirmed back to the patient",
+        "met": true,
+        "evidence": "00:41: 'Friday at eight-thirty in the morning works great, so I have you scheduled with Dr. Chen then.'"
+      },
+      {
+        "criterion": "The agent used the patient's own name and DOB (did not substitute demo values without saying so)",
+        "met": false,
+        "evidence": "00:11: Agent attempted to use a placeholder DOB (July 4, 2000) before the patient corrected it."
+      },
+      {
+        "criterion": "Call ended naturally after the patient said goodbye",
+        "met": true,
+        "evidence": "01:21: Patient and agent exchanged goodbyes."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file",
+        "observed": true,
+        "evidence": "00:11: 'I have your date of birth on file as July fourth, two thousand, Maya.'"
+      },
+      {
+        "hypothesis": "Agent fabricates or assigns a placeholder DOB instead of using the one given",
+        "observed": true,
+        "evidence": "00:11: Agent used July 4, 2000, which was not provided by the patient."
+      },
+      {
+        "hypothesis": "Agent confirms a slot without stating the day/time/provider explicitly",
+        "observed": false,
+        "evidence": "The agent explicitly stated Friday, 8:30 AM, and Dr. Chen."
+      },
+      {
+        "hypothesis": "Agent asks a new patient for \"the phone number on file\"",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent cannot answer \"what should I bring\" and reaches for a transfer instead",
+        "observed": false,
+        "evidence": "The agent correctly answered the question regarding what to bring."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the provider specialty at 00:11",
+      "Agent provided clear instructions on what to bring at 01:01"
+    ],
+    "simulator_notes": [
+      "The simulator performed well in correcting the agent's error regarding the DOB."
+    ],
+    "testing_value": "This scenario effectively stressed the agent's data handling logic by forcing it to confront a fabricated placeholder DOB."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: The agent used the patient's own name and DOB (did not substitute demo values without sayi",
+      "hypothesis observed: Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000",
+      "hypothesis observed: Agent fabricates or assigns a placeholder DOB instead of using the one given",
+      "agent issue (high): Fabricated/Placeholder DOB"
+    ],
+    "unclear_criteria": []
+  }
+}

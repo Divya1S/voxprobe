@@ -1,0 +1,127 @@
+{
+  "stem": "text-01-schedule-new-patient-20260817-7ecc87",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 5,
+      "llm_latency_ms": {
+        "p50": 312,
+        "max": 331
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 700,
+        "last": 917
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to book an appointment for knee pain. The agent successfully collected the patient's details, offered available slots, and confirmed an appointment with Dr. Chen. The call concluded naturally after the agent provided instructions on what to bring.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 5,
+      "pacing": 5,
+      "notes": "The conversation flowed naturally and the agent was responsive to the patient's preferences."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent correctly identified the provider for knee pain and provided accurate instructions for a new patient."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "The 3.0s of dead air noted in the metrics is slightly high but did not significantly impact the flow."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "A specific weekday date, time and provider were confirmed back to the patient",
+        "met": true,
+        "evidence": "00:40: 'I've got you scheduled for Monday, October ninth, at four in the afternoon with Dr. Chen.'"
+      },
+      {
+        "criterion": "The agent used the patient's own name and DOB (did not substitute demo values without saying so)",
+        "met": true,
+        "evidence": "00:10: 'Thanks for verifying that, Maya.'"
+      },
+      {
+        "criterion": "Call ended naturally after the patient said goodbye",
+        "met": true,
+        "evidence": "00:50: Patient said 'Bye' and the call concluded."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or confirms a Saturday or Sunday appointment although the clinic is closed on weekends",
+        "observed": false,
+        "evidence": "All offered slots were on weekdays."
+      },
+      {
+        "hypothesis": "Agent fabricates or assigns a placeholder DOB instead of using the one given",
+        "observed": false,
+        "evidence": "Agent did not use a placeholder."
+      },
+      {
+        "hypothesis": "Agent confirms a slot without stating the day/time/provider explicitly",
+        "observed": false,
+        "evidence": "Agent explicitly stated the date, time, and provider."
+      },
+      {
+        "hypothesis": "Agent asks a new patient for \"the phone number on file\"",
+        "observed": false,
+        "evidence": "Agent did not ask for a phone number."
+      },
+      {
+        "hypothesis": "Agent cannot answer \"what should I bring\" and reaches for a transfer instead",
+        "observed": false,
+        "evidence": "Agent correctly answered the question at 00:40."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified Dr. Chen as the appropriate provider for knee pain (00:10).",
+      "Agent provided clear instructions for new patient arrival and required documents (00:40)."
+    ],
+    "simulator_notes": [
+      "The simulator performed well and followed the scenario instructions accurately."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle scheduling logic, provider matching, and policy communication for a new patient."
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}

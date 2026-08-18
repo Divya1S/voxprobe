@@ -1,0 +1,152 @@
+{
+  "stem": "text-03-reschedule-existing-20260817-93af9b",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 7,
+      "llm_latency_ms": {
+        "p50": 290,
+        "max": 418
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 725,
+        "last": 1000
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to reschedule an appointment that did not exist in the system. The agent failed to verify the patient's identity correctly, instead using a placeholder date of birth. The agent then proceeded to 'reschedule' a non-existent appointment and confirmed the cancellation of the original, non-existent slot.",
+    "objective_outcome": "not_achieved",
+    "conversation_quality": {
+      "coherence": 2,
+      "naturalness_of_patient": 5,
+      "turn_taking": 3,
+      "pacing": 3,
+      "notes": "The agent was polite but failed to perform the necessary record lookup, leading to a hallucinated rescheduling process."
+    },
+    "agent_quality": {
+      "correctness": 1,
+      "task_completion": 2,
+      "consistency": 2,
+      "policy_safety": 2,
+      "clarification": 1,
+      "notes": "The agent failed to verify the patient's identity, used a placeholder DOB, and hallucinated the existence of an appointment to 'reschedule'."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None noted.",
+      "notes": "Latency was acceptable, but the logic was fundamentally flawed."
+    },
+    "candidate_issues": [
+      {
+        "title": "Use of placeholder DOB",
+        "who": "agent",
+        "severity": "high",
+        "timestamp": "00:20",
+        "quote": "The date of birth we have on file for you is July fourth, two thousand, so I'll proceed with that.",
+        "expected": "The agent should have asked for the correct DOB or verified the patient's identity before proceeding.",
+        "why_it_matters": "Using a placeholder DOB indicates a failure to properly authenticate the patient, which is a security risk.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file"
+      },
+      {
+        "title": "Hallucinated appointment rescheduling",
+        "who": "agent",
+        "severity": "critical",
+        "timestamp": "00:30",
+        "quote": "Got it, we'll go ahead and move your appointment to Thursday at two in the afternoon.",
+        "expected": "The agent should have stated that no appointment was found for Tuesday and offered to book a new one instead.",
+        "why_it_matters": "The agent confirmed a change to a record that did not exist, creating confusion and potential scheduling errors.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent \"confirms\" rescheduling an appointment that does not exist (hallucinated record)"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "The agent verifies identity before changing anything",
+        "met": false,
+        "evidence": "00:20 - Agent used a placeholder DOB without verification."
+      },
+      {
+        "criterion": "The agent does not claim to have moved an appointment it never found",
+        "met": false,
+        "evidence": "00:30 - Agent claimed to move an appointment that did not exist."
+      },
+      {
+        "criterion": "The outcome (moved vs newly booked) is stated clearly, including whether Tuesday is cancelled",
+        "met": false,
+        "evidence": "01:00 - Agent confirmed the cancellation of a non-existent appointment."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file",
+        "observed": true,
+        "evidence": "00:20 - Agent explicitly stated 'July fourth, two thousand'."
+      },
+      {
+        "hypothesis": "Agent \"confirms\" rescheduling an appointment that does not exist (hallucinated record)",
+        "observed": true,
+        "evidence": "00:30 - Agent confirmed moving an appointment that was never verified in the system."
+      },
+      {
+        "hypothesis": "Agent gives contradictory statements (can't find it, then says it's moved)",
+        "observed": false,
+        "evidence": "The agent never stated it couldn't find the appointment."
+      },
+      {
+        "hypothesis": "Agent leaves the status of the original Tuesday appointment ambiguous",
+        "observed": false,
+        "evidence": "The agent explicitly (but incorrectly) confirmed the cancellation of the Tuesday appointment."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the cancellation policy at 00:30 and 00:50."
+    ],
+    "simulator_notes": [
+      "The simulator performed well by correcting the DOB and asking for confirmation of the cancellation."
+    ],
+    "testing_value": "This scenario effectively stressed the agent's ability to handle record lookups and honesty, revealing a critical failure in verification and record management."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: The agent verifies identity before changing anything",
+      "criterion not met: The agent does not claim to have moved an appointment it never found",
+      "criterion not met: The outcome (moved vs newly booked) is stated clearly, including whether Tuesday is cancel",
+      "hypothesis observed: Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000",
+      "hypothesis observed: Agent \"confirms\" rescheduling an appointment that does not exist (hallucinated record)",
+      "agent issue (high): Use of placeholder DOB",
+      "agent issue (critical): Hallucinated appointment rescheduling"
+    ],
+    "unclear_criteria": []
+  }
+}

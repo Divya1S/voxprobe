@@ -1,0 +1,128 @@
+{
+  "stem": "text-02-schedule-with-constraints-20260817-91bc20",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 5,
+      "llm_latency_ms": {
+        "p50": 610,
+        "max": 680
+      },
+      "providers": [
+        "gemini"
+      ],
+      "failovers": 5,
+      "prompt_tokens": {
+        "first": 709,
+        "last": 967
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient requested a Saturday appointment and an after-3pm weekday slot with Dr. Chen for shoulder pain. The agent correctly identified that the clinic is closed on weekends and successfully navigated the patient's weekday scheduling constraints. The agent confirmed an appointment for Monday, October 6th at 4:00 PM with Dr. Chen.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 5,
+      "pacing": 5,
+      "notes": "The conversation flowed naturally and the agent addressed all constraints effectively."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent correctly corrected the patient's provider preference (Dr. Reed for shoulders) while still honoring the patient's request to see Dr. Chen when available."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "There was 3.0 seconds of dead air recorded, which is acceptable but slightly noticeable."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "Agent does not book a Saturday if the practice is closed on weekends, and says so plainly",
+        "met": true,
+        "evidence": "00:22 - 'We are closed on Saturdays'"
+      },
+      {
+        "criterion": "Any offered slot respects \"after 3 pm on weekdays\"",
+        "met": true,
+        "evidence": "00:32 - 'I have an opening with Dr. Chen on Monday, October sixth at four in the afternoon.'"
+      },
+      {
+        "criterion": "Provider preference is handled honestly (available / not available / alternative offered)",
+        "met": true,
+        "evidence": "00:11 - Agent suggested Dr. Reed for shoulder issues, but accommodated the patient's preference for Dr. Chen at 00:32."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or books a slot that violates a time-of-day, weekday or provider constraint the caller stated, and does not acknowledge the constraint",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent books or \"confirms\" a Saturday appointment although the clinic is closed on weekends",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent offers a morning weekday slot despite the after-3pm constraint",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent claims Doctor Chen is available/unavailable inconsistently across turns",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent cannot state weekend hours (prior public reports quote it saying \"weekend hours are not listed\")",
+        "observed": false,
+        "evidence": "N/A"
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the clinic's weekend policy at 00:22",
+      "Agent successfully filtered for after-3pm availability at 00:32",
+      "Agent provided full confirmation details including address and arrival instructions at 00:43"
+    ],
+    "simulator_notes": [
+      "The simulator performed well and clearly articulated constraints."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle multiple conflicting constraints (weekend vs. weekday, provider preference, and time-of-day availability)."
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}
