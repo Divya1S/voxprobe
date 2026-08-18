@@ -53,10 +53,10 @@ def cmd_simulate(args) -> None:
     settings = load_settings()
     scenario = find_scenario(settings.scenarios_dir, args.scenario)
     target = find_target(settings.targets_dir, args.target)
-    if target.kind == "websocket":
-        raise SystemExit(f"target {target.id}: websocket targets are planned (roadmap P5) and not runnable yet")
-    if target.kind != "local":
-        raise SystemExit(f"target {target.id} is a {target.kind} target — `simulate` needs a local target")
+    if target.kind not in ("local", "websocket"):
+        raise SystemExit(f"target {target.id} is a {target.kind} target — `simulate` needs a local or websocket target")
+    if args.mode == "text" and target.kind != "local":
+        raise SystemExit("text mode drives the bundled sample agent only; use --mode audio for websocket targets")
     if args.mode == "text":
         simulate.main(settings, scenario, target, max_turns=args.max_turns)
         return
@@ -187,6 +187,14 @@ def cmd_bench(args) -> None:
     print((out / "summary.md").read_text())
 
 
+def cmd_serve_agent(args) -> None:
+    from .arena.run import serve_main
+
+    settings = load_settings()
+    target = find_target(settings.targets_dir, args.target)
+    serve_main(settings, target, args.host, args.port)
+
+
 def cmd_calibrate(args) -> None:
     from . import calibrate
 
@@ -242,6 +250,12 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--max-turns", type=int, default=12)
     p.add_argument("--no-resume", action="store_true")
     p.set_defaults(fn=cmd_bench)
+
+    p = sub.add_parser("serve-agent", help="expose the bundled sample agent over Pipecat's websocket protocol")
+    p.add_argument("--target", default="local-clinic")
+    p.add_argument("--host", default="localhost")
+    p.add_argument("--port", type=int, default=8765)
+    p.set_defaults(fn=cmd_serve_agent)
 
     p = sub.add_parser(
         "calibrate", help="judge calibration: sample claims into a labelling sheet, then score human agreement"
