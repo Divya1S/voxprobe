@@ -64,3 +64,19 @@ def test_render_mentions_dead_air_and_policy_thresholds():
     md = render_md(compute(timeline))
     assert "Dead air (response gap ≥ 3.0 s) | 1" in md
     assert "PATIENT slow" in md
+
+
+def test_contained_interjection_is_an_overlap_not_dead_air():
+    """A barge-in nested inside a long agent turn (the exact case the barge-in driver creates)."""
+    timeline = [
+        seg("AGENT", 10.0, 25.0),  # long agent turn
+        seg("PATIENT", 14.0, 16.0),  # caller cuts in and is talked over — wholly inside the agent's turn
+        seg("AGENT", 27.0, 30.0),  # agent responds 2 s after it stopped
+        seg("PATIENT", 31.0, 33.0),
+    ]
+    m = compute(timeline)
+    assert m["dead_air"] == []  # NOT an 11 s agent dead-air event
+    assert len(m["overlaps"]) == 1
+    assert m["overlaps"][0]["who_started"] == "PATIENT" and m["overlaps"][0]["overlap_s"] == 2.0
+    assert m["agent_response"]["n"] == 1 and m["agent_response"]["max_s"] == 2.0  # 25 → 27
+    assert m["patient_response"]["n"] == 1 and m["patient_response"]["max_s"] == 1.0  # 30 → 31

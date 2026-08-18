@@ -195,9 +195,10 @@ def _judge_text_run(settings: Settings, scenario: Scenario, target: Target, resu
     from .metrics import compute
 
     stem = f"text-{scenario.id}-{datetime.now(UTC).strftime('%Y%m%d')}-{uuid4().hex[:6]}"
+    # text mode has no timing worth reporting (turn pacing sleeps would show up as fake gaps): label by turn number
     lines = [
-        f"[{int(ln['t']) // 60:02d}:{int(ln['t']) % 60:02d}] {'AGENT' if ln['speaker'] == 'AGENT' else 'PATIENT'}: {ln['text']}"
-        for ln in result["transcript"]
+        f"[T{i:02d}] {'AGENT' if ln['speaker'] == 'AGENT' else 'PATIENT'}: {ln['text']}"
+        for i, ln in enumerate(result["transcript"], 1)
     ]
     transcript_md = "\n".join(lines)
     events = [{"type": "brain-turn", **r} for r in result["brain_records"]]

@@ -23,10 +23,12 @@ calibration); and record-store bugs (the sample agent has no booking store, so "
 from __future__ import annotations
 
 import asyncio
+import difflib
 import json
 import re
 import statistics
 import time
+import zlib
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -112,40 +114,45 @@ class RunRecord:
     target_kind: str  # "planted" | "clean"
     rep: int
     stem: str | None
-    judge_detected: bool
+    judge_detected: bool  # strict detector (published)
     symptom_detected: bool | None
     decision_pass: bool | None
     caller_turns: int
     duration_s: float
     error: str | None = None
+    judge_detected_loose: bool = False  # keyword-assisted detector (diagnostic only)
     caller_model: str = ""
     agent_model: str = ""
     judge_model: str = ""
     ts: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
-def _judge_detected(analysis: dict, spec: BugSpec) -> bool:
+def _judge_detected(analysis: dict, spec: BugSpec, strict: bool = True) -> bool:
+    """STRICT (the published number): the injected hypothesis is marked observed, or an agent issue's
+    `matches_hypothesis` is that hypothesis — both by near-verbatim text similarity. LOOSE (diagnostic only) also
+    accepts an agent issue whose text contains one of the bug's keywords."""
     judge = analysis.get("judge") or {}
     for h in judge.get("hypotheses") or []:
-        if h.get("observed") is True and _similar(h.get("hypothesis", ""), spec.hypothesis):
+        if h.get("observed") is True and _same_hypothesis(h.get("hypothesis", ""), spec.hypothesis):
             return True
     for it in judge.get("candidate_issues") or []:
         if it.get("who") != "agent":
             continue
-        text = " ".join(
-            str(it.get(k, "")) for k in ("title", "expected", "why_it_matters", "matches_hypothesis")
-        ).lower()
-        if _similar(it.get("matches_hypothesis", ""), spec.hypothesis) or any(k in text for k in spec.keywords):
+        if _same_hypothesis(it.get("matches_hypothesis", ""), spec.hypothesis):
             return True
+        if not strict:
+            text = " ".join(str(it.get(k, "")) for k in ("title", "expected", "why_it_matters")).lower()
+            if any(k in text for k in spec.keywords):
+                return True
     return False
 
 
-def _similar(a: str, b: str) -> bool:
-    """Loose match between the judge's copy of a hypothesis and ours (it should be verbatim; be tolerant of trimming)."""
-    a, b = a.lower().strip(), b.lower().strip()
+def _same_hypothesis(a: str, b: str) -> bool:
+    """Near-verbatim match (the judge is told to copy hypotheses verbatim; tolerate trimming/punctuation)."""
+    a, b = " ".join(a.lower().split()), " ".join(b.lower().split())
     if not a or not b:
         return False
-    return a == b or a in b or b in a or len(set(a.split()) & set(b.split())) >= max(4, len(b.split()) // 2)
+    return a == b or difflib.SequenceMatcher(None, a, b).ratio() >= 0.85
 
 
 def _symptom_detected(transcript: list[dict], spec: BugSpec) -> bool | None:
@@ -224,33 +231,39 @@ async def run_bench(
     # (free tier, measured 2026-08-17 evening: gpt-oss-20b and gpt-oss-120b each 8K TPM / 1K requests per day).
     rotation = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]  # Groq retired llama-3.x for free keys on 2026-08-17
     # Sample-agent Gemini models rotate too: free-tier daily request caps are per model.
-    agent_rotation = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash", "gemini-3-flash-preview"]
+    agent_rotation = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-3-flash-preview", "gemini-3.1-flash-lite"]
 
     async def one(idx: int, spec: BugSpec, scenario: Scenario, kind: str, rep: int) -> None:
         nonlocal completed
         target = _planted_target(clean, spec.bug) if kind == "planted" else clean
         sc = _with_hypothesis(scenario, spec)
+        # Model choice is a deterministic function of the CELL (bug, scenario, rep) — planted and clean arms of the
+        # same cell always get the same models, so the control is not confounded by which model happened to run.
+        cell_key = zlib.crc32(f"{spec.bug}|{scenario.id}|{rep}".encode())
         run_settings = replace(
             settings,
-            groq_model=rotation[idx % len(rotation)],
-            gemini_model=agent_rotation[idx % len(agent_rotation)],
+            groq_model=rotation[cell_key % len(rotation)],
+            gemini_model=agent_rotation[cell_key % len(agent_rotation)],
         )
-        t0 = time.monotonic()
         rec: RunRecord
         async with sem:
             await asyncio.sleep(pace_s)  # be gentle with free-tier per-minute quotas
+            t0 = time.monotonic()  # timed from the actual start of the run, not from when it queued
             try:
                 res = await run_text_simulation(
                     run_settings, sc, target, max_turns=max_turns, quiet=True, judge=True, turn_pace_s=turn_pace_s
                 )
                 analysis = res.get("analysis") or {}
+                if not analysis or (analysis.get("judge") or {}).get("_failed"):
+                    raise RuntimeError("judge failed on every model — recorded as an error so resume retries it")
                 rec = RunRecord(
                     bug=spec.bug,
                     scenario_id=scenario.id,
                     target_kind=kind,
                     rep=rep,
                     stem=analysis.get("stem"),
-                    judge_detected=_judge_detected(analysis, spec),
+                    judge_detected=_judge_detected(analysis, spec, strict=True),
+                    judge_detected_loose=_judge_detected(analysis, spec, strict=False),
                     symptom_detected=_symptom_detected(res["transcript"], spec),
                     decision_pass=(analysis.get("decision") or {}).get("pass"),
                     caller_turns=res["stats"]["caller_turns"],
@@ -285,10 +298,34 @@ async def run_bench(
             )
 
     await asyncio.gather(*(one(i, *c) for i, c in enumerate(cells)))
+    rescore(settings, runs_path)  # re-derive detections from the stored judge JSON so all runs use the same rule
     summary = summarize(runs_path)
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     (out_dir / "summary.md").write_text(render_summary_md(name, summary))
     return out_dir
+
+
+def rescore(settings: Settings, runs_path: Path) -> int:
+    """Recompute strict/loose judge detection for every recorded run from its stored analysis JSON (same rule for all
+    runs, including ones recorded before a detector change). Returns the number of rows rewritten."""
+    rows = [json.loads(line) for line in runs_path.read_text().splitlines() if line.strip()]
+    changed = 0
+    for r in rows:
+        if r.get("error") or not r.get("stem"):
+            continue
+        p = settings.reports_dir / f"{r['stem']}.analysis.json"
+        if not p.exists():
+            continue
+        analysis = json.loads(p.read_text())
+        spec = BUGS.get(r["bug"])
+        if not spec:
+            continue
+        strict, loose = _judge_detected(analysis, spec, True), _judge_detected(analysis, spec, False)
+        if r.get("judge_detected") != strict or r.get("judge_detected_loose") != loose:
+            r["judge_detected"], r["judge_detected_loose"] = strict, loose
+            changed += 1
+    runs_path.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    return changed
 
 
 def summarize(runs_path: Path) -> dict:
@@ -305,9 +342,9 @@ def summarize(runs_path: Path) -> dict:
         tn = len(clean) - fp
         prec = tp / (tp + fp) if tp + fp else None
         rec = tp / (tp + fn) if tp + fn else None
-        f1 = (
-            (2 * prec * rec / (prec + rec)) if prec and rec else (0.0 if prec is not None and rec is not None else None)
-        )
+        f1 = _f1(prec, rec)
+        loose_tp = sum(bool(r.get("judge_detected_loose")) for r in planted)
+        loose_fp = sum(bool(r.get("judge_detected_loose")) for r in clean)
         # pass@k / pass^k over cells (bug, scenario) on the planted target
         cells: dict[str, list[bool]] = {}
         for r in planted:
@@ -331,6 +368,8 @@ def summarize(runs_path: Path) -> dict:
             "pass_pow_k": _r(pass_pow_k),
             "k": max((len(v) for v in cells.values()), default=0),
             "scenarios": sorted(cells),
+            "loose_recall": _r(loose_tp / len(planted)) if planted else None,
+            "loose_false_alarm_rate": _r(loose_fp / len(clean)) if clean else None,
             "symptom_recall": _r(sum(sym_planted) / len(sym_planted)) if sym_planted else None,
             "symptom_false_alarm_rate": _r(sum(sym_clean) / len(sym_clean)) if sym_clean else None,
             "clean_control_flag_rate": _r(fp / len(clean)) if clean else None,
@@ -359,12 +398,22 @@ def summarize(runs_path: Path) -> dict:
             "tn": tn,
             "precision": _r(prec),
             "recall": _r(rec),
-            "f1": _r(2 * prec * rec / (prec + rec)) if prec and rec else None,
+            "f1": _r(_f1(prec, rec)),
             "clean_control_flag_rate": _r(fp / (fp + tn)) if fp + tn else None,
         },
         "per_bug": per_bug,
-        "avg_run_seconds": _r(statistics.mean(r["duration_s"] for r in runs)) if runs else None,
+        # durations recorded before 2026-08-18 included asyncio queue wait; anything > 600 s is treated as inflated
+        "avg_run_seconds": _r(statistics.mean(d))
+        if (d := [r["duration_s"] for r in runs if 0 < r["duration_s"] <= 600])
+        else None,
+        "avg_run_seconds_note": "mean over runs timed from actual start (≤ 600 s); earlier rows that included queue wait are excluded",
     }
+
+
+def _f1(prec, rec):
+    if prec is None or rec is None:
+        return None
+    return 0.0 if (prec + rec) == 0 else 2 * prec * rec / (prec + rec)
 
 
 def _r(x):
@@ -396,8 +445,10 @@ def render_summary_md(name: str, s: dict) -> str:
         "",
         "Method: one bug planted at a time in the bundled sample agent; the same scenarios run against the clean agent as control; "
         "each cell repeated k times; the bug's symptom description is injected as a hypothesis and the judge must mark it observed with evidence "
-        "(or flag a matching agent issue). pass@k = detected in ≥1 of k repeats of a (bug, scenario) cell; pass^k = detected in all k. "
-        "Symptom rules are transparent regexes over the agent's lines, scored separately. Text mode (LLM ↔ LLM); the audio arena is sampled separately.",
+        "(or flag an agent issue whose matches_hypothesis is that hypothesis) — near-verbatim text match, no keyword guessing "
+        "(a keyword-assisted 'loose' detector is kept in the JSON for diagnosis only). pass@k = detected in ≥1 of k repeats of a "
+        "(bug, scenario) cell; pass^k = detected in all k. Symptom rules are transparent regexes over the agent's lines, scored "
+        "separately. Text mode (LLM ↔ LLM), turn-paced for free-tier quotas; the audio arena is not part of this table.",
         "",
     ]
     return "\n".join(L)

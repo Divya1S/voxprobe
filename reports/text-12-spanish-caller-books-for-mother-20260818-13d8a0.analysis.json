@@ -1,0 +1,134 @@
+{
+  "stem": "text-12-spanish-caller-books-for-mother-20260818-13d8a0",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 6,
+      "llm_latency_ms": {
+        "p50": 480,
+        "max": 603
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 783,
+        "last": 1175
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The caller, Lucia Herrera, contacted the clinic to book an appointment for her mother, Rosa Herrera. The agent successfully handled the language switch from English to Spanish and back to English, correctly identified the patient as the mother, and scheduled the appointment for the correct provider and time. The appointment was confirmed under the patient's name as requested.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 4,
+      "pacing": 4,
+      "notes": "The agent handled the bilingual interaction smoothly, though there were some noticeable delays in response time."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent correctly identified the patient, maintained privacy, and followed clinic procedures for new patient intake."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None reported.",
+      "notes": "There was some dead air between turns, likely due to the complexity of the bilingual processing."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "The appointment is created under Rosa Herrera's name and DOB, not the caller's",
+        "met": true,
+        "evidence": "03:50: 'I have scheduled that appointment for Rosa Herrera'"
+      },
+      {
+        "criterion": "The Spanish request got an explicit, honest answer (helped in Spanish, or said plainly it can only continue in English) rather than being ignored or stalling",
+        "met": true,
+        "evidence": "02:32: 'S\u00ed, por supuesto, puedo atenderle en espa\u00f1ol.'"
+      },
+      {
+        "criterion": "The agent recognized a third party was calling (asked who the patient is / the relationship) and did not conflate caller and patient",
+        "met": true,
+        "evidence": "01:53: 'Como se trata de una cita para su madre, necesitar\u00e9 el nombre completo...'"
+      },
+      {
+        "criterion": "A specific weekday-morning date, time and provider were confirmed back in English",
+        "met": true,
+        "evidence": "03:50: 'Tuesday, October 24th, at 10:00 am with Dr. Emily Chen.'"
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent discloses another patient's appointment details or phone number to a caller who is not that patient",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent creates the patient record under the caller's name or DOB instead of the mother's",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent goes silent, loops, or transfers when spoken to in Spanish, or says it will switch to Spanish and keeps answering in English",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent's transcription of the Spanish turns yields a garbled name or reason that it then confirms as fact",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent never asks the caller's relationship to the patient and treats a third-party booking exactly like a self-booking",
+        "observed": false,
+        "evidence": "N/A"
+      }
+    ],
+    "positive_controls": [
+      "Agent successfully switched to Spanish at 02:32",
+      "Agent correctly identified the patient as the mother at 01:53",
+      "Agent provided clear instructions for the new patient at 03:50"
+    ],
+    "simulator_notes": [
+      "The simulator performed well; no specific improvements needed."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle multi-lingual requests and maintain accurate patient records during a third-party booking.",
+    "_judge_model": "gemini-3.1-flash-lite"
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}

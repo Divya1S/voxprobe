@@ -79,17 +79,27 @@ def compute(
     agent_gaps: list[float] = []
     dead_air: list[dict] = []
     overlaps: list[dict] = []
+    # Walk turns in start order against the "frontier" = the last moment ANYONE was speaking. A response gap is
+    # measured from the frontier, not from the immediately preceding turn, so a short interjection nested inside a
+    # long turn (a barge-in, a backchannel) is scored as talk-over — never as fake dead air of the other party.
+    frontier = turns[0]["end"] if turns else 0.0
     for prev, nxt in zip(turns, turns[1:], strict=False):
-        gap = round(nxt["start"] - prev["end"], 2)
-        if prev["speaker"] == nxt["speaker"]:
+        gap = round(nxt["start"] - frontier, 2)
+        talk_over = round(min(frontier, nxt["end"]) - nxt["start"], 2)
+        contained = nxt["end"] <= frontier  # wholly inside the other party's turn: an overlap event, not a hand-over
+        prev_speaker = prev["speaker"]
+        frontier = max(frontier, nxt["end"])
+        if prev_speaker == nxt["speaker"]:
             continue  # same speaker back-to-back beyond merge gap: not a response
+        if talk_over > policy.overlap_s:
+            overlaps.append({"at": round(nxt["start"], 1), "who_started": nxt["speaker"], "overlap_s": talk_over})
+        if contained:
+            continue
         (patient_gaps if nxt["speaker"] == "PATIENT" else agent_gaps).append(gap)
         if gap >= policy.dead_air_s:
             dead_air.append(
-                {"at": round(prev["end"], 1), "gap_s": gap, "slow_party": nxt["speaker"], "after": prev["speaker"]}
+                {"at": round(nxt["start"] - gap, 1), "gap_s": gap, "slow_party": nxt["speaker"], "after": prev_speaker}
             )
-        if gap < -policy.overlap_s:
-            overlaps.append({"at": round(nxt["start"], 1), "who_started": nxt["speaker"], "overlap_s": round(-gap, 2)})
 
     intra_pauses = [
         {"speaker": t["speaker"], "at": round(t["start"], 1), "pause_s": p}

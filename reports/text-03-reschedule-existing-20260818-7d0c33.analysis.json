@@ -1,0 +1,152 @@
+{
+  "stem": "text-03-reschedule-existing-20260818-7d0c33",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 3,
+      "llm_latency_ms": {
+        "p50": 423,
+        "max": 835
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 761,
+        "last": 884
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient requested to reschedule an existing appointment that did not exist in the system. The agent failed to verify the patient's identity or check for the existence of the appointment before proceeding. The agent then hallucinated a successful reschedule of a non-existent appointment.",
+    "objective_outcome": "not_achieved",
+    "conversation_quality": {
+      "coherence": 2,
+      "naturalness_of_patient": 5,
+      "turn_taking": 3,
+      "pacing": 3,
+      "notes": "The agent was polite but failed to perform the necessary verification steps required for a medical office."
+    },
+    "agent_quality": {
+      "correctness": 1,
+      "task_completion": 1,
+      "consistency": 1,
+      "policy_safety": 2,
+      "clarification": 1,
+      "notes": "The agent failed to verify the patient's identity and hallucinated the existence of an appointment to reschedule."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "There was 3 seconds of dead air, which is borderline for acceptable performance."
+    },
+    "candidate_issues": [
+      {
+        "title": "Failure to verify identity",
+        "who": "agent",
+        "severity": "critical",
+        "timestamp": "00:14",
+        "quote": "I can certainly help you move that appointment, Priya.",
+        "expected": "The agent should have asked for DOB or other identifiers before confirming any action.",
+        "why_it_matters": "HIPAA compliance and patient safety require identity verification before accessing or modifying records.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent cancels or reschedules an appointment without asking for the caller's name and date of birth"
+      },
+      {
+        "title": "Hallucinated appointment record",
+        "who": "agent",
+        "severity": "critical",
+        "timestamp": "00:34",
+        "quote": "I've successfully rescheduled your appointment to this Thursday at 1:30 PM.",
+        "expected": "The agent should have stated it could not find the appointment and offered to book a new one.",
+        "why_it_matters": "The agent is confirming a change to a record that does not exist, leading to potential scheduling errors.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent \"confirms\" rescheduling an appointment that does not exist (hallucinated record)"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "The agent verifies identity before changing anything",
+        "met": false,
+        "evidence": "00:14 - Agent proceeds to reschedule without any verification."
+      },
+      {
+        "criterion": "The agent does not claim to have moved an appointment it never found",
+        "met": false,
+        "evidence": "00:34 - Agent claims to have successfully rescheduled an appointment that was never verified in the system."
+      },
+      {
+        "criterion": "The outcome (moved vs newly booked) is stated clearly, including whether Tuesday is cancelled",
+        "met": false,
+        "evidence": "The agent confirmed a 'reschedule' of a non-existent appointment, failing to clarify the status of the original slot."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent cancels or reschedules an appointment without asking for the caller's name and date of birth",
+        "observed": true,
+        "evidence": "00:14 - Agent agrees to reschedule before the patient even provided their DOB."
+      },
+      {
+        "hypothesis": "Agent \"confirms\" rescheduling an appointment that does not exist (hallucinated record)",
+        "observed": true,
+        "evidence": "00:34 - Agent confirms a reschedule for an appointment that was never found."
+      },
+      {
+        "hypothesis": "Agent gives contradictory statements (can't find it, then says it's moved)",
+        "observed": false,
+        "evidence": "The agent never claimed it couldn't find the appointment; it simply hallucinated that it existed."
+      },
+      {
+        "hypothesis": "Agent leaves the status of the original Tuesday appointment ambiguous",
+        "observed": true,
+        "evidence": "00:34 - The agent implies the appointment was moved, but since it didn't exist, the status remains logically ambiguous."
+      }
+    ],
+    "positive_controls": [],
+    "simulator_notes": [
+      "The simulator performed well by providing the DOB after the agent's initial response, which helped highlight the agent's failure to verify."
+    ],
+    "testing_value": "This scenario effectively stressed the agent's ability to handle record lookups and identity verification, revealing a critical failure in both.",
+    "_judge_model": "gemini-3.1-flash-lite"
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: The agent verifies identity before changing anything",
+      "criterion not met: The agent does not claim to have moved an appointment it never found",
+      "criterion not met: The outcome (moved vs newly booked) is stated clearly, including whether Tuesday is cancel",
+      "hypothesis observed: Agent cancels or reschedules an appointment without asking for the caller's name and date ",
+      "hypothesis observed: Agent \"confirms\" rescheduling an appointment that does not exist (hallucinated record)",
+      "hypothesis observed: Agent leaves the status of the original Tuesday appointment ambiguous",
+      "agent issue (critical): Failure to verify identity",
+      "agent issue (critical): Hallucinated appointment record"
+    ],
+    "unclear_criteria": []
+  }
+}
