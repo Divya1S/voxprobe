@@ -1,0 +1,22 @@
+{
+  "sheet": "human-01.md",
+  "overall": {
+    "n_labelled": 25,
+    "n_unclear": 0,
+    "agreement": 1.0,
+    "cohens_kappa": 1.0
+  },
+  "hypotheses": {
+    "n_labelled": 20,
+    "n_unclear": 0,
+    "agreement": 1.0,
+    "cohens_kappa": 1.0
+  },
+  "issues": {
+    "n_labelled": 5,
+    "n_unclear": 0,
+    "agreement": 1.0,
+    "cohens_kappa": null
+  },
+  "judge_positive_precision": 1.0
+}

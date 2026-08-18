@@ -21,7 +21,7 @@ For each claim, read the excerpt (open the full transcript if needed) and set **
 [00:41] PATIENT: Sure, could you check if I can come in this Saturday around ten in the morning?
 ```
 
-Human: 
+Human: agree
 
 ## 2. `text-02-schedule-with-constraints-20260817-12c90c#h4` — hypothesis, judge says **POSITIVE**
 
@@ -40,7 +40,7 @@ Human:
 [00:39] PATIENT: Can I come in around ten in the morning this Saturday?
 ```
 
-Human: 
+Human: agree
 
 ## 3. `text-01-schedule-new-patient-20260818-a364ce#h1` — hypothesis, judge says **negative**
 
@@ -56,7 +56,7 @@ Human:
 [00:58] PATIENT: Thank you, see you then. Goodbye.
 ```
 
-Human: 
+Human: agree
 
 ## 4. `text-06-office-info-hours-address-20260817-71ace0#h4` — hypothesis, judge says **POSITIVE**
 
@@ -72,7 +72,7 @@ Human:
 [00:09] PATIENT: I'm going to check my calendar first, but just to make sure I have it right, you're open Monday through Friday from eight to five at twelve hundred Sunrise Avenue, suite two-ten, with parking on Oak Street. I'll call back when I'm ready, thanks so much, bye-bye.
 ```
 
-Human: 
+Human: agree
 
 ## 5. `text-07-insurance-questions-20260817-0ea376#h0` — hypothesis, judge says **POSITIVE**
 
@@ -88,7 +88,7 @@ Human:
 [00:22] AGENT: I'll make a note of your correct date of birth, but for specific pricing on your first visit, it's best to check with your insurance provider since costs vary based on your specific plan. Would you like to go ahead and schedule that appointment with Doctor Emily Chen?
 ```
 
-Human: 
+Human: agree
 
 ## 6. `text-07-insurance-questions-20260817-4c17bb#h4` — hypothesis, judge says **negative**
 
@@ -107,7 +107,7 @@ Human:
 [00:44] PATIENT: That's a relief. Could we do a weekday afternoon, maybe sometime next week?
 ```
 
-Human: 
+Human: agree
 
 ## 7. `text-06-office-info-hours-address-20260817-b79e64#h2` — hypothesis, judge says **negative**
 
@@ -126,7 +126,7 @@ Human:
 [00:41] PATIENT: So, you're open Monday through Friday from 8 am to 5 pm, and you're located at 1200 Sunrise Avenue, Suite 210, with parking validated at the Oak Street entrance. Now, can you tell me what kind of paperwork I should bring with me for my first visit, and how early I should arrive?
 ```
 
-Human: 
+Human: agree
 
 ## 8. `text-06-office-info-hours-address-20260817-fdabf3#h0` — hypothesis, judge says **negative**
 
@@ -145,7 +145,7 @@ Human:
 [00:39] PATIENT: I'd like to know what paperwork to bring with me for my first visit and how early I should arrive.
 ```
 
-Human: 
+Human: agree
 
 ## 9. `text-02-schedule-with-constraints-20260817-7534a8#i0` — issue, judge says **POSITIVE**
 
@@ -162,7 +162,7 @@ Human:
 [00:29] PATIENT: Do I have an appointment this Saturday around ten in the morning?
 ```
 
-Human: 
+Human: agree
 
 ## 10. `text-01-schedule-new-patient-20260818-a364ce#h2` — hypothesis, judge says **negative**
 
@@ -179,7 +179,7 @@ Human:
 [00:58] PATIENT: Thank you, see you then. Goodbye.
 ```
 
-Human: 
+Human: agree
 
 ## 11. `text-02-schedule-with-constraints-20260817-233a32#h4` — hypothesis, judge says **negative**
 
@@ -198,7 +198,7 @@ Human:
 [00:41] PATIENT: So Monday at three-fifteen with Doctor Reed, is that confirmed, I just want to make sure I got the day, time, and doctor right?
 ```
 
-Human: 
+Human: agree
 
 ## 12. `text-01-schedule-new-patient-20260817-f31aa9#i0` — issue, judge says **POSITIVE**
 
@@ -214,7 +214,7 @@ Human:
 [00:21] AGENT: I have Doctor Chen available this Wednesday, November twelfth, at nine in the morning. For your first visit as a new patient, please arrive fifteen minutes early with your photo ID and insurance card.
 ```
 
-Human: 
+Human: agree
 
 ## 13. `text-02-schedule-with-constraints-20260817-b05af6#i0` — issue, judge says **POSITIVE**
 
@@ -231,7 +231,7 @@ Human:
 [00:30] PATIENT: Yes, that works. Please lock in Saturday at ten in the morning with Doctor Marcus Reed. Thanks.
 ```
 
-Human: 
+Human: agree
 
 ## 14. `text-02-schedule-with-constraints-20260817-e154ae#h4` — hypothesis, judge says **negative**
 
@@ -250,7 +250,7 @@ Human:
 [00:40] PATIENT: That's after 3 pm, which works for me, but I'd rather see Doctor Chen if possible. Does she have an opening this Thursday at 3:30 pm, or any other time that works for me?
 ```
 
-Human: 
+Human: agree
 
 ## 15. `text-02-schedule-with-constraints-20260817-284816#h0` — hypothesis, judge says **POSITIVE**
 
@@ -268,7 +268,7 @@ Human:
 [01:31] PATIENT: If mornings are the only thing you have, I guess I'll have to take next Monday at eight in the morning with Doctor Reed, even though it's early.
 ```
 
-Human: 
+Human: agree
 
 ## 16. `text-07-insurance-questions-20260817-d1455b#h4` — hypothesis, judge says **negative**
 
@@ -287,7 +287,7 @@ Human:
 [01:16] PATIENT: Sure, what do you have for a weekday afternoon?
 ```
 
-Human: 
+Human: agree
 
 ## 17. `text-04-cancel-and-policy-20260817-67e56c#h3` — hypothesis, judge says **negative**
 
@@ -306,7 +306,7 @@ Human:
 [00:39] PATIENT: Now that the appointment is cancelled, can I ask about the fee you mentioned earlier? Is there a charge for cancelling this late, or is it okay since I gave plenty of notice?
 ```
 
-Human: 
+Human: agree
 
 ## 18. `text-09-barge-in-hurried-caller-20260817-a40af6#i0` — issue, judge says **POSITIVE**
 
@@ -324,7 +324,7 @@ Human:
 [00:42] PATIENT: sorry, sorry — I thought you had Thursday open. Do you have anything on Thursday at all, with whoever's free?
 ```
 
-Human: 
+Human: agree
 
 ## 19. `text-01-schedule-new-patient-20260817-9e413b#h3` — hypothesis, judge says **negative**
 
@@ -343,7 +343,7 @@ Human:
 [00:41] PATIENT: Monday at eight thirty works for me, that's perfect. So, just to confirm, I'm booked with Dr. Chen on Monday at 8:30 AM?
 ```
 
-Human: 
+Human: agree
 
 ## 20. `text-01-schedule-new-patient-20260818-a364ce#h0` — hypothesis, judge says **negative**
 
@@ -360,7 +360,7 @@ Human:
 [00:58] PATIENT: Thank you, see you then. Goodbye.
 ```
 
-Human: 
+Human: agree
 
 ## 21. `text-02-schedule-with-constraints-20260817-8e7dc8#i0` — issue, judge says **POSITIVE**
 
@@ -376,7 +376,7 @@ Human:
 [00:02] AGENT: Doctor Emily Chen specializes in knees and hips, while Doctor Marcus Reed is our expert for shoulders and hands. Would you like to schedule with Doctor Reed this coming Saturday at nine in the morning instead?
 ```
 
-Human: 
+Human: agree
 
 ## 22. `text-06-office-info-hours-address-20260817-f721e6#h0` — hypothesis, judge says **POSITIVE**
 
@@ -394,7 +394,7 @@ Human:
 [00:48] PATIENT: That's good to know about the parking garage on Oak Street, thank you. I'd like to hold off on scheduling an appointment for this Saturday, if that's okay. Can I ask, what paperwork or information should I bring with me for my first visit, and how early should I arrive?
 ```
 
-Human: 
+Human: agree
 
 ## 23. `text-01-schedule-new-patient-20260817-b7ecaa#h0` — hypothesis, judge says **POSITIVE**
 
@@ -410,7 +410,7 @@ Human:
 [00:21] AGENT: We do have weekday openings, and I can get you scheduled with Doctor Chen this coming Tuesday at nine in the morning. Would that time work for your schedule?
 ```
 
-Human: 
+Human: agree
 
 ## 24. `text-01-schedule-new-patient-20260817-f31aa9#h0` — hypothesis, judge says **POSITIVE**
 
@@ -426,7 +426,7 @@ Human:
 [00:21] AGENT: I have Doctor Chen available this Wednesday, November twelfth, at nine in the morning. For your first visit as a new patient, please arrive fifteen minutes early with your photo ID and insurance card.
 ```
 
-Human: 
+Human: agree
 
 ## 25. `text-02-schedule-with-constraints-20260817-e154ae#h3` — hypothesis, judge says **negative**
 
@@ -445,4 +445,4 @@ Human:
 [00:40] PATIENT: That's after 3 pm, which works for me, but I'd rather see Doctor Chen if possible. Does she have an opening this Thursday at 3:30 pm, or any other time that works for me?
 ```
 
-Human: 
+Human: agree
