@@ -45,3 +45,12 @@ def test_director_flags_repetition():
 def test_goodbye_detection():
     assert looks_like_goodbye("Great, thanks so much. Bye now!")
     assert not looks_like_goodbye("Could you repeat the time, please?")
+
+
+def test_director_pending_note_is_used_exactly_once():
+    s = find_scenario(SCENARIOS_DIR, "09")
+    state = CallState(scenario=s, patient_turns=2, pending_note="You just interrupted; state your new request.")
+    first = director_note(state, "…and our office is located at")
+    assert "You just interrupted" in first
+    second = director_note(state, "Sure, go ahead.")
+    assert "You just interrupted" not in second

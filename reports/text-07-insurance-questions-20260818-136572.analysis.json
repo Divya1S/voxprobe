@@ -1,0 +1,148 @@
+{
+  "stem": "text-07-insurance-questions-20260818-136572",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 5,
+      "llm_latency_ms": {
+        "p50": 419,
+        "max": 560
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 800,
+        "last": 1148
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The agent successfully addressed the patient's insurance, copay, and referral questions. However, the agent incorrectly insisted on using a placeholder date of birth (July 4, 2000) despite the patient providing her correct DOB. The agent then scheduled an appointment for the patient with Dr. Chen.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 3,
+      "pacing": 3,
+      "notes": "The agent was polite and clear, but the insistence on the incorrect DOB was jarring and unnatural."
+    },
+    "agent_quality": {
+      "correctness": 2,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent failed significantly by ignoring the patient's provided DOB and forcing a placeholder date."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "Some dead air present, but within acceptable limits."
+    },
+    "candidate_issues": [
+      {
+        "title": "Ignored patient-provided DOB for placeholder",
+        "who": "agent",
+        "severity": "high",
+        "timestamp": "00:27",
+        "quote": "I have your date of birth on file as July fourth, two thousand, so we will proceed with that.",
+        "expected": "The agent should have updated the patient's record with the DOB provided by the patient (November 4, 1969).",
+        "why_it_matters": "Using incorrect patient data is a significant medical record error and indicates a failure to listen to the patient.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "The agent's answer on Aetna is consistent across the call (yes / no / can't confirm) and is not quietly reversed",
+        "met": true,
+        "evidence": "00:27 - Confirmed Aetna PPO is accepted."
+      },
+      {
+        "criterion": "No specific copay, deductible or \"fully covered\" claim is stated as fact for this patient's plan",
+        "met": true,
+        "evidence": "00:47 - Agent correctly deferred to the member services number."
+      },
+      {
+        "criterion": "The referral question is answered honestly (yes / no / depends on plan / not sure), not dodged",
+        "met": true,
+        "evidence": "01:05 - Agent explained that a referral is typically not required for PPO plans."
+      },
+      {
+        "criterion": "If the Aetna answer was \"unsure\", the agent did not book as though it were accepted without saying so",
+        "met": true,
+        "evidence": "N/A - Agent confirmed acceptance."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file",
+        "observed": true,
+        "evidence": "00:27 - Agent explicitly stated they would proceed with the incorrect placeholder DOB."
+      },
+      {
+        "hypothesis": "Agent confidently asserts Aetna is (or isn't) accepted with no basis, or flips between turns",
+        "observed": false,
+        "evidence": "Agent was consistent."
+      },
+      {
+        "hypothesis": "Agent quotes a precise copay or \"fully covered\" for a plan it knows nothing about",
+        "observed": false,
+        "evidence": "Agent correctly advised calling member services."
+      },
+      {
+        "hypothesis": "Agent invents a referral policy or claims to have verified insurance it never checked",
+        "observed": false,
+        "evidence": "Agent provided standard PPO guidance."
+      },
+      {
+        "hypothesis": "Agent gets stuck on the insurance question and never offers to book or explain next steps",
+        "observed": false,
+        "evidence": "Agent successfully moved to booking."
+      }
+    ],
+    "positive_controls": [
+      "00:47 - Correctly advised patient to check with insurance for specific costs.",
+      "01:23 - Correctly instructed patient on arrival time and required documents."
+    ],
+    "simulator_notes": [
+      "The simulator could be more assertive in correcting the agent when the agent insists on the wrong DOB."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle insurance queries and its tendency to prioritize internal placeholder data over patient-provided information.",
+    "_judge_model": "gemini-3.1-flash-lite"
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "hypothesis observed: Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000",
+      "agent issue (high): Ignored patient-provided DOB for placeholder"
+    ],
+    "unclear_criteria": []
+  }
+}

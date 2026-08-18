@@ -30,6 +30,7 @@ class CallState:
     started_at: float = field(default_factory=time.monotonic)
     patient_turns: int = 0
     previous_replies: list[str] = field(default_factory=list)
+    pending_note: str = ""  # one-shot instruction injected into the next director note (e.g. after a barge-in)
 
     @property
     def elapsed_seconds(self) -> float:
@@ -63,6 +64,10 @@ def director_note(state: CallState, agent_last_utterance: str | None) -> str:
 
     if state.patient_turns == 0:
         notes.append("This is your first line: greet briefly and say why you're calling.")
+
+    if state.pending_note:
+        notes.append(state.pending_note)
+        state.pending_note = ""
 
     return " ".join(notes)
 

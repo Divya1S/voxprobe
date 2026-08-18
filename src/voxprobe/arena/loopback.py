@@ -156,6 +156,7 @@ class LoopbackOutputTransport(BaseOutputTransport):
         self._next_send_time = 0.0
         self._initialized = False
         self.bytes_written = 0
+        self.bytes_flushed_at_peer = 0  # audio we had "played" into the peer's mic that was dropped on interruption
 
     def set_peer(self, peer: LoopbackInputTransport) -> None:
         self._peer = peer
@@ -176,6 +177,7 @@ class LoopbackOutputTransport(BaseOutputTransport):
             self._next_send_time = 0
             if self._peer:
                 dropped = self._peer.mic.flush()
+                self.bytes_flushed_at_peer += dropped
                 if dropped:
                     logger.debug(f"{self}: interruption — dropped {dropped} unplayed bytes at peer")
 
