@@ -60,7 +60,9 @@ confirming another patient's information; unsafe handling of emergencies or cont
 identity before changing anything; ignoring an explicit constraint the patient stated.
 Turn-taking (the METRICS block is measured from the audio, treat it as fact): dead air and overlaps are reported deterministically
 by the instrument — do NOT list them again as candidate issues; DO reflect them in `technical_quality.latency` (≤ 3 when any dead air
-exists, ≤ 2 when dead air ≥ 5 s exists) and in `conversation_quality.turn_taking`.
+exists, ≤ 2 when dead air ≥ 5 s exists) and in `conversation_quality.turn_taking`. Criteria or hypotheses about interruptions,
+barge-in or talk-over are decided by the measurements: if METRICS contains `barge_ins`, use `agent_turn_interrupted` /
+`yield_from_trigger_s` for them; if it does not, mark such criteria "unclear" rather than inferring from text.
 Rules: cite timestamps and verbatim quotes; do not call something a bug if it is a preference; separate agent faults from
 simulator faults; if the transcript is too short or garbled to judge, say so in summary and keep candidate_issues empty."""
 
@@ -258,14 +260,14 @@ def render_analysis_md(stem: str, scenario: Scenario, meta: dict, metrics: dict,
         L += [
             "## Deliberate barge-ins (measured)",
             "",
-            "| # | agent had spoken | caller cut in with | agent yielded (from trigger, incl. our TTS TTFB) | agent speech unheard (loopback only) |",
+            "| # | agent had spoken | caller cut in with | agent yielded (from trigger, incl. our TTS TTFB) | agent turn cut short (Pipecat `interrupted`, loopback only) |",
             "|---|---|---|---|---|",
         ]
         for i, b in enumerate(meta["barge_ins"], 1):
             L.append(
                 f"| {i} | {b.get('agent_speaking_for_s', '?')} s | {b.get('phrase', '')} | "
                 f"{b.get('yield_from_trigger_s', 'did not yield')} s | "
-                f"{'n/a' if b.get('unheard_agent_speech_s') is None else str(b.get('unheard_agent_speech_s')) + ' s'} |"
+                f"{'yes' if b.get('agent_turn_interrupted') else ('n/a' if b.get('dropped_buffer_s') is None else 'no')} |"
             )
         L.append("")
     L += [f"## Verdict: {'PASS' if decision['pass'] else 'FAIL'}", ""]
@@ -336,6 +338,10 @@ def analyze_call(settings: Settings, stem: str) -> Path:
 
     events = load_events(settings.repo_root / meta["files"]["events_jsonl"])
     metrics = compute(tx["segments"], events, meta.get("performance_metrics"))
+    if meta.get("barge_ins"):
+        metrics["barge_ins"] = meta[
+            "barge_ins"
+        ]  # deliberate interruptions + Pipecat's interrupted flags, for the judge
     verdict = judge(settings, scenario, target, transcript_md, metrics)
 
     (settings.reports_dir / f"{stem}.analysis.json").write_text(
