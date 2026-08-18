@@ -1,10 +1,14 @@
 """Command-line entry point.
 
-voxprobe list                                        scenarios and targets
-voxprobe simulate --scenario 01 --target local-clinic   local run against the bundled sample agent (text mode; audio arena coming)
-voxprobe call --scenario 01 --target my-phone-agent  real phone call through the optional Vapi adapter (tunnel + brain server + call + evidence)
-voxprobe serve                                       run the brain server only (external tunnel)
-voxprobe analyze <stem>...                           re-transcribe + metrics + judge draft for recorded call(s)
+voxprobe list                                          scenarios and targets
+voxprobe simulate --scenario 02 --target local-clinic-buggy --mode text|audio   local arena vs the bundled sample agent
+voxprobe simulate --scenario 01 --target ws-local-clinic --mode audio           the same caller over a websocket target
+voxprobe serve-agent --target local-clinic --port 8765  expose the sample agent over Pipecat's websocket protocol
+voxprobe bench --name <name> -k 3                      planted-bug detection benchmark (precision/recall/F1, pass@k)
+voxprobe calibrate sample|score ...                    judge calibration sheet + human agreement / kappa
+voxprobe analyze <stem>...                             re-transcribe + metrics + judge for recorded runs
+voxprobe call --scenario 01 --target <vapi-target>     experimental phone adapter (tunnel + brain server + call)
+voxprobe serve                                         brain server only (external tunnel)
 """
 
 from __future__ import annotations

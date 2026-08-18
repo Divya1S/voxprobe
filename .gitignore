@@ -38,3 +38,6 @@ reports/call-*
 reports/events/arena-*
 reports/events/call-*
 .ruff_cache/
+
+# run recordings live in recordings/ locally; only curated copies under examples/ are committed
+recordings/*.mp3

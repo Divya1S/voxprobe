@@ -1,8 +1,12 @@
-"""Post-call analysis: re-transcribe → metrics → LLM-judge DRAFT. A human curates the bug report from these drafts.
+"""Post-call analysis: re-transcribe → metrics → LLM judge → deterministic PASS/FAIL.
 
-The judge is deliberately asked for *candidate* issues with timestamps, quotes, expected behavior, who is at fault
-(agent vs our simulator vs uncertain), severity and confidence — never a verdict. Anything it flags is checked
-against the audio before it can appear in BUG_REPORT.md.
+Two kinds of findings, kept apart on purpose:
+* **measured** — dead air and talk-over from the audio timing (`measured_issues`), exact timestamps, rule-based severity, no LLM;
+* **judged** — the LLM returns *structured* verdicts (one `met` per success criterion, one `observed` per bug hypothesis, each
+  with evidence) plus candidate issues with timestamp, quote, expected behaviour, who is at fault (agent / simulator /
+  uncertain), severity and confidence.
+`decide()` turns both into PASS/FAIL without an LLM. Judge quality is measured, not assumed: `bench.py` scores it against
+planted bugs and `calibrate.py` against human labels.
 """
 
 from __future__ import annotations
