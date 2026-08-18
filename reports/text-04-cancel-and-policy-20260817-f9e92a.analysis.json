@@ -1,0 +1,148 @@
+{
+  "stem": "text-04-cancel-and-policy-20260817-f9e92a",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 7,
+      "llm_latency_ms": {
+        "p50": 318,
+        "max": 397
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 730,
+        "last": 1013
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to cancel an appointment, but the agent incorrectly identified the patient using a placeholder date of birth. Despite the patient correcting the agent, the agent insisted on using the incorrect file data. The agent successfully cancelled the appointment and correctly explained the cancellation policy, though the identity verification process was flawed.",
+    "objective_outcome": "partial",
+    "conversation_quality": {
+      "coherence": 3,
+      "naturalness_of_patient": 5,
+      "turn_taking": 3,
+      "pacing": 3,
+      "notes": "The agent's insistence on using incorrect data despite the patient's correction made the interaction feel robotic and unhelpful."
+    },
+    "agent_quality": {
+      "correctness": 2,
+      "task_completion": 4,
+      "consistency": 2,
+      "policy_safety": 5,
+      "clarification": 2,
+      "notes": "The agent failed to properly verify the patient's identity, instead relying on a hallucinated or incorrect DOB on file and refusing to accept the patient's correction."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None reported.",
+      "notes": "The agent's refusal to acknowledge the patient's correct DOB is a significant logic failure."
+    },
+    "candidate_issues": [
+      {
+        "title": "Incorrect DOB usage",
+        "who": "agent",
+        "severity": "high",
+        "timestamp": "00:10",
+        "quote": "I see on file your date of birth is July fourth, two thousand",
+        "expected": "The agent should have asked for the DOB or accepted the patient's correction.",
+        "why_it_matters": "Using incorrect patient data violates security and privacy protocols.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "The agent verifies name and DOB before cancelling anything",
+        "met": false,
+        "evidence": "00:10 - The agent used an incorrect DOB and refused to update it."
+      },
+      {
+        "criterion": "The agent does not claim to have cancelled an appointment it never found",
+        "met": true,
+        "evidence": "The agent found the appointment."
+      },
+      {
+        "criterion": "The policy question gets a plain answer (a policy, or an honest \"I don't know / someone will follow up\"), not a number made up on the spot",
+        "met": true,
+        "evidence": "00:50 - The agent correctly stated the 24-hour notice policy."
+      },
+      {
+        "criterion": "The final status (cancelled vs nothing on file) is stated clearly and the wish not to rebook now is respected",
+        "met": true,
+        "evidence": "00:40 - The agent confirmed cancellation and did not push back when the patient declined to rebook."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file",
+        "observed": true,
+        "evidence": "00:10 - Agent stated 'July fourth, two thousand'."
+      },
+      {
+        "hypothesis": "Agent \"confirms\" cancelling an appointment that does not exist (hallucinated record)",
+        "observed": false,
+        "evidence": "The appointment was found."
+      },
+      {
+        "hypothesis": "Agent cancels without asking for name and DOB",
+        "observed": false,
+        "evidence": "The agent asked for the name, but used an incorrect DOB."
+      },
+      {
+        "hypothesis": "Agent invents a specific fee or notice window it cannot back up, or gives a different policy when re-asked",
+        "observed": false,
+        "evidence": "The agent provided the correct policy."
+      },
+      {
+        "hypothesis": "Agent keeps steering toward rebooking after the patient declined, or ends without saying whether anything was cancelled",
+        "observed": false,
+        "evidence": "The agent respected the patient's choice not to rebook."
+      }
+    ],
+    "positive_controls": [
+      "Correctly explained the cancellation policy at 00:50",
+      "Confirmed the cancellation clearly at 00:40"
+    ],
+    "simulator_notes": [
+      "The simulator performed well in correcting the agent's error."
+    ],
+    "testing_value": "This scenario successfully stressed the agent's identity verification logic and its ability to handle incorrect data on file."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: The agent verifies name and DOB before cancelling anything",
+      "hypothesis observed: Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000",
+      "agent issue (high): Incorrect DOB usage"
+    ],
+    "unclear_criteria": []
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "stem": "text-02-schedule-with-constraints-20260817-5da2e5",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 8,
+      "llm_latency_ms": {
+        "p50": 912,
+        "max": 1206
+      },
+      "providers": [
+        "gemini"
+      ],
+      "failovers": 8,
+      "prompt_tokens": {
+        "first": 709,
+        "last": 976
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient attempted to schedule an appointment for a shoulder issue, requesting a Saturday or a weekday after 3 pm. The agent correctly identified that the clinic is closed on weekends and that Dr. Reed is the appropriate specialist for shoulders. However, the agent failed to offer any options that met the patient's 'after 3 pm' constraint, repeatedly insisting that 8 am was the only available time.",
+    "objective_outcome": "partial",
+    "conversation_quality": {
+      "coherence": 4,
+      "naturalness_of_patient": 5,
+      "turn_taking": 4,
+      "pacing": 3,
+      "notes": "The agent was polite but repetitive, failing to acknowledge the patient's constraint beyond a simple 'I understand' before immediately ignoring it."
+    },
+    "agent_quality": {
+      "correctness": 4,
+      "task_completion": 3,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 3,
+      "notes": "The agent correctly identified clinic hours and provider specialties but failed to provide any scheduling options that actually fit the patient's stated availability."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "Latency was acceptable, but the agent's inability to offer alternatives beyond 8 am made the scheduling process frustrating."
+    },
+    "candidate_issues": [
+      {
+        "title": "Failure to accommodate weekday after-3pm constraint",
+        "who": "agent",
+        "severity": "medium",
+        "timestamp": "00:34",
+        "quote": "I understand your schedule, but eight in the morning on Monday is the only option I have available.",
+        "expected": "The agent should have searched for or offered alternative dates/times that fit the after-3pm constraint, or explained why no such slots exist.",
+        "why_it_matters": "The patient explicitly stated they work until 3 pm; offering only 8 am slots makes the appointment impossible for the patient to attend.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent offers or books a slot that violates a time-of-day, weekday or provider constraint the caller stated, and does not acknowledge the constraint"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "Agent does not book a Saturday if the practice is closed on weekends, and says so plainly",
+        "met": true,
+        "evidence": "00:22: 'We are closed on weekends'"
+      },
+      {
+        "criterion": "Any offered slot respects \"after 3 pm on weekdays\"",
+        "met": false,
+        "evidence": "00:34, 00:45, 00:57: Agent repeatedly insisted on 8 am slots."
+      },
+      {
+        "criterion": "Provider preference is handled honestly (available / not available / alternative offered)",
+        "met": true,
+        "evidence": "00:11, 00:57: Agent correctly identified Dr. Reed as the shoulder specialist and explained Dr. Chen's specialty."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or books a slot that violates a time-of-day, weekday or provider constraint the caller stated, and does not acknowledge the constraint",
+        "observed": true,
+        "evidence": "00:34: Agent acknowledged the schedule but ignored the constraint by only offering 8 am."
+      },
+      {
+        "hypothesis": "Agent books or \"confirms\" a Saturday appointment although the clinic is closed on weekends",
+        "observed": false,
+        "evidence": "Agent correctly stated the clinic is closed on weekends."
+      },
+      {
+        "hypothesis": "Agent offers a morning weekday slot despite the after-3pm constraint",
+        "observed": true,
+        "evidence": "00:34, 00:45, 00:57: Agent repeatedly offered 8 am slots."
+      },
+      {
+        "hypothesis": "Agent claims Doctor Chen is available/unavailable inconsistently across turns",
+        "observed": false,
+        "evidence": "Agent was consistent regarding provider specialties."
+      },
+      {
+        "hypothesis": "Agent cannot state weekend hours (prior public reports quote it saying \"weekend hours are not listed\")",
+        "observed": false,
+        "evidence": "Agent clearly stated 'We are closed on weekends'."
+      }
+    ],
+    "positive_controls": [
+      "Correctly identified weekend closure at 00:22",
+      "Correctly identified Dr. Reed as the shoulder specialist at 00:11"
+    ],
+    "simulator_notes": [
+      "The simulator performed well in adhering to the persona and constraints."
+    ],
+    "testing_value": "This scenario effectively stressed the agent's ability to handle conflicting constraints (patient availability vs. clinic availability), revealing a failure to provide flexible scheduling options."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: Any offered slot respects \"after 3 pm on weekdays\"",
+      "hypothesis observed: Agent offers or books a slot that violates a time-of-day, weekday or provider constraint t",
+      "hypothesis observed: Agent offers a morning weekday slot despite the after-3pm constraint"
+    ],
+    "unclear_criteria": []
+  }
+}

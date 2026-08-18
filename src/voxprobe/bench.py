@@ -218,20 +218,20 @@ async def run_bench(
     t_start = time.monotonic()
     completed = 0
     # Rotate the caller brain across Groq models so no single model's tokens-per-day cap stalls the matrix
-    # (free tier, measured 2026-08-17: llama-3.1-8b 6K TPM/500K TPD; gpt-oss-20b 8K TPM; llama-3.3-70b 12K TPM/100K TPD).
-    rotation = [
-        "llama-3.1-8b-instant",
-        "llama-3.1-8b-instant",
-        "openai/gpt-oss-20b",
-        "llama-3.1-8b-instant",
-        "llama-3.3-70b-versatile",
-    ]
+    # (free tier, measured 2026-08-17 evening: gpt-oss-20b and gpt-oss-120b each 8K TPM / 1K requests per day).
+    rotation = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]  # Groq retired llama-3.x for free keys on 2026-08-17
+    # Sample-agent Gemini models rotate too: free-tier daily request caps are per model.
+    agent_rotation = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.7-flash", "gemini-3-flash-preview"]
 
     async def one(idx: int, spec: BugSpec, scenario: Scenario, kind: str, rep: int) -> None:
         nonlocal completed
         target = _planted_target(clean, spec.bug) if kind == "planted" else clean
         sc = _with_hypothesis(scenario, spec)
-        run_settings = replace(settings, groq_model=rotation[idx % len(rotation)])
+        run_settings = replace(
+            settings,
+            groq_model=rotation[idx % len(rotation)],
+            gemini_model=agent_rotation[idx % len(agent_rotation)],
+        )
         t0 = time.monotonic()
         rec: RunRecord
         async with sem:

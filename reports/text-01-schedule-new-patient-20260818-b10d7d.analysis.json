@@ -1,0 +1,122 @@
+{
+  "stem": "text-01-schedule-new-patient-20260818-b10d7d",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 8,
+      "llm_latency_ms": {
+        "p50": 305,
+        "max": 471
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 719,
+        "last": 871
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The transcript is incomplete and garbled, providing no clear evidence of the agent\u2019s actions or the patient\u2019s responses. Consequently, the agent\u2019s performance cannot be evaluated against the scenario\u2019s success criteria or bug hypotheses.",
+    "objective_outcome": "unclear",
+    "conversation_quality": {
+      "coherence": 1,
+      "naturalness_of_patient": 1,
+      "turn_taking": 1,
+      "pacing": 1,
+      "notes": "Transcript insufficient for assessment."
+    },
+    "agent_quality": {
+      "correctness": 1,
+      "task_completion": 1,
+      "consistency": 1,
+      "policy_safety": 1,
+      "clarification": 1,
+      "notes": "No data to judge agent behavior."
+    },
+    "technical_quality": {
+      "latency": 1,
+      "audio_or_asr_issues": "Transcript incomplete; no audio data.",
+      "notes": "No measurable latency or audio issues."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "A specific weekday date, time and provider were confirmed back to the patient",
+        "met": "unclear",
+        "evidence": "Transcript incomplete; no confirmation."
+      },
+      {
+        "criterion": "The agent used the patient's own name and DOB (did not substitute demo values without saying so)",
+        "met": "unclear",
+        "evidence": "Transcript incomplete; no name/DOB usage."
+      },
+      {
+        "criterion": "Call ended naturally after the patient said goodbye",
+        "met": "unclear",
+        "evidence": "Transcript incomplete; no call termination."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent fabricates or assigns a placeholder DOB instead of using the one given",
+        "observed": "unclear",
+        "evidence": "Transcript incomplete."
+      },
+      {
+        "hypothesis": "Agent confirms a slot without stating the day/time/provider explicitly",
+        "observed": "unclear",
+        "evidence": "Transcript incomplete."
+      },
+      {
+        "hypothesis": "Agent asks a new patient for \"the phone number on file\"",
+        "observed": "unclear",
+        "evidence": "Transcript incomplete."
+      },
+      {
+        "hypothesis": "Agent cannot answer \"what should I bring\" and reaches for a transfer instead",
+        "observed": "unclear",
+        "evidence": "Transcript incomplete."
+      }
+    ],
+    "positive_controls": [],
+    "simulator_notes": [],
+    "testing_value": "The scenario could not be evaluated because the transcript was incomplete, preventing assessment of the agent\u2019s performance.",
+    "_judge_model": "openai/gpt-oss-20b"
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": [
+      "A specific weekday date, time and provider were confirmed ba",
+      "The agent used the patient's own name and DOB (did not subst",
+      "Call ended naturally after the patient said goodbye"
+    ]
+  }
+}

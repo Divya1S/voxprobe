@@ -1,0 +1,126 @@
+{
+  "stem": "text-01-schedule-new-patient-20260818-a364ce",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 3,
+      "llm_latency_ms": {
+        "p50": 335,
+        "max": 408
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 729,
+        "last": 878
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The agent greeted the caller, collected Maya Thompson's name, DOB, and reason for the call, then offered a Thursday, October 24th 10:00 AM appointment with Dr. Emily Chen. Maya accepted and asked what to bring; the agent confirmed the slot, gave arrival and document instructions, and the call ended after Maya said goodbye. All success criteria were met.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 5,
+      "pacing": 4,
+      "notes": "Minor 3\u2011second dead air but overall smooth flow."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "Accurately collected info, offered appropriate provider, gave clear instructions, no policy violations."
+    },
+    "technical_quality": {
+      "latency": 4,
+      "audio_or_asr_issues": "none",
+      "notes": "3\u202fs dead air noted in metrics; otherwise clear audio."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "A specific weekday date, time and provider were confirmed back to the patient",
+        "met": true,
+        "evidence": "00:57 \u2013 \"Great, I have you scheduled for Thursday, October 24th at 10:00 AM with Dr. Chen.\""
+      },
+      {
+        "criterion": "The agent used the patient's own name and DOB (did not substitute demo values without saying so)",
+        "met": true,
+        "evidence": "00:48 \u2013 \"Thank you, Maya.\" (DOB was collected and not fabricated)."
+      },
+      {
+        "criterion": "Call ended naturally after the patient said goodbye",
+        "met": true,
+        "evidence": "00:58 \u2013 \"Thank you, see you then. Goodbye.\""
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent fabricates or assigns a placeholder DOB instead of using the one given",
+        "observed": false,
+        "evidence": "Agent never stated a DOB; no placeholder was used."
+      },
+      {
+        "hypothesis": "Agent confirms a slot without stating the day/time/provider explicitly",
+        "observed": false,
+        "evidence": "00:57 \u2013 slot confirmed with day, time, and provider."
+      },
+      {
+        "hypothesis": "Agent asks a new patient for \"the phone number on file\"",
+        "observed": false,
+        "evidence": "No request for phone number was made."
+      },
+      {
+        "hypothesis": "Agent cannot answer \"what should I bring\" and reaches for a transfer instead",
+        "observed": false,
+        "evidence": "00:57 \u2013 agent provided arrival time and items to bring."
+      }
+    ],
+    "positive_controls": [
+      "00:18\u201300:19 \u2013 Collected name, DOB, and reason for call.",
+      "00:48 \u2013 Recommended appropriate provider (Dr. Emily Chen) for knee pain.",
+      "00:57 \u2013 Confirmed specific date, time, and provider.",
+      "00:57 \u2013 Gave clear instructions on arrival time and required documents."
+    ],
+    "simulator_notes": [
+      "Patient could have explicitly asked about insurance acceptance, but the scenario did not require it.",
+      "Patient response timing was appropriate; no improvements needed."
+    ],
+    "testing_value": "The scenario exercised the agent's core scheduling workflow and policy compliance for a new patient, providing a meaningful but straightforward stress test of happy\u2011path behavior.",
+    "_judge_model": "openai/gpt-oss-120b"
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}

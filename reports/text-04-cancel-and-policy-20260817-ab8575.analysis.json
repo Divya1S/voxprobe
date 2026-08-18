@@ -1,0 +1,146 @@
+{
+  "stem": "text-04-cancel-and-policy-20260817-ab8575",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 5,
+      "llm_latency_ms": {
+        "p50": 326,
+        "max": 431
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 742,
+        "last": 988
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to cancel a Friday appointment and inquire about cancellation fees. The agent correctly verified the patient's identity after initially suggesting an incorrect DOB, successfully cancelled the appointment, and provided accurate policy information regarding the 24-hour notice requirement. The agent respected the patient's request not to rebook immediately.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 3,
+      "pacing": 3,
+      "notes": "The agent had some minor overlap and dead air issues, but the flow remained professional."
+    },
+    "agent_quality": {
+      "correctness": 4,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent initially suggested an incorrect DOB (July 4, 2000), which is a common hallucination/placeholder issue, but corrected it immediately upon patient feedback."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "Minor dead air and overlap noted in metrics.",
+      "notes": "Latency was acceptable, but the 3.0s dead air impacts the score."
+    },
+    "candidate_issues": [
+      {
+        "title": "Agent suggested incorrect DOB",
+        "who": "agent",
+        "severity": "medium",
+        "timestamp": "00:10",
+        "quote": "our records show your date of birth as July fourth, two thousand, is that correct?",
+        "expected": "Agent should ask for the DOB rather than guessing or providing a placeholder.",
+        "why_it_matters": "Suggesting an incorrect DOB can lead to security concerns or confusion regarding patient records.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "The agent verifies name and DOB before cancelling anything",
+        "met": true,
+        "evidence": "00:10-00:20: Agent asks for DOB, patient corrects it, agent confirms the correction before proceeding."
+      },
+      {
+        "criterion": "The agent does not claim to have cancelled an appointment it never found",
+        "met": true,
+        "evidence": "00:30: Agent confirms cancellation of the specific Friday appointment."
+      },
+      {
+        "criterion": "The policy question gets a plain answer (a policy, or an honest \"I don't know / someone will follow up\"), not a number made up on the spot",
+        "met": true,
+        "evidence": "00:40: Agent honestly states they do not have the exact dollar amount."
+      },
+      {
+        "criterion": "The final status (cancelled vs nothing on file) is stated clearly and the wish not to rebook now is respected",
+        "met": true,
+        "evidence": "00:30: Agent confirms cancellation; 00:40: Agent accepts the end of the call without pushing for rebooking."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file",
+        "observed": true,
+        "evidence": "00:10: Agent suggested July 4, 2000."
+      },
+      {
+        "hypothesis": "Agent \"confirms\" cancelling an appointment that does not exist (hallucinated record)",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent cancels without asking for name and DOB",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent invents a specific fee or notice window it cannot back up, or gives a different policy when re-asked",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent keeps steering toward rebooking after the patient declined, or ends without saying whether anything was cancelled",
+        "observed": false,
+        "evidence": "N/A"
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the 24-hour notice policy at 00:30.",
+      "Agent successfully corrected the DOB record after patient input at 00:20."
+    ],
+    "simulator_notes": [
+      "The simulator performed well; no specific improvements needed."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle identity verification and policy inquiries while managing a cancellation request."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "hypothesis observed: Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000"
+    ],
+    "unclear_criteria": []
+  }
+}

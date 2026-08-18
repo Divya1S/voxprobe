@@ -1,0 +1,132 @@
+{
+  "stem": "text-04-cancel-and-policy-20260817-71e268",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 4,
+      "llm_latency_ms": {
+        "p50": 669,
+        "max": 748
+      },
+      "providers": [
+        "gemini"
+      ],
+      "failovers": 4,
+      "prompt_tokens": {
+        "first": 734,
+        "last": 923
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to cancel a Friday appointment and inquire about the cancellation policy. The agent verified the patient's identity, confirmed the cancellation, and correctly explained the 24-hour notice policy. The agent successfully handled the request without pressuring the patient to rebook.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 4,
+      "pacing": 4,
+      "notes": "The conversation flowed naturally and the agent was responsive to the patient's queries."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent followed all protocols, including identity verification and accurate policy communication."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "There was a 3-second dead air period noted in the metrics, which impacted the latency score."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "The agent verifies name and DOB before cancelling anything",
+        "met": true,
+        "evidence": "00:00 - Agent requested name and DOB; 00:10 - Patient provided them; 00:11 - Agent proceeded to cancel."
+      },
+      {
+        "criterion": "The agent does not claim to have cancelled an appointment it never found",
+        "met": true,
+        "evidence": "The agent confirmed the cancellation of the specific appointment mentioned by the patient."
+      },
+      {
+        "criterion": "The policy question gets a plain answer (a policy, or an honest \"I don't know / someone will follow up\"), not a number made up on the spot",
+        "met": true,
+        "evidence": "00:32 - Agent correctly stated the 24-hour notice policy."
+      },
+      {
+        "criterion": "The final status (cancelled vs nothing on file) is stated clearly and the wish not to rebook now is respected",
+        "met": true,
+        "evidence": "00:21 - Agent confirmed the appointment is completely cancelled; 00:42 - Patient stated they would call back later, and the agent ended the call appropriately."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file",
+        "observed": false,
+        "evidence": "The agent asked for the DOB and did not state a placeholder."
+      },
+      {
+        "hypothesis": "Agent \"confirms\" cancelling an appointment that does not exist (hallucinated record)",
+        "observed": false,
+        "evidence": "The agent confirmed the cancellation of the appointment the patient identified."
+      },
+      {
+        "hypothesis": "Agent cancels without asking for name and DOB",
+        "observed": false,
+        "evidence": "The agent asked for and received the name and DOB before cancelling."
+      },
+      {
+        "hypothesis": "Agent invents a specific fee or notice window it cannot back up, or gives a different policy when re-asked",
+        "observed": false,
+        "evidence": "The agent consistently cited the 24-hour notice policy."
+      },
+      {
+        "hypothesis": "Agent keeps steering toward rebooking after the patient declined, or ends without saying whether anything was cancelled",
+        "observed": false,
+        "evidence": "The agent did not pressure the patient to rebook."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly requested identity verification at the start (00:00).",
+      "Agent accurately communicated the cancellation policy (00:32)."
+    ],
+    "simulator_notes": [
+      "The simulator performed well and followed the scenario instructions."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle a standard cancellation request while adhering to identity and policy protocols."
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}

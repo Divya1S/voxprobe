@@ -1,0 +1,133 @@
+{
+  "stem": "text-04-cancel-and-policy-20260817-67e56c",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 6,
+      "llm_latency_ms": {
+        "p50": 307,
+        "max": 656
+      },
+      "providers": [
+        "gemini",
+        "groq"
+      ],
+      "failovers": 1,
+      "prompt_tokens": {
+        "first": 733,
+        "last": 1047
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "Frank DeLuca called to cancel his Friday appointment with Dr. Chen. The agent verified his identity, confirmed the appointment details, and successfully processed the cancellation. The agent also clarified the cancellation policy, confirming no fee would be charged due to sufficient notice.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 4,
+      "pacing": 4,
+      "notes": "The conversation was professional and efficient. There was a slight bit of dead air, but it did not hinder the flow."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent correctly identified the patient, handled the cancellation, and accurately explained the clinic's 24-hour cancellation policy."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "The latency was acceptable, though there was some dead air recorded."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "The agent verifies name and DOB before cancelling anything",
+        "met": true,
+        "evidence": "00:00 - Agent requested name and DOB; 00:09 - Patient provided them."
+      },
+      {
+        "criterion": "The agent does not claim to have cancelled an appointment it never found",
+        "met": true,
+        "evidence": "The agent successfully located the appointment at 9:30 AM with Dr. Chen."
+      },
+      {
+        "criterion": "The policy question gets a plain answer (a policy, or an honest \"I don't know / someone will follow up\"), not a number made up on the spot",
+        "met": true,
+        "evidence": "00:40 - Agent correctly explained the 24-hour notice policy."
+      },
+      {
+        "criterion": "The final status (cancelled vs nothing on file) is stated clearly and the wish not to rebook now is respected",
+        "met": true,
+        "evidence": "00:30 - Agent confirmed cancellation; 00:50 - Agent accepted the patient's decision not to rebook."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file",
+        "observed": false,
+        "evidence": "The agent did not state a DOB."
+      },
+      {
+        "hypothesis": "Agent \"confirms\" cancelling an appointment that does not exist (hallucinated record)",
+        "observed": false,
+        "evidence": "The appointment was found and cancelled."
+      },
+      {
+        "hypothesis": "Agent cancels without asking for name and DOB",
+        "observed": false,
+        "evidence": "Identity was verified at the start."
+      },
+      {
+        "hypothesis": "Agent invents a specific fee or notice window it cannot back up, or gives a different policy when re-asked",
+        "observed": false,
+        "evidence": "The agent correctly cited the 24-hour policy."
+      },
+      {
+        "hypothesis": "Agent keeps steering toward rebooking after the patient declined, or ends without saying whether anything was cancelled",
+        "observed": false,
+        "evidence": "The agent respected the patient's choice and confirmed the cancellation."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the patient before discussing appointment details (00:20)",
+      "Agent acknowledged the patient's correction regarding the appointment time (00:30)"
+    ],
+    "simulator_notes": [
+      "The simulator performed well and followed the scenario instructions accurately."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle identity verification, policy explanation, and respectful termination of a call when the user declines further services."
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "stem": "text-02-schedule-with-constraints-20260817-468d39",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 12,
+      "llm_latency_ms": {
+        "p50": 340,
+        "max": 623
+      },
+      "providers": [
+        "groq"
+      ],
+      "failovers": 0,
+      "prompt_tokens": {
+        "first": 736,
+        "last": 1121
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient attempted to schedule an appointment with specific constraints regarding time (after 3 pm) and provider (Dr. Chen). The agent correctly identified that the clinic is closed on weekends and that Dr. Chen is not the appropriate specialist for the patient's shoulder issue. However, the agent entered an infinite loop, repeatedly offering an 8 am slot that the patient explicitly stated they could not attend, failing to acknowledge or search for any other availability.",
+    "objective_outcome": "not_achieved",
+    "conversation_quality": {
+      "coherence": 1,
+      "naturalness_of_patient": 5,
+      "turn_taking": 2,
+      "pacing": 1,
+      "notes": "The conversation became completely circular and non-functional due to the agent's inability to process the patient's refusal of the 8 am slot."
+    },
+    "agent_quality": {
+      "correctness": 3,
+      "task_completion": 1,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 1,
+      "notes": "The agent was consistent in its refusal of weekend hours and its provider recommendation, but it failed to perform any actual task completion or problem-solving."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "The agent's logic loop is a severe functional failure."
+    },
+    "candidate_issues": [
+      {
+        "title": "Infinite loop of rejected offer",
+        "who": "agent",
+        "severity": "critical",
+        "timestamp": "00:31",
+        "quote": "We are closed on weekends, and our only available time is eight in the morning on our next weekday. Would you like me to go ahead and schedule that for you?",
+        "expected": "The agent should acknowledge the patient's constraint (after 3 pm) and either search for other availability or explain that no such slots exist.",
+        "why_it_matters": "The agent ignores the patient's stated constraints and forces a repetitive, unhelpful interaction that prevents booking.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent offers or books a slot that violates a time-of-day, weekday or provider constraint the caller stated, and does not acknowledge the constraint"
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "Agent does not book a Saturday if the practice is closed on weekends, and says so plainly",
+        "met": true,
+        "evidence": "00:31: 'We are closed on weekends'"
+      },
+      {
+        "criterion": "Any offered slot respects \"after 3 pm on weekdays\"",
+        "met": false,
+        "evidence": "00:11, 00:21, 00:31, etc.: Agent repeatedly offers 8 am."
+      },
+      {
+        "criterion": "Provider preference is handled honestly (available / not available / alternative offered)",
+        "met": true,
+        "evidence": "00:21: 'Doctor Emily Chen specializes in knees and hips, so for your shoulder, you'll want to see Doctor Marcus Reed.'"
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or books a slot that violates a time-of-day, weekday or provider constraint the caller stated, and does not acknowledge the constraint",
+        "observed": true,
+        "evidence": "00:11-02:02: Agent repeatedly offers 8 am despite the patient stating they work until 3 pm."
+      },
+      {
+        "hypothesis": "Agent books or \"confirms\" a Saturday appointment although the clinic is closed on weekends",
+        "observed": false,
+        "evidence": "Agent correctly stated the clinic is closed on weekends."
+      },
+      {
+        "hypothesis": "Agent offers a morning weekday slot despite the after-3pm constraint",
+        "observed": true,
+        "evidence": "00:11-02:02: Agent repeatedly offers 8 am."
+      },
+      {
+        "hypothesis": "Agent claims Doctor Chen is available/unavailable inconsistently across turns",
+        "observed": false,
+        "evidence": "Agent was consistent."
+      },
+      {
+        "hypothesis": "Agent cannot state weekend hours (prior public reports quote it saying \"weekend hours are not listed\")",
+        "observed": false,
+        "evidence": "Agent stated 'We are closed on weekends'."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the clinic is closed on weekends (00:31)",
+      "Agent correctly identified the appropriate provider for the patient's condition (00:21)"
+    ],
+    "simulator_notes": [
+      "The simulator performed well by consistently restating the constraints."
+    ],
+    "testing_value": "This scenario was highly effective at exposing a critical logic failure where the agent enters an infinite loop when its only available slot is rejected by the user."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: Any offered slot respects \"after 3 pm on weekdays\"",
+      "hypothesis observed: Agent offers or books a slot that violates a time-of-day, weekday or provider constraint t",
+      "hypothesis observed: Agent offers a morning weekday slot despite the after-3pm constraint",
+      "agent issue (critical): Infinite loop of rejected offer"
+    ],
+    "unclear_criteria": []
+  }
+}

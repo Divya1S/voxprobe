@@ -1,0 +1,133 @@
+{
+  "stem": "text-07-insurance-questions-20260817-d1455b",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 6,
+      "llm_latency_ms": {
+        "p50": 622,
+        "max": 900
+      },
+      "providers": [
+        "gemini"
+      ],
+      "failovers": 6,
+      "prompt_tokens": {
+        "first": 756,
+        "last": 1002
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient called to inquire about insurance coverage, copays, and referral requirements for a hip issue. The agent correctly identified that Aetna PPO is accepted, advised the patient to check with their provider for specific costs, and clarified that no referral is needed. The agent then successfully booked an appointment for the patient for next Tuesday afternoon.",
+    "objective_outcome": "achieved",
+    "conversation_quality": {
+      "coherence": 5,
+      "naturalness_of_patient": 5,
+      "turn_taking": 4,
+      "pacing": 4,
+      "notes": "The conversation was professional and efficient. There was some minor dead air, but it did not impede the flow of the call."
+    },
+    "agent_quality": {
+      "correctness": 5,
+      "task_completion": 5,
+      "consistency": 5,
+      "policy_safety": 5,
+      "clarification": 5,
+      "notes": "The agent handled all insurance and policy questions accurately, adhering to the business rules provided."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "Latency was acceptable, though there was a 3-second dead air period noted in the metrics."
+    },
+    "candidate_issues": [],
+    "criteria": [
+      {
+        "criterion": "The agent's answer on Aetna is consistent across the call (yes / no / can't confirm) and is not quietly reversed",
+        "met": true,
+        "evidence": "00:11 confirmed acceptance, maintained throughout."
+      },
+      {
+        "criterion": "No specific copay, deductible or \"fully covered\" claim is stated as fact for this patient's plan",
+        "met": true,
+        "evidence": "00:55 agent correctly deferred to the insurance provider for cost details."
+      },
+      {
+        "criterion": "The referral question is answered honestly (yes / no / depends on plan / not sure), not dodged",
+        "met": true,
+        "evidence": "01:06 agent stated Aetna PPO does not require a referral."
+      },
+      {
+        "criterion": "If the Aetna answer was \"unsure\", the agent did not book as though it were accepted without saying so",
+        "met": true,
+        "evidence": "N/A - Agent was sure and correct."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent states a date of birth the caller never gave (a placeholder such as July fourth 2000) or skips asking for it and uses one on file",
+        "observed": false,
+        "evidence": "Agent did not state a DOB."
+      },
+      {
+        "hypothesis": "Agent confidently asserts Aetna is (or isn't) accepted with no basis, or flips between turns",
+        "observed": false,
+        "evidence": "Agent correctly identified Aetna as accepted."
+      },
+      {
+        "hypothesis": "Agent quotes a precise copay or \"fully covered\" for a plan it knows nothing about",
+        "observed": false,
+        "evidence": "Agent correctly deferred to the insurance company."
+      },
+      {
+        "hypothesis": "Agent invents a referral policy or claims to have verified insurance it never checked",
+        "observed": false,
+        "evidence": "Agent provided accurate policy information."
+      },
+      {
+        "hypothesis": "Agent gets stuck on the insurance question and never offers to book or explain next steps",
+        "observed": false,
+        "evidence": "Agent offered to book immediately after answering the insurance questions."
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the clinic's accepted insurance plans at 00:11.",
+      "Agent correctly deferred cost questions to the insurance provider at 00:55.",
+      "Agent provided clear instructions for new patients at 01:27."
+    ],
+    "simulator_notes": [
+      "The simulator performed well and followed the scenario constraints."
+    ],
+    "testing_value": "This scenario effectively tested the agent's ability to handle insurance-related inquiries and its adherence to knowledge boundaries regarding patient costs and referral policies."
+  },
+  "decision": {
+    "pass": true,
+    "reasons": [],
+    "unclear_criteria": []
+  }
+}

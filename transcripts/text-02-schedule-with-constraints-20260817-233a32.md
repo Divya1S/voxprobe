@@ -1,0 +1,12 @@
+# text-02-schedule-with-constraints-20260817-233a32 — Scheduling with constraints — asks for Saturday, needs after 3 pm, wants a specific doctor (text mode, local-clinic)
+
+[00:00] AGENT: Hello, thank you for calling Sunrise Orthopedics. Please note that this call may be recorded for quality and training purposes. May I please have your first and last name, your date of birth, and the reason for your call today?
+[00:10] PATIENT: My name's Daniel Reyes, I was born September thirtieth, nineteen seventy-eight, and I'm calling because my left shoulder's been stiff and painful for a month, especially when I reach overhead, and I'd like to book an appointment with Doctor Chen.
+[00:10] AGENT: Thanks for verifying that, Daniel. Doctor Reed actually handles shoulder and hand conditions, so I'd be happy to get you scheduled with him instead. I have an opening this Thursday, October fifth, at ten in the morning, or Friday, October sixth, at two in the afternoon. Which of those works best for you?
+[00:20] PATIENT: Neither of those times work for me, I'm working until 3 pm on weekdays, so I'd need something after that, but I'd really prefer to see Doctor Chen if possible, can I come in this Saturday morning around ten?
+[00:21] AGENT: We are actually closed on weekends, and Doctor Chen specializes in knees and hips. Since you need an after-hours appointment and help with your shoulder, I can schedule you with Doctor Reed next Tuesday, October tenth, at three-thirty in the afternoon. Does that time work for your schedule?
+[00:31] PATIENT: That's a bit later than I'd like, but before I say yes, can you tell me if there's anything earlier on Tuesday or any other weekday after 3 pm that's available with Doctor Reed?
+[00:31] AGENT: I have an earlier opening with Doctor Reed this coming Monday, October ninth, at three-fifteen in the afternoon, or Tuesday, October tenth, at three-fifteen as well. Do either of those closer times work for you?
+[00:41] PATIENT: So Monday at three-fifteen with Doctor Reed, is that confirmed, I just want to make sure I got the day, time, and doctor right?
+[00:41] AGENT: You're all set for Monday, October ninth, at three-fifteen in the afternoon with Doctor Reed. Since you're a new patient, please arrive fifteen minutes early and bring your photo ID and insurance card.
+[00:51] PATIENT: So just to confirm, it's Monday at three-fifteen with Doctor Reed, I'll make sure to get there a little early, thanks for your help, goodbye.

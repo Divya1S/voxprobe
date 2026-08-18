@@ -1,0 +1,163 @@
+{
+  "stem": "text-09-barge-in-hurried-caller-20260817-40d602",
+  "metrics": {
+    "policy": {
+      "merge_gap_s": 1.5,
+      "overlap_s": 0.3,
+      "dead_air_s": 3.0,
+      "intra_pause_s": 2.5
+    },
+    "turns": {
+      "AGENT": 0,
+      "PATIENT": 0
+    },
+    "patient_response": {
+      "n": 0
+    },
+    "agent_response": {
+      "n": 0
+    },
+    "dead_air": [],
+    "overlaps": [],
+    "intra_turn_pauses": [],
+    "talk_share": {
+      "AGENT": 0.0,
+      "PATIENT": 0.0
+    },
+    "duration_s": 0.0,
+    "brain": {
+      "turns": 5,
+      "llm_latency_ms": {
+        "p50": 974,
+        "max": 2340
+      },
+      "providers": [
+        "gemini"
+      ],
+      "failovers": 5,
+      "prompt_tokens": {
+        "first": 728,
+        "last": 942
+      }
+    }
+  },
+  "measured_issues": [],
+  "judge": {
+    "summary": "The patient attempted to book an appointment, specifically requesting a change from Tuesday to Thursday and expressing flexibility regarding the provider. The agent failed to acknowledge the patient's request for Thursday, repeatedly insisting on an 'eight in the morning on the next weekday' slot. The call concluded with the agent confirming an appointment without explicitly stating the day of the week, leaving the patient's request for Thursday unaddressed.",
+    "objective_outcome": "not_achieved",
+    "conversation_quality": {
+      "coherence": 2,
+      "naturalness_of_patient": 5,
+      "turn_taking": 2,
+      "pacing": 2,
+      "notes": "The agent was highly repetitive and failed to process the patient's specific requests for a different day."
+    },
+    "agent_quality": {
+      "correctness": 1,
+      "task_completion": 1,
+      "consistency": 2,
+      "policy_safety": 5,
+      "clarification": 1,
+      "notes": "The agent ignored the patient's request for Thursday and failed to confirm the day of the week in the final booking summary."
+    },
+    "technical_quality": {
+      "latency": 3,
+      "audio_or_asr_issues": "None",
+      "notes": "The agent's inability to adapt to the patient's input made the conversation feel robotic and ineffective."
+    },
+    "candidate_issues": [
+      {
+        "title": "Failure to acknowledge requested day",
+        "who": "agent",
+        "severity": "critical",
+        "timestamp": "00:22",
+        "quote": "I can only offer you eight in the morning on the next weekday",
+        "expected": "The agent should have checked availability for Thursday as requested.",
+        "why_it_matters": "The patient explicitly asked for Thursday, and the agent ignored this, causing confusion.",
+        "confidence": "high",
+        "matches_hypothesis": "Agent talks over the interruption or resumes its previous sentence as if nothing happened"
+      },
+      {
+        "title": "Failure to confirm appointment details",
+        "who": "agent",
+        "severity": "high",
+        "timestamp": "00:45",
+        "quote": "I have you scheduled for eight in the morning on the next weekday",
+        "expected": "The agent should have stated the specific day (Thursday) and time.",
+        "why_it_matters": "The patient does not know which day they are actually booked for.",
+        "confidence": "high",
+        "matches_hypothesis": ""
+      }
+    ],
+    "criteria": [
+      {
+        "criterion": "The agent stops when interrupted and answers the interrupting question instead of finishing its script",
+        "met": false,
+        "evidence": "00:22 - Agent repeated the same script despite the interruption."
+      },
+      {
+        "criterion": "The final booking reflects the latest request (Thursday, any doctor), not the earlier Tuesday / Doctor Chen ask",
+        "met": false,
+        "evidence": "00:45 - Agent confirmed 'next weekday' instead of 'Thursday'."
+      },
+      {
+        "criterion": "Details already given (name, DOB, reason) are not asked for again after an interruption",
+        "met": true,
+        "evidence": "The agent did not re-ask for these details."
+      },
+      {
+        "criterion": "Day, time and doctor are stated back clearly at the end",
+        "met": false,
+        "evidence": "00:45 - Agent failed to state the day of the week or the doctor."
+      }
+    ],
+    "hypotheses": [
+      {
+        "hypothesis": "Agent offers or books a slot that violates a time-of-day, weekday or provider constraint the caller stated, and does not acknowledge the constraint",
+        "observed": true,
+        "evidence": "00:22 - Agent ignored the Thursday request."
+      },
+      {
+        "hypothesis": "Agent talks over the interruption or resumes its previous sentence as if nothing happened",
+        "observed": true,
+        "evidence": "00:22 - Agent repeated the exact same script."
+      },
+      {
+        "hypothesis": "Agent books Tuesday (the first request) or keeps offering Doctor Chen after the patient dropped that preference",
+        "observed": true,
+        "evidence": "00:33 - Agent continued to offer the same slot without acknowledging the Thursday preference."
+      },
+      {
+        "hypothesis": "Agent loses collected details after a barge-in and re-asks for name and DOB from the top",
+        "observed": false,
+        "evidence": "N/A"
+      },
+      {
+        "hypothesis": "Agent ends up confirming two appointments (Tuesday and Thursday) without cancelling one",
+        "observed": false,
+        "evidence": "N/A"
+      }
+    ],
+    "positive_controls": [
+      "Agent correctly identified the patient's initial details (00:11)."
+    ],
+    "simulator_notes": [
+      "The simulator performed well in attempting to steer the conversation."
+    ],
+    "testing_value": "This scenario successfully stressed the agent's inability to handle intent tracking and barge-in, revealing a significant failure in conversational flow."
+  },
+  "decision": {
+    "pass": false,
+    "reasons": [
+      "criterion not met: The agent stops when interrupted and answers the interrupting question instead of finishin",
+      "criterion not met: The final booking reflects the latest request (Thursday, any doctor), not the earlier Tues",
+      "criterion not met: Day, time and doctor are stated back clearly at the end",
+      "hypothesis observed: Agent offers or books a slot that violates a time-of-day, weekday or provider constraint t",
+      "hypothesis observed: Agent talks over the interruption or resumes its previous sentence as if nothing happened",
+      "hypothesis observed: Agent books Tuesday (the first request) or keeps offering Doctor Chen after the patient dr",
+      "agent issue (critical): Failure to acknowledge requested day",
+      "agent issue (high): Failure to confirm appointment details"
+    ],
+    "unclear_criteria": []
+  }
+}

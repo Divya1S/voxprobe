@@ -1,0 +1,86 @@
+{
+  "generated_at": "2026-08-17T18:14:05.910539+00:00",
+  "runs": 51,
+  "overall": {
+    "tp": 26,
+    "fn": 0,
+    "fp": 0,
+    "tn": 25,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "clean_control_flag_rate": 0.0
+  },
+  "per_bug": {
+    "fabricated_dob": {
+      "runs_planted": 11,
+      "runs_clean": 12,
+      "tp": 11,
+      "fn": 0,
+      "fp": 0,
+      "tn": 12,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1,
+      "pass_pow_k": 1,
+      "k": 3,
+      "scenarios": [
+        "01-schedule-new-patient",
+        "03-reschedule-existing",
+        "04-cancel-and-policy",
+        "07-insurance-questions"
+      ],
+      "symptom_recall": 1.0,
+      "symptom_false_alarm_rate": 0.0,
+      "clean_control_flag_rate": 0.0
+    },
+    "ignore_constraints": {
+      "runs_planted": 6,
+      "runs_clean": 4,
+      "tp": 6,
+      "fn": 0,
+      "fp": 0,
+      "tn": 4,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1,
+      "pass_pow_k": 1,
+      "k": 3,
+      "scenarios": [
+        "02-schedule-with-constraints",
+        "09-barge-in-hurried-caller"
+      ],
+      "symptom_recall": null,
+      "symptom_false_alarm_rate": null,
+      "clean_control_flag_rate": 0.0
+    },
+    "weekend_booking": {
+      "runs_planted": 9,
+      "runs_clean": 9,
+      "tp": 9,
+      "fn": 0,
+      "fp": 0,
+      "tn": 9,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1,
+      "pass_pow_k": 1,
+      "k": 3,
+      "scenarios": [
+        "01-schedule-new-patient",
+        "02-schedule-with-constraints",
+        "06-office-info-hours-address"
+      ],
+      "symptom_recall": 0.889,
+      "symptom_false_alarm_rate": 0.0,
+      "clean_control_flag_rate": 0.0
+    }
+  },
+  "avg_run_seconds": 1916.459
+}
