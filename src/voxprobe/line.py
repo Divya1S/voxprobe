@@ -157,8 +157,8 @@ async def fetch(
         else:
             calls = await client.list_calls(phone_number_id=settings.vapi_phone_number_id, limit=limit)
         for call in calls:
-            if call.get("type") != "inboundPhoneCall" or call.get("status") != "ended":
-                continue
+            if call.get("type") not in ("inboundPhoneCall", "webCall") or call.get("status") != "ended":
+                continue  # webCall = the $0 dashboard "Talk" test of the same assistant
             meta_scn = (
                 scenario_id or (call.get("assistant") or {}).get("metadata", {}).get("scenario_id") or state.scenario_id
             )
@@ -181,7 +181,7 @@ async def fetch(
             (settings.transcripts_dir / f"{stem}.json").write_text(json.dumps(call, indent=2, ensure_ascii=False))
             meta = {
                 "stem": stem,
-                "kind": "inbound-line",
+                "kind": "inbound-line" if call.get("type") == "inboundPhoneCall" else "web-test",
                 "scenario_id": meta_scn,
                 "target_id": target_id,
                 "title": f"inbound call to the line ({target_id})",
