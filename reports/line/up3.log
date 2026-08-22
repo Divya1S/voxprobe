@@ -1,0 +1,6 @@
+18:28:27 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:50926->104.16.231.132:443: read: connection reset by peer
+18:28:27 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel up: https://7f4e8f99039b5f.lhr.life
+● line armed: +12132892081 → assistant voxprobe-line (23b6e1ec…) as target 'local-clinic-buggy'
+  greeting: Thank you for calling Sunrise Orthopedics. This call may be recorded. Can I get your first and last name, please?
+  test for $0: Vapi dashboard → Assistants → voxprobe-line → Talk.  Ctrl-C to stop (the number keeps the assistant; tunnel dies).

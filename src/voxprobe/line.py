@@ -27,6 +27,7 @@ from .targets import Target, find_target
 from .vapi_client import LINE_ASSISTANT_NAME, VapiClient, build_line_assistant
 
 log = logging.getLogger("voxprobe.line")
+KEEPALIVE_S = 20  # public /health poll period; two consecutive failures → new tunnel + re-arm
 
 
 @dataclass
@@ -210,7 +211,12 @@ async def fetch(
 
 
 async def up(settings: Settings, target: Target, *, scenario_id: str = "", greeting: str | None = None) -> None:
-    """Server + tunnel + arm; block until Ctrl-C. Prints the number to call."""
+    """Server + tunnel + arm; block until Ctrl-C. Prints the number to call.
+
+    Free tunnels die (localhost.run drops idle sessions; cloudflared quick tunnels churn), so a keepalive polls the public
+    /health every KEEPALIVE_S; on failure it restarts the tunnel and re-arms the saved assistant with the new URL.
+    """
+    import httpx
     import uvicorn
 
     from .cli import _start_tunnel, _wait_healthy
@@ -223,19 +229,44 @@ async def up(settings: Settings, target: Target, *, scenario_id: str = "", greet
     )
     server_task = asyncio.create_task(server.serve())
     proc, url = await _start_tunnel(settings.brain_port)
-    print(f"● tunnel up: {url}")
+    print(f"● tunnel up: {url}", flush=True)
     try:
         await _wait_healthy(url)
         state = await arm(with_public_url(settings, url), target, scenario_id=scenario_id, greeting=greeting)
         print(
-            f"● line armed: {state.number or '(number)'} → assistant {LINE_ASSISTANT_NAME} ({state.assistant_id[:8]}…) as target '{target.id}'"
+            f"● line armed: {state.number or '(number)'} → assistant {LINE_ASSISTANT_NAME} ({state.assistant_id[:8]}…) as target '{target.id}'",
+            flush=True,
         )
-        print(f"  greeting: {state.greeting}")
+        print(f"  greeting: {state.greeting}", flush=True)
         print(
-            "  test for $0: Vapi dashboard → Assistants → voxprobe-line → Talk.  Ctrl-C to stop (the number keeps the assistant; tunnel dies)."
+            "  test for $0: Vapi dashboard → Assistants → voxprobe-line → Talk.  Ctrl-C to stop (the number keeps the assistant; tunnel dies).",
+            flush=True,
         )
-        while True:
-            await asyncio.sleep(3600)
+        fails = 0
+        async with httpx.AsyncClient(timeout=15) as http:
+            while True:
+                await asyncio.sleep(KEEPALIVE_S)
+                ok = False
+                try:
+                    r = await http.get(f"{url}/health")
+                    ok = r.status_code == 200 and r.text.startswith("{")
+                except Exception as e:  # noqa: BLE001 - any transport failure counts
+                    log.warning("keepalive: %s", str(e)[:120])
+                if ok:
+                    fails = 0
+                    continue
+                fails += 1
+                if fails < 2:
+                    continue  # one blip is fine; two in a row means the tunnel is gone
+                log.warning("tunnel unhealthy twice — restarting tunnel and re-arming")
+                proc.terminate()
+                proc, url = await _start_tunnel(settings.brain_port)
+                await _wait_healthy(url)
+                state = await arm(
+                    with_public_url(settings, url), target, scenario_id=state.scenario_id, greeting=greeting
+                )
+                print(f"● tunnel replaced → {url}; line re-armed", flush=True)
+                fails = 0
     except (KeyboardInterrupt, asyncio.CancelledError):
         pass
     finally:

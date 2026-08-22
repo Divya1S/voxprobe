@@ -1,0 +1,2 @@
+18:26:54 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:50902->104.16.231.132:443: read: connection reset by peer
+18:26:54 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
