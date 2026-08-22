@@ -17,6 +17,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.6"]
 phone = []  # Vapi adapter uses httpx only; Twilio adapter (via Pipecat) will add deps here
+# CALL-E adapter: CALL-E's outbound agent as a caller (plan-then-dial Developer API). https://docs.heycall-e.com
+calle = ["calle-ai>=0.7"]
 # Audio arena: simulated caller <-> sample agent over real audio (Pipecat). Deepgram for STT/TTS by default.
 arena = ["pipecat-ai[silero,deepgram,groq,openai,websocket,soundfile]>=1.7.0"]  # smart-turn v3 ONNX model ships in the wheel; no torch needed
 # Fully local speech for the arena on Apple Silicon (no accounts): Kokoro TTS + MLX Whisper STT

@@ -264,6 +264,19 @@ wheels = [
 ]
 
 [[package]]
+name = "calle-ai"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "httpx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6f/a5/b35d435f7f3e3093918316f97107f332b9a146751621aed0270f570ab12a/calle_ai-0.7.0.tar.gz", hash = "sha256:77e9999ffeb3a6d886b066bd951674e11fb28104d31d8fbfa8d3e03eabaf079c", size = 98657, upload-time = "2026-08-19T09:31:00.153Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/65/cd/8fe3345da0eb9d6f315c164fdc176796c6f1225ecc413c804f6c3a8b854d/calle_ai-0.7.0-py3-none-any.whl", hash = "sha256:da6c081c0c57c12a620f5f6a8003e263ec43921c7e94e3d110281985c4895dda", size = 62812, upload-time = "2026-08-19T09:30:59.146Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2026.7.22"
 source = { registry = "https://pypi.org/simple" }
@@ -3330,6 +3343,9 @@ arena = [
 arena-local = [
     { name = "pipecat-ai", extra = ["kokoro", "mlx-whisper"] },
 ]
+calle = [
+    { name = "calle-ai" },
+]
 dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -3338,6 +3354,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "calle-ai", marker = "extra == 'calle'", specifier = ">=0.7" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "openai", specifier = ">=1.40" },
@@ -3351,7 +3368,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
 ]
-provides-extras = ["dev", "phone", "arena", "arena-local"]
+provides-extras = ["dev", "phone", "calle", "arena", "arena-local"]
 
 [[package]]
 name = "wait-for2"
