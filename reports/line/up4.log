@@ -1,0 +1,25 @@
+● tunnel up: https://keep-six-modification-pan.trycloudflare.com
+Traceback (most recent call last):
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/bin/voxprobe", line 12, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 415, in main
+    args.fn(args)
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 300, in cmd_line
+    line.main_up(settings, args.target, args.scenario, args.greeting)
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/line.py", line 282, in main_up
+    asyncio.run(up(settings, target, scenario_id=sid, greeting=greeting))
+  File "/opt/anaconda3/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/line.py", line 234, in up
+    await _wait_healthy(url)
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 186, in _wait_healthy
+    raise RuntimeError(f"{url}/health never became reachable through the tunnel")
+RuntimeError: https://keep-six-modification-pan.trycloudflare.com/health never became reachable through the tunnel
