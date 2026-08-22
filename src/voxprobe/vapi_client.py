@@ -83,6 +83,76 @@ def build_assistant(scenario: Scenario, target: Target, settings: Settings) -> d
     return assistant
 
 
+LINE_ASSISTANT_NAME = "voxprobe-line"
+DEFAULT_LINE_VOICE = "luna"  # Deepgram Aura-2 receptionist voice (the caller's voice is CALL-E's own)
+
+
+def default_greeting(target: Target) -> str:
+    return (
+        f"Thank you for calling {target.business.name}. This call may be recorded. "
+        "Can I get your first and last name, please?"
+    )
+
+
+def build_line_assistant(
+    target: Target,
+    settings: Settings,
+    *,
+    scenario_id: str = "",
+    greeting: str | None = None,
+    max_duration_s: int = 240,
+    voice_id: str = DEFAULT_LINE_VOICE,
+) -> dict:
+    """A SAVED assistant that answers INBOUND calls on our free number as the receptionist under test.
+
+    Brain = our server in receptionist role (``ROLE:agent TARGET:<id>`` marker → ``sample_agent_prompt(target)`` with its
+    planted bugs). The caller on the other end is whoever dials the line — for the CALL-E work, CALL-E's agent.
+    Stereo MP3: Vapi puts the CALLER on the left channel and this assistant on the right; ``line fetch`` swaps them into
+    voxprobe's convention (L = agent under test, R = caller) before analysis.
+    """
+    if not settings.public_base_url:
+        raise RuntimeError("PUBLIC_BASE_URL is not set — start the tunnel first")
+    marker = f"ROLE:agent TARGET:{target.id}" + (f" SCENARIO:{scenario_id}" if scenario_id else "")
+    return {
+        "name": LINE_ASSISTANT_NAME,
+        "firstMessageMode": "assistant-speaks-first",
+        "firstMessage": greeting or default_greeting(target),
+        "model": {
+            "provider": "custom-llm",
+            "url": settings.public_base_url,  # Vapi appends /chat/completions
+            "model": "voxprobe-line-brain",
+            "messages": [{"role": "system", "content": marker}],
+            "temperature": 0.6,
+            "maxTokens": 120,
+            "timeoutSeconds": 15,
+            "metadataSendMode": "off",
+        },
+        "credentials": [{"provider": "custom-llm", "apiKey": settings.brain_server_secret, "name": "voxprobe-brain"}],
+        "transcriber": {
+            "provider": "deepgram",
+            "model": "nova-3",
+            "language": "en",
+            "smartFormat": False,
+            "endpointing": 300,
+            "keyterm": [target.business.name, *[pr.split("(")[0].strip() for pr in target.business.providers]],
+        },
+        "voice": {"provider": "deepgram", "model": "aura-2", "voiceId": voice_id},
+        "server": {
+            "url": f"{settings.public_base_url}/vapi/webhook",
+            "timeoutSeconds": 10,
+            "headers": {"Authorization": f"Bearer {settings.brain_server_secret}"},
+        },
+        "serverMessages": SERVER_MESSAGES,
+        "artifactPlan": {"recordingEnabled": True, "recordingFormat": "mp3"},
+        "monitorPlan": {"controlEnabled": True, "listenEnabled": False},
+        "startSpeakingPlan": {"waitSeconds": 0.5, "smartEndpointingPlan": {"provider": "livekit"}},
+        "backgroundSound": "off",
+        "silenceTimeoutSeconds": 60,
+        "maxDurationSeconds": max_duration_s,
+        "metadata": {"role": "line", "target_id": target.id, "scenario_id": scenario_id, "project": "voxprobe"},
+    }
+
+
 class VapiClient:
     def __init__(self, settings: Settings):
         self.settings = settings
@@ -165,6 +235,42 @@ class VapiClient:
         r.raise_for_status()
         dest.write_bytes(r.content)
         return dest
+
+    # ---- admin helpers for the inbound line (saved assistant + phone number) ----
+    async def find_assistant(self, name: str) -> dict | None:
+        r = await self._http.get("/assistant", params={"limit": 100})
+        r.raise_for_status()
+        return next((a for a in r.json() if a.get("name") == name), None)
+
+    async def upsert_assistant(self, body: dict) -> dict:
+        """Create the saved assistant or PATCH the existing one with the same name. Returns the assistant."""
+        existing = await self.find_assistant(body["name"])
+        if existing:
+            r = await self._http.patch(f"/assistant/{existing['id']}", json=body)
+        else:
+            r = await self._http.post("/assistant", json=body)
+        if r.status_code >= 300:
+            raise RuntimeError(f"Vapi assistant upsert failed {r.status_code}: {r.text[:600]}")
+        return r.json()
+
+    async def get_phone_number(self, phone_number_id: str) -> dict:
+        r = await self._http.get(f"/phone-number/{phone_number_id}")
+        r.raise_for_status()
+        return r.json()
+
+    async def patch_phone_number(self, phone_number_id: str, body: dict) -> dict:
+        r = await self._http.patch(f"/phone-number/{phone_number_id}", json=body)
+        if r.status_code >= 300:
+            raise RuntimeError(f"Vapi phone-number patch failed {r.status_code}: {r.text[:600]}")
+        return r.json()
+
+    async def list_calls(self, *, phone_number_id: str | None = None, limit: int = 10) -> list[dict]:
+        params: dict = {"limit": limit}
+        if phone_number_id:
+            params["phoneNumberId"] = phone_number_id
+        r = await self._http.get("/call", params=params)
+        r.raise_for_status()
+        return r.json()
 
     async def control(self, call: dict, message: dict) -> None:
         """Live call control (e.g. {"type": "say", "content": "..."} or {"type": "end-call"})."""

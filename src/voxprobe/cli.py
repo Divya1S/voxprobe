@@ -8,6 +8,7 @@ voxprobe bench --name <name> -k 3                      planted-bug detection ben
 voxprobe calibrate sample|score ...                    judge calibration sheet + human agreement / kappa
 voxprobe analyze <stem>...                             re-transcribe + metrics + judge for recorded runs
 voxprobe calle probe|dry-run|run ...                   CALL-E's outbound agent as the caller (plan-then-dial; allow-listed numbers only)
+voxprobe line up|arm|fetch|down ...                    the inbound line: our receptionist under test answering the free Vapi number
 voxprobe call --scenario 01 --target <vapi-target>     experimental phone adapter (tunnel + brain server + call)
 voxprobe serve                                         brain server only (external tunnel)
 """
@@ -243,6 +244,33 @@ def cmd_calle(args) -> None:
     print(res.transcript_path.read_text())
 
 
+def cmd_line(args) -> None:
+    from . import line
+
+    settings = load_settings()
+    if args.action == "up":
+        line.main_up(settings, args.target, args.scenario, args.greeting)
+    elif args.action == "arm":
+        state = line.LineState.load(settings)
+        target = find_target(settings.targets_dir, args.target or state.target_id)
+        sid = find_scenario(settings.scenarios_dir, args.scenario).id if args.scenario else state.scenario_id
+        st = asyncio.run(
+            line.arm(line.with_public_url(settings, state.public_url), target, scenario_id=sid, greeting=args.greeting)
+        )
+        print(f"● line re-armed: target '{st.target_id}' scenario '{st.scenario_id or '-'}' greeting: {st.greeting}")
+    elif args.action == "fetch":
+        metas = asyncio.run(line.fetch(settings, limit=args.limit, scenario_id=args.scenario, call_id=args.call_id))
+        for m in metas:
+            print(
+                f"● {m['stem']}: {m.get('ended_reason')} from {m.get('from')} · {m['files'].get('recording_mp3') or 'no recording'}"
+            )
+        if not metas:
+            print("no ended inbound calls found on the line")
+    elif args.action == "down":
+        asyncio.run(line.down(settings))
+        print("● assistant detached from the number")
+
+
 def cmd_analyze(args) -> None:
     from .analyze import analyze_call
 
@@ -310,6 +338,17 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--timeout", type=float, default=600.0, help="seconds to wait for the CallTask to finish")
     p.add_argument("--yes", action="store_true", help="confirm spending one real CALL-E call")
     p.set_defaults(fn=cmd_calle)
+
+    p = sub.add_parser(
+        "line", help="inbound line: up (server+tunnel+assistant on the free number), arm, fetch artifacts, down"
+    )
+    p.add_argument("action", choices=["up", "arm", "fetch", "down"])
+    p.add_argument("--target", default="local-clinic", help="receptionist profile (target id) the line answers as")
+    p.add_argument("--scenario", help="the persona the CALLER is expected to play (attached to evidence for the judge)")
+    p.add_argument("--greeting", help="override the receptionist's first line")
+    p.add_argument("--limit", type=int, default=5, help="fetch: how many recent calls to look at")
+    p.add_argument("--call-id", help="fetch: one specific Vapi call id")
+    p.set_defaults(fn=cmd_line)
 
     p = sub.add_parser("analyze", help="re-transcribe + metrics + judge draft for recorded call(s) by artifact stem")
     p.add_argument("stems", nargs="+")

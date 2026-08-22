@@ -5,7 +5,8 @@ Routes
 POST /chat/completions   Vapi's custom-LLM hook. OpenAI chat-completions request in (full history), OpenAI SSE
                          chunks out. We ignore Vapi's system message except for the ``SCENARIO:<id>`` marker,
                          rebuild the real persona prompt from the scenario file, add the director's note, ask
-                         the brain, and stream the shaped reply back.
+                         the brain, and stream the shaped reply back. With a ``ROLE:agent TARGET:<id>`` marker
+                         (the inbound line) we answer as the receptionist under test instead.
 POST /vapi/webhook       Vapi server messages (transcript, speech-update, user-interrupted, status-update,
                          end-of-call-report, ...). Appended verbatim + receive timestamp to
                          reports/events/<call_id>.jsonl — the raw material for latency/turn-taking evidence.
@@ -37,6 +38,7 @@ log = logging.getLogger("voxprobe.server")
 
 SCENARIO_MARKER = re.compile(r"SCENARIO:([0-9]{2}-[a-z0-9-]+)")
 TARGET_MARKER = re.compile(r"TARGET:([a-z0-9-]+)")
+ROLE_MARKER = re.compile(r"ROLE:(agent|patient)")
 
 
 class CallRegistry:
@@ -110,6 +112,41 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
 
         scenario_id, target_id = _markers_from(messages, body)
+        role = _role_from(messages)
+        if role == "agent":
+            # Inbound line: WE are the receptionist under test (sample agent + planted bugs); the caller is whoever dialed.
+            if not target_id:
+                raise HTTPException(status_code=400, detail="ROLE:agent needs a TARGET:<id> marker")
+            from .simulate import sample_agent_prompt
+
+            target = registry.target(target_id)
+            history = window_history(messages)
+            t0 = time.perf_counter()
+            rec = await brain.reply(sample_agent_prompt(target), history)
+            registry.record_turn(call_id, rec)
+            n = len(registry.turns(call_id))
+            _append_event(
+                events_dir,
+                call_id,
+                {
+                    "type": "line-turn",
+                    "received_at": time.time(),
+                    "target": target_id,
+                    "scenario": scenario_id,
+                    "turn": n,
+                    "provider": rec.provider,
+                    "model": rec.model,
+                    "latency_ms": rec.latency_ms,
+                    "server_ms": int((time.perf_counter() - t0) * 1000),
+                    "caller_last": next((m["content"] for m in reversed(history) if m["role"] == "user"), None),
+                    "reply": rec.reply,
+                },
+            )
+            log.info("[%s] line turn %d %s %dms :: %s", call_id[:8], n, rec.provider, rec.latency_ms, rec.reply)
+            if body.get("stream", True):
+                return StreamingResponse(_sse(rec.reply, rec.model), media_type="text/event-stream")
+            return JSONResponse(_completion_json(rec.reply, rec.model))
+
         if not scenario_id or not target_id:
             raise HTTPException(
                 status_code=400, detail="system message must carry SCENARIO:<id> and TARGET:<id> markers"
@@ -177,6 +214,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"ok": True}
 
     return app
+
+
+def _role_from(messages: list[dict]) -> str:
+    for m in messages:
+        if m.get("role") == "system" and isinstance(m.get("content"), str):
+            r = ROLE_MARKER.search(m["content"])
+            if r:
+                return r.group(1)
+    return "patient"
 
 
 def _markers_from(messages: list[dict], body: dict) -> tuple[str | None, str | None]:
