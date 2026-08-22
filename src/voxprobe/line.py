@@ -27,7 +27,7 @@ from .targets import Target, find_target
 from .vapi_client import LINE_ASSISTANT_NAME, VapiClient, build_line_assistant
 
 log = logging.getLogger("voxprobe.line")
-KEEPALIVE_S = 20  # public /health poll period; two consecutive failures → new tunnel + re-arm
+KEEPALIVE_S = 10  # public /health poll period; two consecutive failures → new tunnel + re-arm (≤ ~25 s outage)
 
 
 @dataclass
