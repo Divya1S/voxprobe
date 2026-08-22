@@ -1,0 +1,116 @@
+18:44:32 probe 1: planner still down (status_code: 429)
+18:54:42 probe 2: planner still down (status_code: 429)
+19:04:52 probe 3: planner still down (status_code: 429)
+19:15:03 probe 4: planner still down (status_code: 429)
+19:25:15 probe 5: planner still down (status_code: 429)
+19:35:25 probe 6: planner still down (status_code: 429)
+19:45:35 probe 7: planner still down (status_code: 429)
+19:55:45 probe 8: planner still down (status_code: 429)
+20:05:57 probe 9: planner still down (status_code: 429)
+20:16:06 probe 10: planner still down (status_code: 429)
+20:26:18 probe 11: planner still down (status_code: 429)
+20:36:28 probe 12: planner still down (status_code: 429)
+20:46:40 probe 13: planner still down (status_code: 429)
+20:56:50 probe 14: planner still down (status_code: 429)
+21:07:01 probe 15: planner still down (status_code: 429)
+21:17:13 probe 16: planner still down (status_code: 429)
+21:27:23 probe 17: planner still down (status_code: 429)
+21:37:33 probe 18: planner still down (status_code: 429)
+01:03:11 probe 19: planner answered without the 429 — placing call #1 now
+{
+  "ok": false,
+  "server_url": "https://seleven-mcp-sg.airudder.com/mcp/openagent_oauth",
+  "error": {
+    "code": "http_error",
+    "message": "MCP request timed out for initialize",
+    "status_code": null
+  }
+}
+MCP request timed out for initialize
+
+Traceback (most recent call last):
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpx/_transports/default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpcore/_sync/connection.py", line 101, in handle_request
+    raise exc
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpcore/_sync/connection.py", line 78, in handle_request
+    stream = self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpcore/_sync/connection.py", line 124, in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpcore/_backends/sync.py", line 207, in connect_tcp
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/calle/calls.py", line 76, in _request
+    response = self._client.request(method, path, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpx/_client.py", line 825, in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpx/_client.py", line 914, in send
+    response = self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpx/_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpx/_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpx/_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpx/_transports/default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [Errno 8] nodename nor servname provided, or not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/calle_client.py", line 230, in run
+    created = client.calls.create(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/calle/calls.py", line 40, in create
+    return self._request("POST", "/v1/calls", json=payload, headers=headers)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/calle/calls.py", line 80, in _request
+    raise CalleConnectionError("CALL-E API request failed before receiving a response.") from exc
+calle.errors.CalleConnectionError: CALL-E API request failed before receiving a response.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/bin/voxprobe", line 12, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 415, in main
+    args.fn(args)
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 277, in cmd_calle
+    res = calle_client.run(
+          ^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/calle_client.py", line 251, in run
+    raise RuntimeError(f"CALL-E create failed: {detail}") from e
+RuntimeError: CALL-E create failed: {'status_code': None, 'code': None, 'message': None, 'details': None, 'request_id': None}
+GATED-RETRY-DONE exit=1

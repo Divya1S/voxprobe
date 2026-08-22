@@ -8,3 +8,84 @@
 18:40:30 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:51120->104.16.231.132:443: read: connection reset by peer
 18:40:30 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
 ● tunnel replaced → https://98cc278672d992.lhr.life; line re-armed
+19:00:38 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+19:00:38 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:51364->104.16.230.132:443: read: connection reset by peer
+19:00:38 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://075a5a0a1ad564.lhr.life; line re-armed
+19:02:57 WARNING voxprobe.line: keepalive: 
+19:03:43 WARNING voxprobe.line: keepalive: Server disconnected without sending a response.
+19:08:14 WARNING voxprobe.line: keepalive: Server disconnected without sending a response.
+19:08:39 WARNING voxprobe.line: keepalive: Server disconnected without sending a response.
+19:08:39 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+19:08:39 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:51420->104.16.230.132:443: read: connection reset by peer
+19:08:39 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://ce221c4585c945.lhr.life; line re-armed
+19:09:29 WARNING voxprobe.line: keepalive: Server disconnected without sending a response.
+19:20:27 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+19:20:27 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:51545->104.16.230.132:443: read: connection reset by peer
+19:20:27 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://a96c895980a87b.lhr.life; line re-armed
+19:40:34 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+19:40:35 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:51727->104.16.230.132:443: read: connection reset by peer
+19:40:35 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://52c28737fc0c30.lhr.life; line re-armed
+19:41:59 WARNING voxprobe.line: keepalive: [Errno 8] nodename nor servname provided, or not known
+20:00:42 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+20:00:42 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:51914->104.16.231.132:443: read: connection reset by peer
+20:00:42 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://8c9552df429361.lhr.life; line re-armed
+20:20:29 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+20:20:29 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:52087->104.16.231.132:443: read: connection reset by peer
+20:20:29 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://93142bd9826db1.lhr.life; line re-armed
+20:40:36 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+20:40:36 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:52265->104.16.231.132:443: read: connection reset by peer
+20:40:36 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://97d5ef16b155d1.lhr.life; line re-armed
+21:00:50 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+21:00:50 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:52462->104.16.231.132:443: read: connection reset by peer
+21:00:50 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://8fccfeea5b15bb.lhr.life; line re-armed
+21:20:37 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+21:20:37 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:52615->104.16.231.132:443: read: connection reset by peer
+21:20:37 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://f3d2cc3f26bbce.lhr.life; line re-armed
+21:40:24 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+21:40:24 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:52793->104.16.231.132:443: read: connection reset by peer
+21:40:24 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://b3858fd84aad03.lhr.life; line re-armed
+21:56:49 WARNING voxprobe.line: keepalive: [Errno 8] nodename nor servname provided, or not known
+22:02:45 WARNING voxprobe.line: keepalive: [Errno 8] nodename nor servname provided, or not known
+22:02:45 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+22:02:45 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": dial tcp: lookup api.trycloudflare.com: no such host
+22:02:45 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+Traceback (most recent call last):
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/bin/voxprobe", line 12, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 403, in main
+    p.set_defaults(fn=cmd_line)
+    ^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 292, in cmd_line
+    print(res.transcript_path.read_text())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/line.py", line 282, in main_up
+    asyncio.run(up(settings, target, scenario_id=sid, greeting=greeting))
+  File "/opt/anaconda3/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/line.py", line 263, in up
+    proc, url = await _start_tunnel(settings.brain_port)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 172, in _start_tunnel
+    return await _start_localhost_run(port, timeout_s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 153, in _start_localhost_run
+    raise RuntimeError("localhost.run did not print a *.lhr.life URL (is outbound ssh allowed?)")
+RuntimeError: localhost.run did not print a *.lhr.life URL (is outbound ssh allowed?)
