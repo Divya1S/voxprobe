@@ -46,7 +46,7 @@ def build_task(scenario: Scenario, business: str = "the office you are calling",
     p = scenario.patient
     lines = [
         f"You are {p.name}, a {'new' if p.new_patient else 'returning'} patient calling {business}. "
-        f"Speak as this person in the first person; never say you are an AI unless asked directly.",
+        f"Speak as this person in the first person. If asked whether you are an AI or automated caller, answer honestly.",
         f"Why you are calling, in your own words: {p.reason}",
         f"Your goal for this call: {scenario.objective}",
         f"Your date of birth, if they ask: {p.dob_spoken} ({p.dob.isoformat()}).",
@@ -211,14 +211,18 @@ def run(
     client = _client(settings)
     stem = _stem(scenario)
     try:
-        created = client.calls.create(
-            task=payload["task"],
-            recipients=payload["recipients"],
-            result_schema=payload["result_schema"],
-            metadata=payload["metadata"],
-            webhook_url=webhook_url,
-            idempotency_key=stem,
-        )
+        try:
+            created = client.calls.create(
+                task=payload["task"],
+                recipients=payload["recipients"],
+                result_schema=payload["result_schema"],
+                metadata=payload["metadata"],
+                webhook_url=webhook_url,
+                idempotency_key=stem,
+            )
+        except Exception as e:  # surface CALL-E's error envelope (code/details) — the SDK's str() hides it
+            detail = {k: getattr(e, k, None) for k in ("status_code", "code", "message", "details", "request_id")}
+            raise RuntimeError(f"CALL-E create failed: {detail}") from e
         call_id = created["id"]
         task = client.calls.wait_for_result(call_id, interval_seconds=3.0, timeout_seconds=timeout_s)
         events: list[dict[str, Any]] = []
