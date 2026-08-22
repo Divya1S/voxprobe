@@ -1,0 +1,13 @@
+{
+  "ok": false,
+  "server_url": "https://seleven-mcp-sg.airudder.com/mcp/openagent_oauth",
+  "stage": "plan_call",
+  "call_started": false,
+  "retry_safe": true,
+  "error": {
+    "code": "plan_call_error",
+    "message": "plan_call returned an error.",
+    "status_code": null
+  }
+}
+plan_call returned an error.

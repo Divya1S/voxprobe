@@ -4,3 +4,7 @@
 ● line armed: +12132892081 → assistant voxprobe-line (23b6e1ec…) as target 'local-clinic-buggy'
   greeting: Thank you for calling Sunrise Orthopedics. This call may be recorded. Can I get your first and last name, please?
   test for $0: Vapi dashboard → Assistants → voxprobe-line → Talk.  Ctrl-C to stop (the number keeps the assistant; tunnel dies).
+18:40:30 WARNING voxprobe.line: tunnel unhealthy twice — restarting tunnel and re-arming
+18:40:30 WARNING voxprobe.tunnel: cloudflared: failed to request quick Tunnel: Post "https://api.trycloudflare.com/tunnel": read tcp 10.25.194.57:51120->104.16.231.132:443: read: connection reset by peer
+18:40:30 WARNING voxprobe.tunnel: cloudflared unavailable — falling back to localhost.run
+● tunnel replaced → https://98cc278672d992.lhr.life; line re-armed

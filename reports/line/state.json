@@ -1,10 +1,10 @@
 {
-  "public_url": "https://7f4e8f99039b5f.lhr.life",
+  "public_url": "https://98cc278672d992.lhr.life",
   "assistant_id": "23b6e1ec-9392-47ac-89cb-5bb1659a1e59",
   "phone_number_id": "6b72dea7-99d6-48a9-b896-16c7f9077b5f",
   "number": "+12132892081",
   "target_id": "local-clinic-buggy",
   "scenario_id": "02-schedule-with-constraints",
   "greeting": "Thank you for calling Sunrise Orthopedics. This call may be recorded. Can I get your first and last name, please?",
-  "since": 1787362111.153523
+  "since": 1787362833.662693
 }
