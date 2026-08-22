@@ -169,3 +169,10 @@ prepared"** (full task 18:26 and 18:30 PDT; minimal task 18:30; `calle-ai` 0.7.0
 report with the identical signature was opened the same hour (awesome-phone-call-agents #213, failures since Aug 21, stuck
 `in_progress` tasks since Aug 10). No call was spent. Gate 0 (first CALL-E call to our line) waits for their recovery; the
 line is up and verified end to end in the meantime.
+
+**Root cause (19:05).** Via the MCP/CLI path (`calle mcp call plan_call`, plan only) the server returns the upstream error
+verbatim: `429 … model gpt-5.5 … "You have no credits remaining" … credit_balance_exhausted` — CALL-E's own planner has run
+out of OpenAI quota; identical for our number and a fictional one. That is the "call plan could not be prepared" behind the
+REST 503. Nothing to fix on our side; the retry runner (same idempotency key, every 10 min) will place call #1 when their
+planner is back. Filed as FEEDBACK.md #5.
+
