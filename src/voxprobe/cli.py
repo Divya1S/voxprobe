@@ -162,6 +162,8 @@ async def _start_tunnel(port: int, timeout_s: int = 90) -> tuple[subprocess.Pope
     import os
 
     pref = os.environ.get("VOXPROBE_TUNNEL", "").strip().lower()
+    if pref == "localhost.run":
+        return await _start_localhost_run(port, timeout_s)
     if pref in ("", "cloudflared"):
         got = await _start_cloudflared(port, timeout_s if pref else 40)
         if got:

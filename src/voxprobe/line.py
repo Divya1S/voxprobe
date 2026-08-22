@@ -210,6 +210,36 @@ async def fetch(
     return metas
 
 
+async def _tunnel_until_healthy(port: int, *, attempts: int = 8):
+    """Alternate tunnel providers until the public /health answers. Free tunnels are flaky; never give up on the first."""
+    import os
+
+    from .cli import _start_tunnel, _wait_healthy
+
+    providers = ["localhost.run", "cloudflared"]
+    last: Exception | None = None
+    for i in range(attempts):
+        os.environ["VOXPROBE_TUNNEL"] = providers[i % len(providers)]
+        try:
+            proc, url = await _start_tunnel(port, timeout_s=60)
+        except Exception as e:  # noqa: BLE001
+            last = e
+            log.warning("tunnel attempt %d (%s) failed to start: %s", i + 1, providers[i % 2], str(e)[:120])
+            await asyncio.sleep(5)
+            continue
+        try:
+            await _wait_healthy(url, timeout_s=60)
+            return proc, url
+        except Exception as e:  # noqa: BLE001
+            last = e
+            log.warning(
+                "tunnel attempt %d (%s) never became healthy — trying the next provider", i + 1, providers[i % 2]
+            )
+            proc.terminate()
+            await asyncio.sleep(5)
+    raise RuntimeError(f"no tunnel became healthy after {attempts} attempts: {last}")
+
+
 async def up(settings: Settings, target: Target, *, scenario_id: str = "", greeting: str | None = None) -> None:
     """Server + tunnel + arm; block until Ctrl-C. Prints the number to call.
 
@@ -219,7 +249,6 @@ async def up(settings: Settings, target: Target, *, scenario_id: str = "", greet
     import httpx
     import uvicorn
 
-    from .cli import _start_tunnel, _wait_healthy
     from .server import create_app
 
     if scenario_id:
@@ -228,10 +257,9 @@ async def up(settings: Settings, target: Target, *, scenario_id: str = "", greet
         uvicorn.Config(create_app(settings), host=settings.brain_host, port=settings.brain_port, log_level="warning")
     )
     server_task = asyncio.create_task(server.serve())
-    proc, url = await _start_tunnel(settings.brain_port)
+    proc, url = await _tunnel_until_healthy(settings.brain_port)
     print(f"● tunnel up: {url}", flush=True)
     try:
-        await _wait_healthy(url)
         state = await arm(with_public_url(settings, url), target, scenario_id=scenario_id, greeting=greeting)
         print(
             f"● line armed: {state.number or '(number)'} → assistant {LINE_ASSISTANT_NAME} ({state.assistant_id[:8]}…) as target '{target.id}'",
@@ -260,8 +288,7 @@ async def up(settings: Settings, target: Target, *, scenario_id: str = "", greet
                     continue  # one blip is fine; two in a row means the tunnel is gone
                 log.warning("tunnel unhealthy twice — restarting tunnel and re-arming")
                 proc.terminate()
-                proc, url = await _start_tunnel(settings.brain_port)
-                await _wait_healthy(url)
+                proc, url = await _tunnel_until_healthy(settings.brain_port)
                 state = await arm(
                     with_public_url(settings, url), target, scenario_id=state.scenario_id, greeting=greeting
                 )
