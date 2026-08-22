@@ -41,3 +41,8 @@ reports/events/call-*
 
 # run recordings live in recordings/ locally; only curated copies under examples/ are committed
 recordings/*.mp3
+
+# operational logs/state of the inbound line and CALL-E runners (not evidence)
+reports/line/*.log
+reports/line/state.json
+reports/calle/*.log
