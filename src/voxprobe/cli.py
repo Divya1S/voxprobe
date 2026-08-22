@@ -274,7 +274,15 @@ def cmd_calle(args) -> None:
         return
     if not args.yes:
         raise SystemExit("this places a REAL call and spends one CALL-E call — re-run with --yes")
-    res = calle_client.run(settings, scenario, number, args.business, timeout_s=args.timeout)
+    res = calle_client.run(
+        settings,
+        scenario,
+        number,
+        args.business,
+        timeout_s=args.timeout,
+        retry_every_s=args.retry_every * 60,
+        retry_for_s=args.retry_for * 3600,
+    )
     t = res.task
     print(
         f"● CALL-E call {res.call_id}: status={t.get('status')} task_completed={t.get('task_completed')} confidence={t.get('completion_confidence')}"
@@ -377,6 +385,10 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--business", default="Sunrise Orthopedics", help="how the task names the place being called")
     p.add_argument("--timeout", type=float, default=600.0, help="seconds to wait for the CallTask to finish")
     p.add_argument("--yes", action="store_true", help="confirm spending one real CALL-E call")
+    p.add_argument(
+        "--retry-every", type=float, default=0.0, help="minutes between retries when CALL-E is unavailable (503)"
+    )
+    p.add_argument("--retry-for", type=float, default=0.0, help="hours to keep retrying (same idempotency key)")
     p.set_defaults(fn=cmd_calle)
 
     p = sub.add_parser(
