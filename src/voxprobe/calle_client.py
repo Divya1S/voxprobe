@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -195,6 +196,10 @@ def render_transcript_md(task: dict[str, Any], stem: str) -> str:
     return "\n".join(out)
 
 
+class CalleUnavailable(RuntimeError):
+    """CALL-E could not accept the call right now (503 provider_unavailable / plan could not be prepared)."""
+
+
 def run(
     settings: Settings,
     scenario: Scenario,
@@ -203,26 +208,47 @@ def run(
     *,
     timeout_s: float = 600.0,
     webhook_url: str | None = None,
+    retry_every_s: float = 0.0,
+    retry_for_s: float = 0.0,
 ) -> CalleRun:
-    """Place ONE real CALL-E call. Refuses any number not on ALLOWED_NUMBERS_E164. Keeps raw evidence on disk."""
+    """Place ONE real CALL-E call. Refuses any number not on ALLOWED_NUMBERS_E164. Keeps raw evidence on disk.
+
+    With retry_every_s/retry_for_s set, a 503 provider_unavailable ("The call plan could not be prepared") is retried with
+    the SAME idempotency key and payload (the docs' condition for safe retries), so a recovery never double-dials.
+    """
     number = normalize_e164(number)
     assert_allowed_target(number, settings.allowed_numbers)
     payload = dry_run(scenario, number, business)
     client = _client(settings)
     stem = _stem(scenario)
     try:
-        try:
-            created = client.calls.create(
-                task=payload["task"],
-                recipients=payload["recipients"],
-                result_schema=payload["result_schema"],
-                metadata=payload["metadata"],
-                webhook_url=webhook_url,
-                idempotency_key=stem,
-            )
-        except Exception as e:  # surface CALL-E's error envelope (code/details) — the SDK's str() hides it
-            detail = {k: getattr(e, k, None) for k in ("status_code", "code", "message", "details", "request_id")}
-            raise RuntimeError(f"CALL-E create failed: {detail}") from e
+        deadline = time.monotonic() + retry_for_s
+        attempt = 0
+        while True:
+            attempt += 1
+            try:
+                created = client.calls.create(
+                    task=payload["task"],
+                    recipients=payload["recipients"],
+                    result_schema=payload["result_schema"],
+                    metadata=payload["metadata"],
+                    webhook_url=webhook_url,
+                    idempotency_key=stem,
+                )
+                break
+            except Exception as e:  # surface CALL-E's error envelope (code/details) — the SDK's str() hides it
+                detail = {k: getattr(e, k, None) for k in ("status_code", "code", "message", "details", "request_id")}
+                unavailable = detail.get("code") == "provider_unavailable" or "could not be prepared" in str(e)
+                if unavailable and retry_every_s and time.monotonic() + retry_every_s <= deadline:
+                    print(
+                        f"  CALL-E unavailable (attempt {attempt}, {detail.get('status_code')} {detail.get('code')}) — retrying in {int(retry_every_s)}s with the same idempotency key",
+                        flush=True,
+                    )
+                    time.sleep(retry_every_s)
+                    continue
+                if unavailable:
+                    raise CalleUnavailable(f"CALL-E create failed after {attempt} attempt(s): {detail}") from e
+                raise RuntimeError(f"CALL-E create failed: {detail}") from e
         call_id = created["id"]
         task = client.calls.wait_for_result(call_id, interval_seconds=3.0, timeout_seconds=timeout_s)
         events: list[dict[str, Any]] = []
