@@ -7,6 +7,7 @@ voxprobe serve-agent --target local-clinic --port 8765  expose the sample agent 
 voxprobe bench --name <name> -k 3                      planted-bug detection benchmark (precision/recall/F1, pass@k)
 voxprobe calibrate sample|score ...                    judge calibration sheet + human agreement / kappa
 voxprobe analyze <stem>...                             re-transcribe + metrics + judge for recorded runs
+voxprobe calle probe|dry-run|run ...                   CALL-E's outbound agent as the caller (plan-then-dial; allow-listed numbers only)
 voxprobe call --scenario 01 --target <vapi-target>     experimental phone adapter (tunnel + brain server + call)
 voxprobe serve                                         brain server only (external tunnel)
 """
@@ -214,6 +215,34 @@ def cmd_calibrate(args) -> None:
         print(_json.dumps(calibrate.score(Path(args.name)), indent=2))
 
 
+def cmd_calle(args) -> None:
+    import json as _json
+
+    from . import calle_client
+
+    settings = load_settings()
+    if args.action == "probe":
+        print(_json.dumps(calle_client.probe(settings), indent=2))
+        return
+    scenario = find_scenario(settings.scenarios_dir, args.scenario)
+    number = args.to or settings.calle_target_number
+    if not number:
+        raise SystemExit("need --to +1... (or CALLE_TARGET_E164 in .env)")
+    if args.action == "dry-run":
+        print(_json.dumps(calle_client.dry_run(scenario, number, args.business), indent=2, ensure_ascii=False))
+        return
+    if not args.yes:
+        raise SystemExit("this places a REAL call and spends one CALL-E call — re-run with --yes")
+    res = calle_client.run(settings, scenario, number, args.business, timeout_s=args.timeout)
+    t = res.task
+    print(
+        f"● CALL-E call {res.call_id}: status={t.get('status')} task_completed={t.get('task_completed')} confidence={t.get('completion_confidence')}"
+    )
+    print(f"● raw evidence → {res.raw_path.relative_to(settings.repo_root)}")
+    print(f"● transcript   → {res.transcript_path.relative_to(settings.repo_root)}")
+    print(res.transcript_path.read_text())
+
+
 def cmd_analyze(args) -> None:
     from .analyze import analyze_call
 
@@ -270,6 +299,17 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--pattern", default="*.analysis.json", help="which analyses to sample from (glob under reports/)")
     p.set_defaults(fn=cmd_calibrate)
+
+    p = sub.add_parser(
+        "calle", help="CALL-E adapter: probe (read-only auth check), dry-run (print task+schema), run (one real call)"
+    )
+    p.add_argument("action", choices=["probe", "dry-run", "run"])
+    p.add_argument("--scenario", help="scenario number or id (dry-run/run)")
+    p.add_argument("--to", help="recipient E.164 (default CALLE_TARGET_E164); must be on ALLOWED_NUMBERS_E164")
+    p.add_argument("--business", default="Sunrise Orthopedics", help="how the task names the place being called")
+    p.add_argument("--timeout", type=float, default=600.0, help="seconds to wait for the CallTask to finish")
+    p.add_argument("--yes", action="store_true", help="confirm spending one real CALL-E call")
+    p.set_defaults(fn=cmd_calle)
 
     p = sub.add_parser("analyze", help="re-transcribe + metrics + judge draft for recorded call(s) by artifact stem")
     p.add_argument("stems", nargs="+")

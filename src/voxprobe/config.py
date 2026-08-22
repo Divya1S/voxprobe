@@ -85,6 +85,11 @@ class Settings:
     vapi_phone_number_id: str = ""
     caller_number: str = ""
 
+    # optional caller adapter: CALL-E (https://docs.heycall-e.com) — CALL-E's own agent places the call
+    calle_api_key: str = ""
+    calle_base_url: str = "https://api.heycall-e.com"
+    calle_target_number: str = ""  # default recipient (E.164); must also be on the allow-list
+
     # dial guard
     allowed_numbers: frozenset[str] = frozenset()
 
@@ -109,6 +114,12 @@ class Settings:
     @property
     def targets_dir(self) -> Path:
         return self.repo_root / "targets"
+
+    def require_calle(self) -> None:
+        if not self.calle_api_key:
+            raise RuntimeError(
+                "CALL-E adapter needs CALLE_API_KEY (dashboard.heycall-e.com → Account → API keys; see .env.example)"
+            )
 
     def require_vapi(self) -> None:
         missing = [
@@ -140,6 +151,11 @@ def load_settings() -> Settings:
         brain_port=int(env("BRAIN_PORT", "8000")),
         vapi_api_key=env("VAPI_API_KEY", ""),
         vapi_phone_number_id=env("VAPI_PHONE_NUMBER_ID", ""),
+        calle_api_key=env("CALLE_API_KEY", "").strip(),
+        calle_base_url=env("CALLE_BASE_URL", "https://api.heycall-e.com").rstrip("/"),
+        calle_target_number=normalize_e164(env("CALLE_TARGET_E164", "").strip())
+        if env("CALLE_TARGET_E164", "").strip()
+        else "",
         caller_number=normalize_e164(caller) if caller else "",
         allowed_numbers=parse_allowlist(env("ALLOWED_NUMBERS_E164", "")),
     )

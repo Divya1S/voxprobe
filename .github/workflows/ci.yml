@@ -18,7 +18,7 @@ jobs:
       - name: System deps (ffmpeg for the audio-timing golden test)
         run: sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
       - name: Install
-        run: uv sync --extra dev --extra arena
+        run: uv sync --extra dev --extra arena --extra calle
       - name: Lint
         run: uv run ruff check . && uv run ruff format --check .
       - name: Test
