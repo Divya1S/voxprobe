@@ -176,3 +176,7 @@ out of OpenAI quota; identical for our number and a fictional one. That is the "
 REST 503. Nothing to fix on our side; the retry runner (same idempotency key, every 10 min) will place call #1 when their
 planner is back. Filed as FEEDBACK.md #5.
 
+**01:32Z.** The retry runner's create was accepted, then failed 8 s later with the same message (no attempts, no events); the
+MCP planner probe still shows the 429. Replaced the blind retry with `scripts/calle_gated_retry.sh`: probe `plan_call` via
+MCP (no dial, no task) every 10 min, place call #1 only when the planner answers. FEEDBACK.md #7.
+
