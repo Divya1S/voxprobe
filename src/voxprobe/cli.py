@@ -31,6 +31,7 @@ from .scenarios import find_scenario, load_all_scenarios
 from .targets import find_target, load_all_targets
 
 TUNNEL_URL_RE = re.compile(r"https://[a-z0-9-]+\.trycloudflare\.com")
+log = logging.getLogger("voxprobe.tunnel")
 
 
 def _logging(verbose: bool) -> None:
@@ -89,47 +90,86 @@ def cmd_serve(args) -> None:
     uvicorn.run(create_app(settings), host=settings.brain_host, port=settings.brain_port, log_level="info")
 
 
-async def _start_tunnel(port: int, timeout_s: int = 90) -> tuple[subprocess.Popen, str]:
-    """Spawn a cloudflared quick tunnel; return (process, public https URL) once the tunnel is REGISTERED.
+LHR_URL_RE = re.compile(r"https://[a-z0-9-]+\.lhr\.life")
 
-    cloudflared prints the URL before the connection is established, so we also wait for its
-    "Registered tunnel connection" line — otherwise the first health checks 1033/530 for a while.
-    """
-    log = logging.getLogger("voxprobe.tunnel")
+
+async def _start_cloudflared(port: int, timeout_s: int) -> tuple[subprocess.Popen, str] | None:
+    """cloudflared quick tunnel; None if it cannot register within timeout_s (some networks reset the API call)."""
     proc = subprocess.Popen(
         ["cloudflared", "tunnel", "--url", f"http://127.0.0.1:{port}", "--no-autoupdate"],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
-        bufsize=1,
     )
-    t0 = time.monotonic()
-    url, registered = None, False
+    url, registered, t0 = None, False, time.monotonic()
     loop = asyncio.get_running_loop()
-    while time.monotonic() - t0 < timeout_s and not (url and registered):
+    while time.monotonic() - t0 < timeout_s and proc.poll() is None:
         line = await loop.run_in_executor(None, proc.stdout.readline)
         if not line:
             break
-        if " ERR " in line:
+        if "failed to request quick Tunnel" in line or "ERR" in line:
             log.warning("cloudflared: %s", line.strip()[:200])
-        hit = TUNNEL_URL_RE.search(line)
-        if hit:
-            url = hit.group(0)
+        m = TUNNEL_URL_RE.search(line)
+        if m:
+            url = m.group(0)
         if "Registered tunnel connection" in line:
             registered = True
-    if not url:
-        proc.terminate()
-        raise RuntimeError("cloudflared did not print a trycloudflare.com URL (is cloudflared installed?)")
-    if not registered:
-        log.warning("tunnel URL found but no 'Registered tunnel connection' within %ss — continuing anyway", timeout_s)
-    loop.run_in_executor(None, _drain, proc, log)
-    return proc, url
+            break
+    if url and registered:
+        return proc, url
+    proc.terminate()
+    return None
 
 
-def _drain(proc: subprocess.Popen, log: logging.Logger) -> None:
-    for line in proc.stdout:
-        if " ERR " in line:
-            log.warning("cloudflared: %s", line.strip()[:200])
+async def _start_localhost_run(port: int, timeout_s: int) -> tuple[subprocess.Popen, str]:
+    """$0, no-account fallback: ssh -R through localhost.run (URL https://<id>.lhr.life)."""
+    proc = subprocess.Popen(
+        [
+            "ssh",
+            "-o",
+            "StrictHostKeyChecking=no",
+            "-o",
+            "ServerAliveInterval=30",
+            "-o",
+            "ExitOnForwardFailure=yes",
+            "-R",
+            f"80:127.0.0.1:{port}",
+            "nokey@localhost.run",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    loop = asyncio.get_running_loop()
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < timeout_s and proc.poll() is None:
+        line = await loop.run_in_executor(None, proc.stdout.readline)
+        if not line:
+            break
+        m = LHR_URL_RE.search(line)
+        if m:
+            return proc, m.group(0)
+    proc.terminate()
+    raise RuntimeError("localhost.run did not print a *.lhr.life URL (is outbound ssh allowed?)")
+
+
+async def _start_tunnel(port: int, timeout_s: int = 90) -> tuple[subprocess.Popen, str]:
+    """Expose the local brain server on a public https URL for $0.
+
+    Order: VOXPROBE_TUNNEL env (cloudflared | localhost.run) if set; else cloudflared quick tunnel, then localhost.run when
+    cloudflared cannot register (observed 2026-08-21: api.trycloudflare.com connection reset on some networks).
+    """
+    import os
+
+    pref = os.environ.get("VOXPROBE_TUNNEL", "").strip().lower()
+    if pref in ("", "cloudflared"):
+        got = await _start_cloudflared(port, timeout_s if pref else 40)
+        if got:
+            return got
+        if pref == "cloudflared":
+            raise RuntimeError("cloudflared could not register a quick tunnel")
+        log.warning("cloudflared unavailable — falling back to localhost.run")
+    return await _start_localhost_run(port, timeout_s)
 
 
 async def _wait_healthy(url: str, timeout_s: int = 120) -> None:
