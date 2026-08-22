@@ -149,3 +149,23 @@ agent over-triaged a rolled ankle to urgent care, refused to schedule, and stall
 **Websocket adapter, live.** `voxprobe serve-agent` + `ws-local-clinic`: connect → greeting → turns → stereo recording → analysis all
 worked; the run FAILED honestly because the remote agent kept missing the caller's birth year — the caller's audio reaches a websocket
 agent unpaced (client output at half real-time, no receiving-side virtual mic), so its STT/turn logic saw bursty audio. Tracked.
+
+## 2026-08-21 — CALL-E enters the picture; the line goes up; CALL-E is down
+
+**New direction.** voxprobe now has two adapters for the Devpost hackathon "CALL-E: Your Code Is Calling": `voxprobe calle`
+(CALL-E's outbound agent as a *caller* — task text + result_schema composed from a scenario so its self-report mirrors the
+scenario's success criteria 1:1) and `voxprobe line` (our receptionist under test answering the free Vapi number as a saved
+assistant: custom-LLM → brain server in `ROLE:agent`, Deepgram BYO, stereo MP3; `line fetch` swaps Vapi's L/R into our
+convention so `analyze` is unchanged). The inversion that makes it interesting: CALL-E's agent cannot be programmed — no
+persona, voice, brain or live control in its Developer API — so we program the *person it calls*.
+
+**Plumbing facts learned the hard way.** Vapi's API 403s from Python `urllib` are Cloudflare error 1010 (User-Agent ban) —
+httpx is fine. cloudflared's quick-tunnel API is connection-reset on this network → the tunnel helper falls back to
+localhost.run (ssh -R, $0, no account); free tunnels die when idle → `line up` now polls its own public /health every 20 s
+and replaces the tunnel + re-arms the assistant. LiveKit Cloud advertises a free US number but gates it behind payment.
+
+**CALL-E outage.** Every `POST /v1/calls` today returned **503 `provider_unavailable` — "The call plan could not be
+prepared"** (full task 18:26 and 18:30 PDT; minimal task 18:30; `calle-ai` 0.7.0; read-only `GET /v1/goals` fine). A public
+report with the identical signature was opened the same hour (awesome-phone-call-agents #213, failures since Aug 21, stuck
+`in_progress` tasks since Aug 10). No call was spent. Gate 0 (first CALL-E call to our line) waits for their recovery; the
+line is up and verified end to end in the meantime.

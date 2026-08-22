@@ -1,0 +1,11 @@
+# Feedback to the CALL-E team (running log)
+
+Observations from building voxprobe's CALL-E adapter, with enough detail to reproduce. Times are PDT unless noted; numbers
+masked. Constructive by intent: this is what a developer sees from the outside.
+
+| # | When | What we did | What we saw | Why it matters / suggestion |
+|---|---|---|---|---|
+| 1 | 2026-08-21 18:26, 18:30, 18:31 | `POST /v1/calls` via `calle-ai` 0.7.0 (`calls.create`), US recipient, task 0.4–2.5 kB, `result_schema` plain object, `Idempotency-Key` set | **503 `provider_unavailable`**, message "The call plan could not be prepared.", `details: {}`, no `request_id`. Read-only `GET /v1/goals` 200 with the same key. Same signature as public issue awesome-phone-call-agents#213 | A 503 with an empty `details` and no request id gives the caller nothing to act on or quote in a report. Suggest: populate `details.reason` (planner vs telephony vs region), return a `request_id`, and surface incidents on a status page / `GET /v1/status` |
+| 2 | 2026-08-21 | `CalleAPIError.__str__` returns only the message; `code`/`status_code`/`details` are attributes | Our CLI initially swallowed the code ("The call plan could not be prepared.") | SDK ergonomics: include code + status in `__str__` so logs carry them by default |
+| 3 | 2026-08-21 | `https://test-api.heycall-e.com` with a live `iams_live_` key | 401 "Invalid or missing API key" | Docs mention the test environment but not how to obtain a test key; a $0 sandbox that returns synthetic CallTasks would let integrators run CI without spending calls |
+| 4 | 2026-08-21 | Read the OpenAPI 0.6.0 / SDK | `transcript_turns.offset_seconds` is an integer (or null); no audio via API | Integer offsets cannot support turn-taking/latency measurement; audio (even mono) or ms offsets would make post-call QA possible from the API alone |

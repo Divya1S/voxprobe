@@ -1,0 +1,9 @@
+
+=== retry full task @ 18:30:21
+FAILED: CALL-E create failed: {'status_code': 503, 'code': 'provider_unavailable', 'message': None, 'details': {}, 'request_id': None}
+
+=== minimal task @ 18:30:55
+FAILED: The call plan could not be prepared.
+
+=== minimal task, no region/locale @ 18:31:28
+FAILED: The call plan could not be prepared.

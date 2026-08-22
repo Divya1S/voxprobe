@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/calle_client.py", line 215, in run
+    created = client.calls.create(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/calle/calls.py", line 40, in create
+    return self._request("POST", "/v1/calls", json=payload, headers=headers)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/lib/python3.12/site-packages/calle/calls.py", line 83, in _request
+    raise api_error_from_response(response.status_code, response.json())
+calle.errors.CalleAPIError: The call plan could not be prepared.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/.venv/bin/voxprobe", line 12, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 403, in main
+    args.fn(args)
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/cli.py", line 277, in cmd_calle
+    res = calle_client.run(settings, scenario, number, args.business, timeout_s=args.timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/divyarajput/Dev Projects/Company Work/Pretty Good AI/voxprobe/src/voxprobe/calle_client.py", line 225, in run
+    raise RuntimeError(f"CALL-E create failed: {detail}") from e
+RuntimeError: CALL-E create failed: {'status_code': 503, 'code': 'provider_unavailable', 'message': None, 'details': {}, 'request_id': None}
