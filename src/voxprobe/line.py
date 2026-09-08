@@ -302,9 +302,20 @@ async def up(settings: Settings, target: Target, *, scenario_id: str = "", greet
                 fails += 1
                 if fails < 2:
                     continue  # one blip is fine; two in a row means the tunnel is gone
-                log.warning("tunnel unhealthy twice — restarting tunnel and re-arming")
+                log.warning("tunnel unhealthy twice — restarting tunnel and re-arming (preserving the latest arm)")
                 proc.terminate()
                 proc, url = await _tunnel_until_healthy(settings.brain_port)
+                cur = LineState.load(settings)  # a per-row `arm` may have changed the target/scenario since startup
+                cur_target = find_target(settings.targets_dir, cur.target_id)
+                state = await arm(
+                    with_public_url(settings, url),
+                    cur_target,
+                    scenario_id=cur.scenario_id,
+                    greeting=cur.greeting or None,
+                )
+                print(f"● tunnel replaced → {url}; re-armed as '{cur.target_id}'", flush=True)
+                fails = 0
+                continue
                 state = await arm(
                     with_public_url(settings, url), target, scenario_id=state.scenario_id, greeting=greeting
                 )
