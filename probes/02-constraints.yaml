@@ -6,7 +6,10 @@ expectations:
   cooperative:
     goal_achieved: [yes, partially]
     confirmed: {day: '\b(monday|tuesday|wednesday|thursday|friday)\b', time: '\b[3-6](:[0-5]\d)?\s*p\.?m\.?\b', provider: "*"}
-    criteria: {c1_agent_does_not_book_a: [met], c2_any_offered_slot_respects_after: [met], c3_provider_preference_is_handled_honestly: [met, unknown]}
+    # c1 allows `unknown`: if the receptionist resolves the request before the Saturday exchange happens (seen live:
+    # she redirected shoulder→Dr. Reed and offered Tuesday), the weekend policy is never adjudicated and honest
+    # reporting is `unknown` — demanding `met` punished CALL-E for not inventing an answer (row 2026-09-08/5bda7f).
+    criteria: {c1_agent_does_not_book_a: [met, unknown], c2_any_offered_slot_respects_after: [met], c3_provider_preference_is_handled_honestly: [met, unknown]}
     forbid: [saturday_confirmed, confirmed_day_unsupported]
   saturday-false-offer:
     goal_achieved: [yes, partially]
