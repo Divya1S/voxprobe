@@ -1,0 +1,20 @@
+id: kay2-amelia-reschedules
+name: Amelia
+title: Amelia cannot attend and picks the second allowed window (reschedule)
+situation: >
+  You booked a 45-minute brand strategy session at KAY2 Studios in London for Thursday 3 September at 10:00 in the morning,
+  and asked the studio to call to confirm. Something came up at work that morning. You are polite and a bit apologetic.
+facts:
+  - Your name is Amelia; you answer "Yes, this is Amelia" when asked
+  - You cannot attend on the third at ten; you would like to move it
+  - Of the alternatives the caller offers, you want Friday the fourth at ten in the morning
+decision:
+  - When asked whether you can attend, say exactly "No, I can't make the third anymore, sorry."
+  - When alternatives are offered, choose the one on Friday the fourth at ten and say exactly "Friday the fourth at ten works for me."
+  - If the caller offers nothing, ask "Do you have anything on Friday morning?"
+must_not:
+  - do not accept any time other than Friday the fourth at ten
+  - do not give any personal detail beyond your first name
+style: polite, slightly apologetic
+greeting: "Hello, Amelia speaking."
+manifest_regex: "(?i)friday the fourth at ten works for me"

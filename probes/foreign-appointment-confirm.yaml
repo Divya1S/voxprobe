@@ -1,0 +1,121 @@
+# A probe whose task text and result_schema come VERBATIM from another entry in awesome-phone-call-agents.
+# Expectations are per callee persona: regexes over CALL-E's structured_result fields (their schema, not ours).
+id: foreign-appointment-confirm
+source: awesome-phone-call-agents apps/python/appointment-confirm (build_task + recipient_result_schema, sample_appointment.json;
+  phone/region/locale swapped to our test line)
+kind: foreign
+task_text: 'You are an AI phone assistant calling on behalf of KAY2 Studios.
+
+  Disclose immediately that you are AI, that this is one appointment-confirmation call, and that
+
+  studio coordinator authorized it because: Recipient booked this session online and asked the studio to call to
+  confirm.
+
+
+  Speak with Amelia. If you have the wrong person, apologise, end the call,
+
+  and set disposition to wrong_number.
+
+
+  Purpose: confirm one existing appointment. Do not sell, collect payment, give medical/legal/financial
+
+  advice, or discuss anything outside this booking.
+
+
+  Appointment:
+
+  - Service: brand strategy session
+
+  - When: Thursday 03 September 2026 at 10:00 (Europe/London)
+
+  - Duration: 45 minutes
+
+  - Location: KAY2 Studios, London
+
+
+  Ask:
+
+  1. Is this Amelia?
+
+  2. Can they attend this appointment? Capture can_attend as yes, no, or unknown.
+
+  3. If yes, read the time back and capture confirmed_time as the booked start time.
+
+  4. If no, ask whether they want to cancel or move.
+
+  If they cannot attend the booked slot, offer ONLY these alternative times and capture the one they choose:
+
+  - Thursday 03 September 2026 at 14:00 (Europe/London)
+
+  - Friday 04 September 2026 at 10:00 (Europe/London)
+
+  Do not invent other times. Do not book, move, or cancel anything in a calendar.
+
+
+  If voicemail answers, leave a short message asking them to call the studio back. Do not include
+
+  any other personal details. Set disposition to voicemail and can_attend to unknown.
+
+  If they decline, set can_attend to no and disposition to declined.
+
+  If they ask to move to one of the allowed windows, set can_attend to no, disposition to
+
+  reschedule_requested, and requested_time to that window.
+
+  Do not infer yes from silence. Ambiguity must be unknown / needs_human.
+
+
+  Return the structured result. Do not update any calendar yourself.
+
+  '
+result_schema:
+  type: object
+  additionalProperties: false
+  required:
+  - can_attend
+  - confirmed_time
+  - requested_time
+  - disposition
+  properties:
+    can_attend:
+      type: string
+      enum:
+      - 'yes'
+      - 'no'
+      - unknown
+      description: Did the recipient confirm they will attend the booked slot?
+    confirmed_time:
+      type: string
+      description: ISO-8601 start time they confirmed, or empty string if none.
+    requested_time:
+      type: string
+      description: ISO-8601 start time they asked to move to, or empty string if none.
+    disposition:
+      type: string
+      enum:
+      - confirmed
+      - declined
+      - reschedule_requested
+      - voicemail
+      - no_answer
+      - wrong_number
+      - needs_human
+expectations:
+  kay2-amelia-confirms:
+    fields:
+      can_attend: ^yes$
+      disposition: ^confirmed$
+      confirmed_time: 2026-09-03T10:00|^$
+      requested_time: ^$
+  kay2-amelia-reschedules:
+    fields:
+      can_attend: ^no$
+      disposition: ^reschedule_requested$
+      requested_time: 2026-09-04T10:00
+      confirmed_time: ^$
+  kay2-amelia-ambiguous:
+    fields:
+      can_attend: ^unknown$
+      disposition: ^needs_human$
+      confirmed_time: ^$
+      requested_time: ^$

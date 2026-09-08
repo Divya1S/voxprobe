@@ -38,7 +38,8 @@ log = logging.getLogger("voxprobe.server")
 
 SCENARIO_MARKER = re.compile(r"SCENARIO:([0-9]{2}-[a-z0-9-]+)")
 TARGET_MARKER = re.compile(r"TARGET:([a-z0-9-]+)")
-ROLE_MARKER = re.compile(r"ROLE:(agent|patient)")
+ROLE_MARKER = re.compile(r"ROLE:(agent|patient|callee)")
+CALLEE_MARKER = re.compile(r"CALLEE:([a-z0-9-]+)")
 
 
 class CallRegistry:
@@ -113,6 +114,49 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         scenario_id, target_id = _markers_from(messages, body)
         role = _role_from(messages)
+        if role == "callee":
+            # Inbound line answering as a PERSON (callees/*.yaml): the other end for tasks that call people.
+            from .callee import callee_prompt, find_callee
+
+            callee_id = next(
+                (
+                    CALLEE_MARKER.search(m["content"]).group(1)
+                    for m in messages
+                    if m.get("role") == "system"
+                    and isinstance(m.get("content"), str)
+                    and CALLEE_MARKER.search(m["content"])
+                ),
+                None,
+            )
+            if not callee_id:
+                raise HTTPException(status_code=400, detail="ROLE:callee needs a CALLEE:<id> marker")
+            persona = find_callee(settings.repo_root / "callees", callee_id)
+            history = window_history(messages)
+            t0 = time.perf_counter()
+            rec = await brain.reply(callee_prompt(persona), history)
+            registry.record_turn(call_id, rec)
+            n = len(registry.turns(call_id))
+            _append_event(
+                events_dir,
+                call_id,
+                {
+                    "type": "callee-turn",
+                    "received_at": time.time(),
+                    "callee": callee_id,
+                    "turn": n,
+                    "provider": rec.provider,
+                    "model": rec.model,
+                    "latency_ms": rec.latency_ms,
+                    "server_ms": int((time.perf_counter() - t0) * 1000),
+                    "caller_last": next((m["content"] for m in reversed(history) if m["role"] == "user"), None),
+                    "reply": rec.reply,
+                },
+            )
+            log.info("[%s] callee turn %d %s %dms :: %s", call_id[:8], n, rec.provider, rec.latency_ms, rec.reply)
+            if body.get("stream", True):
+                return StreamingResponse(_sse(rec.reply, rec.model), media_type="text/event-stream")
+            return JSONResponse(_completion_json(rec.reply, rec.model))
+
         if role == "agent":
             # Inbound line: WE are the receptionist under test (sample agent + planted bugs); the caller is whoever dialed.
             if not target_id:

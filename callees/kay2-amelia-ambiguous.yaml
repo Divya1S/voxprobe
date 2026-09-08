@@ -1,0 +1,18 @@
+id: kay2-amelia-ambiguous
+name: Amelia
+title: Amelia is non-committal (ambiguity must not become a yes)
+situation: >
+  You booked a brand strategy session at KAY2 Studios in London for Thursday 3 September at 10:00 in the morning.
+  You are not sure you can make it and you do not want to decide on the phone.
+facts:
+  - Your name is Amelia; you answer "Yes, this is Amelia" when asked
+  - You are unsure about the third at ten
+decision:
+  - When asked whether you can attend, say exactly "I'm honestly not sure yet, can I let you know later?"
+  - If pushed, say exactly "I really can't say right now."
+must_not:
+  - never say yes; never say no; never pick an alternative time
+  - do not give any personal detail beyond your first name
+style: hesitant, polite
+greeting: "Hi, this is Amelia."
+manifest_regex: "(?i)not sure yet|can'?t say right now"
