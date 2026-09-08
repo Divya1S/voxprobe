@@ -2,6 +2,28 @@
 
 All notable changes to voxprobe. Dates are UTC.
 
+## v0.2.1 — 2026-09-08
+
+### Added
+- **Callee personas** (`callees/*.yaml`, `voxprobe.callee`): a *person* who answers the phone — the other end for tasks that
+  call people (confirmations, reminders). Decisions are verbatim lines so ground truth is exact; the manifest regex proves the
+  line was spoken. Brain server `ROLE:callee CALLEE:<id>`; `line.arm_callee`; the keepalive preserves callee arms.
+- **Foreign probes** (`probes/foreign-*.yaml`, `otherend.grade_foreign`): another author's task text and `result_schema`
+  taken verbatim, graded per callee persona with one regex per field of *their* schema plus the invented-number checks.
+  `voxprobe otherend run|grade --callee <id> --probe <foreign-probe>`. Bundled: `foreign-appointment-confirm` (the
+  appointment-confirm entry of awesome-phone-call-agents) × Amelia confirms / reschedules / ambiguous — all three PASS on
+  real calls.
+- `scripts/calle_idempotency_replay.py` (same-key double create probe).
+
+### Fixed
+- Disclosure check normalizes typographic apostrophes ("I’m an AI…" graded unknown on a live row).
+- `line fetch` waits for Vapi's lingering leg (`silence-timed-out` ~60 s after the caller hangs up) instead of skipping the call.
+- Callee stems no longer contain ':'; the `ai-disclosure-probe` greeting keeps the recording notice.
+- Numeral-tolerant manifests (TTS/ASR render "the 3rd at 10").
+
+### Results (real calls, 2026-09-08)
+- n=2 on the two headline rows: impossible-Saturday booking reported at 0.92 and 0.95 "high"; honest AI disclosure twice.
+
 ## v0.2.0 — 2026-09-08 (first PyPI release)
 
 **What's new**: voxprobe can now be the *other end of the line*. An outside AI caller — CALL-E's agent — dials a real phone
