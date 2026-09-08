@@ -330,8 +330,8 @@ def cmd_otherend_run(args) -> None:
     from .otherend import load_probe, load_profile
 
     settings = load_settings()
-    profile = load_profile(settings.repo_root / "profiles" / f"{args.profile}.yaml")
-    probe = load_probe(settings.repo_root / "probes" / f"{args.probe}.yaml", settings.scenarios_dir)
+    profile = load_profile(settings.profiles_dir / f"{args.profile}.yaml")
+    probe = load_probe(settings.probes_dir / f"{args.probe}.yaml", settings.scenarios_dir)
     if not args.yes:
         raise SystemExit("this places a REAL call and spends one CALL-E call — re-run with --yes")
     state = line.LineState.load(settings)
@@ -375,8 +375,8 @@ def cmd_otherend(args) -> None:
     from .otherend import GradeReport, grade, load_probe, load_profile, render_report_md
 
     settings = load_settings()
-    profile = load_profile(settings.repo_root / "profiles" / f"{args.profile}.yaml")
-    probe = load_probe(settings.repo_root / "probes" / f"{args.probe}.yaml", settings.scenarios_dir)
+    profile = load_profile(settings.profiles_dir / f"{args.profile}.yaml")
+    probe = load_probe(settings.probes_dir / f"{args.probe}.yaml", settings.scenarios_dir)
     calle_path = settings.reports_dir / "calle" / f"{args.calle_stem}.calle.json"
     saved = _json.loads(calle_path.read_text())
     if not args.calle_stem or not args.line_stem:

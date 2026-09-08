@@ -1,9 +1,20 @@
 [project]
 name = "voxprobe"
-version = "0.1.0"
-description = "Persona-driven QA for voice agents: realistic simulated callers, both-sides recording, audio-timed transcripts, turn-taking metrics, evidence-backed reports."
+version = "0.2.0"
+description = "Persona-driven QA for voice agents: simulated callers or a programmable callee line, both-sides recording, audio-timed transcripts, turn-taking metrics, evidence-backed reports; CALL-E adapter + otherend grader."
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+keywords = ["voice-agents", "qa", "testing", "pipecat", "call-e", "phone-calls", "speech", "evaluation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Communications :: Telephony",
+]
 dependencies = [
     "fastapi>=0.115",        # brain server: /chat/completions (Vapi custom-LLM) + Vapi webhooks
     "uvicorn[standard]>=0.30", # ASGI server for FastAPI
@@ -24,6 +35,11 @@ arena = ["pipecat-ai[silero,deepgram,groq,openai,websocket,soundfile]>=1.7.0"]  
 # Fully local speech for the arena on Apple Silicon (no accounts): Kokoro TTS + MLX Whisper STT
 arena-local = ["pipecat-ai[kokoro,mlx-whisper]>=1.7.0"]
 
+[project.urls]
+Homepage = "https://github.com/Divya1S/voxprobe"
+Repository = "https://github.com/Divya1S/voxprobe"
+Changelog = "https://github.com/Divya1S/voxprobe/blob/main/CHANGELOG.md"
+
 [project.scripts]
 voxprobe = "voxprobe.cli:main"
 
@@ -33,6 +49,16 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/voxprobe"]
+
+# Ship the data an installed voxprobe needs (config._repo_root falls back to voxprobe/data when there is no checkout).
+[tool.hatch.build.targets.wheel.force-include]
+"scenarios" = "voxprobe/data/scenarios"
+"targets" = "voxprobe/data/targets"
+"profiles" = "voxprobe/data/profiles"
+"probes" = "voxprobe/data/probes"
+
+[tool.hatch.build.targets.sdist]
+include = ["src/voxprobe", "scenarios", "targets", "profiles", "probes", "tests", "README.md", "LICENSE", "CHANGELOG.md", "pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

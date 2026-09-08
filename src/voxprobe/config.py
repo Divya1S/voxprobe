@@ -54,8 +54,32 @@ def assert_allowed_target(number: str, allowed: frozenset[str]) -> str:
 
 
 def _repo_root() -> Path:
-    # src/voxprobe/config.py -> repo root is two levels up from the package directory
-    return Path(__file__).resolve().parents[2]
+    """Where the data (scenarios/, targets/, profiles/, probes/) lives.
+
+    Running from a checkout: the repo root (two levels above this package). Installed from a wheel: the copies shipped
+    under voxprobe/data/ (see pyproject's force-include). VOXPROBE_DATA_DIR overrides both.
+    """
+    override = os.environ.get("VOXPROBE_DATA_DIR", "").strip()
+    if override:
+        return Path(override).expanduser().resolve()
+    here = Path(__file__).resolve()
+    checkout = here.parents[2]
+    if (checkout / "scenarios").is_dir():
+        return checkout
+    packaged = here.parent / "data"
+    if (packaged / "scenarios").is_dir():
+        return packaged
+    return checkout
+
+
+def _work_root(repo_root: Path) -> Path:
+    """Where recordings/, transcripts/, reports/ are written: VOXPROBE_HOME, else the checkout, else the current directory."""
+    override = os.environ.get("VOXPROBE_HOME", "").strip()
+    if override:
+        return Path(override).expanduser().resolve()
+    if (repo_root / "pyproject.toml").is_file():
+        return repo_root
+    return Path.cwd()
 
 
 @dataclass(frozen=True)
@@ -96,16 +120,28 @@ class Settings:
     repo_root: Path = field(default_factory=_repo_root)
 
     @property
+    def work_root(self) -> Path:
+        return _work_root(self.repo_root)
+
+    @property
     def recordings_dir(self) -> Path:
-        return self.repo_root / "recordings"
+        return self.work_root / "recordings"
 
     @property
     def transcripts_dir(self) -> Path:
-        return self.repo_root / "transcripts"
+        return self.work_root / "transcripts"
 
     @property
     def reports_dir(self) -> Path:
-        return self.repo_root / "reports"
+        return self.work_root / "reports"
+
+    @property
+    def profiles_dir(self) -> Path:
+        return self.repo_root / "profiles"
+
+    @property
+    def probes_dir(self) -> Path:
+        return self.repo_root / "probes"
 
     @property
     def scenarios_dir(self) -> Path:

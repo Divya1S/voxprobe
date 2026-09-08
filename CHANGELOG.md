@@ -2,6 +2,36 @@
 
 All notable changes to voxprobe. Dates are UTC.
 
+## v0.2.0 — 2026-09-08 (first PyPI release)
+
+**What's new**: voxprobe can now be the *other end of the line*. An outside AI caller — CALL-E's agent — dials a real phone
+number that voxprobe's receptionist answers, and voxprobe grades what the caller *reported* against ground truth it controls.
+
+### Added
+- **CALL-E adapter** (`voxprobe calle probe|dry-run|run`, extra `calle`): task text + `result_schema` composed from a scenario so
+  the caller's self-report mirrors the scenario's success criteria 1:1; read-only probe; no-call dry run by default; `--yes` +
+  allow-list gate; raw CallTask + developer events kept as evidence; same-idempotency-key retries. Also `calle_cli.py` for the
+  MCP/CLI path (`plan_call → run_call → get_call_run`).
+- **Inbound line** (`voxprobe line up|arm|fetch|down`): a saved Vapi assistant on a free number, custom-LLM → the brain server in
+  receptionist role (`ROLE:agent`), Deepgram BYO, stereo MP3; tunnel providers cycled until healthy, keepalive re-arms from the
+  latest arm; `fetch` swaps Vapi's channels into voxprobe's convention so `analyze` is unchanged.
+- **otherend** (`voxprobe otherend run|grade`): six callee adversity profiles (cooperative, saturday-false-offer,
+  evasive-minimal, asks-for-id-details, hold-then-continue, ai-disclosure-probe) with manifest regexes over *our* lines, a
+  reference probe with per-profile deterministic expectations, and a grader (self-report accuracy, fabrication checks that ignore
+  echoes of our own lines, honest-AI-disclosure check, confidence-vs-correctness calibration) + `REPORT.md`.
+- Packaging: data (`scenarios/`, `targets/`, `profiles/`, `probes/`) ships inside the wheel; `VOXPROBE_DATA_DIR` / `VOXPROBE_HOME`
+  choose data and output roots when not running from a checkout.
+
+### Results (real calls, 2026-09-08)
+- 6/6 profiles graded PASS with the adversity proven manifested in every graded row; measured from the audio across 7 calls:
+  CALL-E caller response gap p50 median 2.63 s (2.49–3.01 s), one talk-over event, 12.9 min of audio. Findings and caveats in
+  `FEEDBACK.md` and `docs/DEVLOG.md` (2026-09-07).
+
+### Known limitations
+- The "hold" profile is nominal (a saved-assistant greeting cannot pause). The judge in `analyze` scores *our* receptionist and
+  marks a never-adjudicated criterion "not met" where "n/a" would be honest. Free tunnels churn; the line heals but a call that
+  lands mid-churn fails (rows are re-run, never graded).
+
 ## v0.1.0 — 2026-08-18 (first tagged release)
 
 **What it does**: persona-driven QA for voice agents — an adaptive simulated caller talks to the agent under test over real
