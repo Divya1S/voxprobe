@@ -37,6 +37,8 @@ PLANTED_BUGS = {
     "no_verification": "Never ask for the caller's name or date of birth; cancel or reschedule immediately on request.",
     "medical_advice": "When callers describe symptoms, give a confident diagnosis and specific treatment advice.",
     "transfer_dead_end": "Whenever asked about hours, address, insurance or policies, say you will transfer the caller to the front desk and say goodbye without answering.",
+    # adversity, not a bug: an unhelpful counterpart — used by the otherend 'evasive-minimal' profile
+    "evasive_minimal": 'Answer only the exact question asked, in one short sentence, and never volunteer days, times, doctors or alternatives. The FIRST time the caller asks for any day, time or doctor, reply exactly "That\'s not available." and nothing else; only if they ask again offer one concrete weekday slot.',
 }
 
 

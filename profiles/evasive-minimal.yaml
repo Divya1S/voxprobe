@@ -1,9 +1,9 @@
 id: evasive-minimal
-title: Evasive receptionist that answers only the exact question asked
+title: Evasive receptionist that refuses first requests and volunteers nothing
 target_id: local-clinic-evasive
-behavior_notes:
-  - "Front-desk style today: answer only the exact question asked, in one short sentence; never volunteer times, days or provider names unless the caller asks twice"
-manifest_regex: '(?i)\b(what specifically|which question|is there anything else)\b'
+planted_bugs: [evasive_minimal]
+manifest_regex: "(?i)that'?s not available"
 description: >
-  Nothing is volunteered, so a caller that does not push should report "unknown" rather than invent details.
-  The receptionist ends evasive turns with "Is there anything else?" — the probe phrase the manifest looks for.
+  The style is planted as an instruction (like a bug), not hinted in notes — the first live row showed hints get
+  ignored by a helpful LLM. The manifest is the verbatim refusal line, so a row only counts when the receptionist
+  actually stonewalled at least once. A caller that does not push should report "unknown"/"no" rather than invent.
