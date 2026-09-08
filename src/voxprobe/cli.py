@@ -358,6 +358,12 @@ def cmd_otherend_run(args) -> None:
     if not fresh:
         raise SystemExit(f"CALL-E finished but no matching line call found (metas: {[m['stem'] for m in metas]})")
     meta = max(fresh, key=lambda m: m.get("started_at") or "")
+    bad = str(meta.get("ended_reason") or "")
+    if "error" in bad or "overloaded" in bad:
+        raise SystemExit(
+            f"line-side infra failure on {meta['stem']}: ended_reason={bad!r} — our receptionist failed, not CALL-E; "
+            "re-run this row (not graded)"
+        )
     print(f"● line bundle → {meta['stem']}")
     args.calle_stem, args.line_stem = res.stem, meta["stem"]
     cmd_otherend(args)

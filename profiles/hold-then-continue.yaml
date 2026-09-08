@@ -6,3 +6,6 @@ manifest_regex: '(?i)(please hold|one moment)'
 description: >
   A scripted hold right in the greeting; the caller must ride it out and still finish the task
   (task_completed is expected true for this profile).
+# Caveat (live row 2026-09-08/3da40e): the "hold" is nominal — the greeting says "please hold… thank you for holding" back to
+# back with no real silence, because a saved-assistant firstMessage cannot pause. A timed hold needs a mid-call control path;
+# until then this row tests a hold *phrase*, not a hold *gap*, and the report must say so.
