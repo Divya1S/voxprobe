@@ -145,7 +145,13 @@ def _render_live_transcript(stem: str, call: dict) -> str:
 
 
 async def fetch(
-    settings: Settings, *, limit: int = 5, scenario_id: str | None = None, call_id: str | None = None
+    settings: Settings,
+    *,
+    limit: int = 5,
+    scenario_id: str | None = None,
+    call_id: str | None = None,
+    since_iso: str | None = None,
+    target_id: str | None = None,
 ) -> list[dict]:
     """Download artifacts for recent inbound calls on the line and write evidence bundles. Returns the metas."""
     settings.require_vapi()
@@ -160,12 +166,19 @@ async def fetch(
         for call in calls:
             if call.get("type") not in ("inboundPhoneCall", "webCall") or call.get("status") != "ended":
                 continue  # webCall = the $0 dashboard "Talk" test of the same assistant
+            if since_iso and (call.get("startedAt") or call.get("createdAt") or "") < since_iso:
+                continue  # older than the arm for this row — not ours
             meta_scn = (
                 scenario_id or (call.get("assistant") or {}).get("metadata", {}).get("scenario_id") or state.scenario_id
             )
-            target_id = (call.get("assistant") or {}).get("metadata", {}).get("target_id") or state.target_id
+            call_target = (
+                target_id or (call.get("assistant") or {}).get("metadata", {}).get("target_id") or state.target_id
+            )
             day = (call.get("startedAt") or call.get("createdAt") or "")[:10].replace("-", "")
-            stem = f"line-{meta_scn or 'noscn'}-{target_id}-{day}-{call['id'][:6]}"
+            tail = call["id"].replace("-", "")[
+                -6:
+            ]  # Vapi ids are UUIDv7: the PREFIX is a shared timestamp; the tail is unique
+            stem = f"line-{meta_scn or 'noscn'}-{call_target}-{day}-{tail}"
             meta_path = settings.reports_dir / f"{stem}.meta.json"
             if meta_path.exists():
                 metas.append(json.loads(meta_path.read_text()))
@@ -187,7 +200,7 @@ async def fetch(
                 "stem": stem,
                 "kind": "inbound-line" if call.get("type") == "inboundPhoneCall" else "web-test",
                 "scenario_id": meta_scn,
-                "target_id": target_id,
+                "target_id": call_target,
                 "title": f"inbound call to the line ({target_id})",
                 "call_id": call.get("id"),
                 "started_at": call.get("startedAt"),
