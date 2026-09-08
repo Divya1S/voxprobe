@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json as _json
 import logging
 import re
 import subprocess
@@ -260,7 +261,6 @@ def cmd_calibrate(args) -> None:
 
 
 def cmd_calle(args) -> None:
-    import json as _json
 
     from . import calle_client
 
@@ -322,9 +322,49 @@ def cmd_line(args) -> None:
         print("● assistant detached from the number")
 
 
+def cmd_otherend_run(args) -> None:
+    """One matrix row: arm the line for the profile → one real CALL-E call → fetch the line bundle → grade."""
+    import time as _time
+
+    from . import calle_client, line
+    from .otherend import load_probe, load_profile
+
+    settings = load_settings()
+    profile = load_profile(settings.repo_root / "profiles" / f"{args.profile}.yaml")
+    probe = load_probe(settings.repo_root / "probes" / f"{args.probe}.yaml", settings.scenarios_dir)
+    if not args.yes:
+        raise SystemExit("this places a REAL call and spends one CALL-E call — re-run with --yes")
+    state = line.LineState.load(settings)
+    target = find_target(settings.targets_dir, profile.target_id)
+    scenario = find_scenario(settings.scenarios_dir, probe.scenario_id)
+    st = asyncio.run(
+        line.arm(
+            line.with_public_url(settings, state.public_url),
+            target,
+            scenario_id=probe.scenario_id,
+            greeting=profile.greeting or None,
+        )
+    )
+    print(f"● line armed as '{st.target_id}' for profile '{profile.id}'")
+    number = args.to or settings.calle_target_number
+    res = calle_client.run(settings, scenario, number, args.business, timeout_s=args.timeout)
+    t = res.task
+    print(
+        f"● CALL-E {res.call_id}: status={t.get('status')} task_completed={t.get('task_completed')} confidence={t.get('completion_confidence')}"
+    )
+    _time.sleep(10)  # let Vapi finalize artifacts
+    metas = asyncio.run(line.fetch(settings, limit=3, scenario_id=probe.scenario_id))
+    fresh = [m for m in metas if m.get("kind") == "inbound-line" and m.get("target_id") == profile.target_id]
+    if not fresh:
+        raise SystemExit(f"CALL-E finished but no matching line call found (metas: {[m['stem'] for m in metas]})")
+    meta = max(fresh, key=lambda m: m.get("started_at") or "")
+    print(f"● line bundle → {meta['stem']}")
+    args.calle_stem, args.line_stem = res.stem, meta["stem"]
+    cmd_otherend(args)
+
+
 def cmd_otherend(args) -> None:
     """Pair one CALL-E dial with the line call it reached (an operator decision — timestamps) and grade the report."""
-    import json as _json
 
     from .otherend import GradeReport, grade, load_probe, load_profile, render_report_md
 
@@ -333,6 +373,8 @@ def cmd_otherend(args) -> None:
     probe = load_probe(settings.repo_root / "probes" / f"{args.probe}.yaml", settings.scenarios_dir)
     calle_path = settings.reports_dir / "calle" / f"{args.calle_stem}.calle.json"
     saved = _json.loads(calle_path.read_text())
+    if not args.calle_stem or not args.line_stem:
+        raise SystemExit("grade needs --calle-stem and --line-stem")
     if saved.get("scenario") != probe.scenario_id:
         raise SystemExit(
             f"{calle_path.name} ran scenario {saved.get('scenario')!r}; probe expects {probe.scenario_id!r}"
@@ -446,12 +488,16 @@ def main(argv: list[str] | None = None) -> None:
     p = sub.add_parser(
         "otherend", help="grade CALL-E's self-report against the line's ground truth (deterministic, offline)"
     )
-    p.add_argument("action", choices=["grade"])
-    p.add_argument("--calle-stem", required=True, help="stem of reports/calle/<stem>.calle.json")
-    p.add_argument("--line-stem", required=True, help="stem of reports/<stem>.meta.json + transcripts/<stem>.md")
-    p.add_argument("--profile", required=True, help="callee profile id (profiles/<id>.yaml) the line was armed with")
+    p.add_argument("action", choices=["grade", "run"])
+    p.add_argument("--calle-stem", help="grade: stem of reports/calle/<stem>.calle.json")
+    p.add_argument("--line-stem", help="grade: stem of reports/<stem>.meta.json + transcripts/<stem>.md")
+    p.add_argument("--profile", required=True, help="callee profile id (profiles/<id>.yaml)")
     p.add_argument("--probe", required=True, help="probe id (probes/<id>.yaml) naming the expectations")
-    p.set_defaults(fn=cmd_otherend)
+    p.add_argument("--to", help="run: recipient E.164 (default CALLE_TARGET_E164); must be allow-listed")
+    p.add_argument("--business", default="Sunrise Orthopedics")
+    p.add_argument("--timeout", type=float, default=540.0)
+    p.add_argument("--yes", action="store_true", help="run: confirm spending one real CALL-E call")
+    p.set_defaults(fn=lambda a: cmd_otherend_run(a) if a.action == "run" else cmd_otherend(a))
 
     p = sub.add_parser("analyze", help="re-transcribe + metrics + judge draft for recorded call(s) by artifact stem")
     p.add_argument("stems", nargs="+")

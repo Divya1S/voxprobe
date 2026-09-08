@@ -125,7 +125,6 @@ def build_line_assistant(
             "temperature": 0.6,
             "maxTokens": 120,
             "timeoutSeconds": 15,
-            "metadataSendMode": "off",
         },
         "credentials": [{"provider": "custom-llm", "apiKey": settings.brain_server_secret, "name": "voxprobe-brain"}],
         "transcriber": {
