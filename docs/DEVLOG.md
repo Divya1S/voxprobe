@@ -232,4 +232,6 @@ manifests must accept numerals; and Vapi's leg lingers ~60 s after CALL-E hangs 
 for it instead of skipping the call (the reschedules row was recovered offline from the existing recording — no call re-spent).
 
 **Shipped:** voxprobe 0.2.1 (callees in the wheel, the fixes above). Calls spent so far: 15 of 20.
+**Idempotency probe (06:16Z).** Same key, two creates back to back: same call id, one ring on our line, 0.96 s for the replayed
+create vs 26.7 s for the original (the plan is prepared synchronously inside the POST). FEEDBACK #15. Calls spent: 16 of 20.
 
