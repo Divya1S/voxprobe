@@ -235,3 +235,10 @@ for it instead of skipping the call (the reschedules row was recovered offline f
 **Idempotency probe (06:16Z).** Same key, two creates back to back: same call id, one ring on our line, 0.96 s for the replayed
 create vs 26.7 s for the original (the plan is prepared synchronously inside the POST). FEEDBACK #15. Calls spent: 16 of 20.
 
+**Packaged and submitted (2026-09-07 23:50 PDT).** `apps/python/otherend` + `skills/otherend-task-test` in awesome-phone-call-agents
+PR #371 (ready for review): eleven redacted real-call fixtures, `otherend replay` with no keys, live mode behind `--yes` + budget +
+allow-list, their validator green, 25 tests. Built by a spec → build → adversarial-review workflow twice; the reviewers corrected
+six documentation claims the fixtures contradicted (credential wording, which greetings carry the recording notice, which persona
+says which greeting, whether every row's first turn disclosed AI — it did not: FEEDBACK #16 — and how `overall`/`usable` are
+derived). voxprobe 0.2.1 on PyPI backs the app. Remaining: the video, Devpost, the survey.
+
