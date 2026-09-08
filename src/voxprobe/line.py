@@ -315,12 +315,6 @@ async def up(settings: Settings, target: Target, *, scenario_id: str = "", greet
                 )
                 print(f"● tunnel replaced → {url}; re-armed as '{cur.target_id}'", flush=True)
                 fails = 0
-                continue
-                state = await arm(
-                    with_public_url(settings, url), target, scenario_id=state.scenario_id, greeting=greeting
-                )
-                print(f"● tunnel replaced → {url}; line re-armed", flush=True)
-                fails = 0
     except (KeyboardInterrupt, asyncio.CancelledError):
         pass
     finally:
