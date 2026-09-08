@@ -17,4 +17,4 @@ must_not:
   - do not give any personal detail beyond your first name
 style: polite, slightly apologetic
 greeting: "Hello, Amelia speaking."
-manifest_regex: "(?i)friday the fourth at ten works for me"
+manifest_regex: "(?i)friday,? the (fourth|4th) at (ten|10) works for me"

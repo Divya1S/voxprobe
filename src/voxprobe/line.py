@@ -192,10 +192,21 @@ async def fetch(
         else:
             calls = await client.list_calls(phone_number_id=settings.vapi_phone_number_id, limit=limit)
         for call in calls:
-            if call.get("type") not in ("inboundPhoneCall", "webCall") or call.get("status") != "ended":
+            if call.get("type") not in ("inboundPhoneCall", "webCall"):
                 continue  # webCall = the $0 dashboard "Talk" test of the same assistant
             if since_iso and (call.get("startedAt") or call.get("createdAt") or "") < since_iso:
                 continue  # older than the arm for this row — not ours
+            if call.get("status") != "ended":
+                if not since_iso:
+                    continue
+                # Vapi's leg can linger ~60 s after the caller hangs up (silence-timed-out); wait for it to end.
+                t0 = time.monotonic()
+                while call.get("status") != "ended" and time.monotonic() - t0 < 150:
+                    await asyncio.sleep(5)
+                    call = await client.get_call(call["id"])
+                if call.get("status") != "ended":
+                    log.warning("call %s still %s after 150 s — skipping", call["id"][-6:], call.get("status"))
+                    continue
             meta_scn = (
                 scenario_id or (call.get("assistant") or {}).get("metadata", {}).get("scenario_id") or state.scenario_id
             )
@@ -206,7 +217,7 @@ async def fetch(
             tail = call["id"].replace("-", "")[
                 -6:
             ]  # Vapi ids are UUIDv7: the PREFIX is a shared timestamp; the tail is unique
-            stem = f"line-{meta_scn or 'noscn'}-{call_target}-{day}-{tail}"
+            stem = f"line-{meta_scn or 'noscn'}-{call_target.replace(':', '-')}-{day}-{tail}"
             meta_path = settings.reports_dir / f"{stem}.meta.json"
             if meta_path.exists():
                 metas.append(json.loads(meta_path.read_text()))
