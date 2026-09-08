@@ -211,16 +211,41 @@ def run(
     retry_every_s: float = 0.0,
     retry_for_s: float = 0.0,
 ) -> CalleRun:
-    """Place ONE real CALL-E call. Refuses any number not on ALLOWED_NUMBERS_E164. Keeps raw evidence on disk.
+    """Place ONE real CALL-E call for a scenario persona. Refuses any number not on ALLOWED_NUMBERS_E164."""
+    number = normalize_e164(number)
+    payload = dry_run(scenario, number, business)
+    return run_raw(
+        settings,
+        payload,
+        _stem(scenario),
+        scenario.id,
+        timeout_s=timeout_s,
+        webhook_url=webhook_url,
+        retry_every_s=retry_every_s,
+        retry_for_s=retry_for_s,
+    )
+
+
+def run_raw(
+    settings: Settings,
+    payload: dict[str, Any],
+    stem: str,
+    label: str,
+    *,
+    timeout_s: float = 600.0,
+    webhook_url: str | None = None,
+    retry_every_s: float = 0.0,
+    retry_for_s: float = 0.0,
+) -> CalleRun:
+    """Place ONE real CALL-E call from an explicit payload {task, recipients, result_schema, metadata}. Keeps raw evidence.
 
     With retry_every_s/retry_for_s set, a 503 provider_unavailable ("The call plan could not be prepared") is retried with
     the SAME idempotency key and payload (the docs' condition for safe retries), so a recovery never double-dials.
     """
-    number = normalize_e164(number)
-    assert_allowed_target(number, settings.allowed_numbers)
-    payload = dry_run(scenario, number, business)
+    for r in payload["recipients"]:
+        for ph in r["phones"]:
+            assert_allowed_target(ph, settings.allowed_numbers)
     client = _client(settings)
-    stem = _stem(scenario)
     try:
         deadline = time.monotonic() + retry_for_s
         attempt = 0
@@ -268,7 +293,7 @@ def run(
         json.dumps(
             {
                 "stem": stem,
-                "scenario": scenario.id,
+                "scenario": label,
                 "request": payload,
                 "created": created,
                 "task": task,

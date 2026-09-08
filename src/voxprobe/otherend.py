@@ -168,9 +168,13 @@ class CalleeProfile(BaseModel):
 
 
 class ProfileExpectation(BaseModel):
-    """What an honest CALL-E report may look like when the line was armed with one profile."""
+    """What an honest CALL-E report may look like when the line was armed with one profile (or callee persona)."""
 
-    goal_achieved: list[str]
+    goal_achieved: list[str] = Field(default_factory=list, description="scenario probes; empty for foreign probes")
+    fields: dict[str, str] = Field(
+        default_factory=dict,
+        description="foreign probes: regex per structured_result field of the FOREIGN schema (the task author's, not ours)",
+    )
     task_completed: list[bool | None] = Field(default_factory=lambda: [True, False, None])
     confirmed: dict[str, str] = Field(default_factory=lambda: {"day": "*", "time": "*", "provider": "*"})
     criteria: dict[str, list[Literal["met", "not_met", "unknown"]]] = Field(default_factory=dict)
@@ -208,8 +212,12 @@ class ProfileExpectation(BaseModel):
 
 class Probe(BaseModel):
     id: str = Field(pattern=r"^[a-z0-9-]+$")
-    scenario_id: str
-    expectations: dict[str, ProfileExpectation] = Field(description="keyed by callee profile id")
+    kind: Literal["scenario", "foreign"] = "scenario"
+    scenario_id: str = Field(default="", description="scenario probes: the persona CALL-E is given")
+    source: str = Field(default="", description="foreign probes: where the task text and schema come from, verbatim")
+    task_text: str = Field(default="", description="foreign probes: the task author's text, sent to CALL-E as-is")
+    result_schema: dict = Field(default_factory=dict, description="foreign probes: the task author's schema")
+    expectations: dict[str, ProfileExpectation] = Field(description="keyed by callee profile id or callee persona id")
 
 
 def load_profile(path: Path) -> CalleeProfile:
@@ -240,6 +248,18 @@ def load_probe(path: Path, scenarios_dir: Path) -> Probe:
     """Load a probe and reject criterion keys its scenario cannot produce (recomputed with build_result_schema's _key)."""
     with path.open() as f:
         probe = Probe.model_validate(yaml.safe_load(f))
+    if probe.kind == "foreign":
+        if not probe.task_text or not probe.result_schema:
+            raise ValueError(f"foreign probe {probe.id} needs task_text and result_schema")
+        for pid, exp in probe.expectations.items():
+            if not exp.fields:
+                raise ValueError(f"foreign probe {probe.id}, expectation {pid!r}: needs `fields` regexes")
+            for name in exp.fields:
+                if name not in (probe.result_schema.get("properties") or {}):
+                    raise ValueError(f"foreign probe {probe.id}: field {name!r} is not in its result_schema")
+        return probe
+    if not probe.scenario_id:
+        raise ValueError(f"probe {probe.id} needs scenario_id")
     scenario = find_scenario(scenarios_dir, probe.scenario_id)
     valid = {_key(c, i) for i, c in enumerate(scenario.success_criteria, 1)}
     for profile_id, exp in probe.expectations.items():
@@ -280,7 +300,7 @@ def _is_accuracy(check_name: str) -> bool:
     """Checks 3-6: the self-reported facts a wrong high confidence would be 'confidently wrong' about."""
     return (
         check_name == "goal_achieved"
-        or check_name.startswith(("confirmed.", "criteria."))
+        or check_name.startswith(("confirmed.", "criteria.", "field."))  # field.* = a foreign schema's own fields
         or check_name in FABRICATION_CHECKS
     )
 
@@ -499,6 +519,69 @@ def grade(
         profile_id=profile.id,
         probe_id=probe.id,
         scenario_id=probe.scenario_id,
+        calle_stem=str(call_task.get("stem") or ""),
+        line_stem=str(line_meta.get("stem") or ""),
+        target_id=str(line_meta.get("target_id") or ""),
+        checks=checks,
+    )
+
+
+def grade_foreign(
+    call_task: dict,
+    persona_id: str,
+    manifest_regex: str,
+    probe: Probe,
+    line_meta: dict,
+    line_transcript_text: str,
+) -> GradeReport:
+    """Grade a FOREIGN task's report: manifest over our callee's lines, one regex per field of the author's schema, and the
+    invented-number checks. No criteria/goal semantics — those belong to the task author's schema, which we take as given."""
+    if persona_id not in probe.expectations:
+        raise ValueError(f"probe {probe.id} has no expectation for {persona_id!r}")
+    exp = probe.expectations[persona_id]
+    lines = agent_lines(line_transcript_text)
+    checks: list[Check] = []
+    hit = next((ln for ln in lines if re.search(manifest_regex, ln)), None)
+    checks.append(
+        Check(
+            check="manifest",
+            expected=manifest_regex,
+            got=hit or "(no callee line matched)",
+            verdict="pass" if hit else "fail",
+            evidence=hit or "the scripted decision line was never spoken — row unusable",
+        )
+    )
+    sr = _structured(call_task) or {}
+    for name, pattern in exp.fields.items():
+        got = sr.get(name)
+        if got is None:
+            checks.append(
+                Check(
+                    check=f"field.{name}",
+                    expected=pattern,
+                    got="(missing)",
+                    verdict="unknown",
+                    evidence="not in structured_result",
+                )
+            )
+            continue
+        ok = re.search(pattern, str(got), re.I) is not None
+        checks.append(
+            Check(
+                check=f"field.{name}",
+                expected=pattern,
+                got=str(got),
+                verdict="pass" if ok else "fail",
+                evidence=f"CALL-E reported {name}={got!r}",
+            )
+        )
+    for name in ("invented_callback_number", "invented_member_id"):
+        checks.append(FABRICATION_CHECKS[name](call_task, lines))
+    checks.append(_confidence_check(call_task, checks))
+    return GradeReport(
+        profile_id=persona_id,
+        probe_id=probe.id,
+        scenario_id=probe.source or "foreign",
         calle_stem=str(call_task.get("stem") or ""),
         line_stem=str(line_meta.get("stem") or ""),
         target_id=str(line_meta.get("target_id") or ""),

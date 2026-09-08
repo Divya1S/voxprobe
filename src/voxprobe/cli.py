@@ -322,6 +322,94 @@ def cmd_line(args) -> None:
         print("● assistant detached from the number")
 
 
+def _foreign_payload(probe, number: str) -> dict:
+    from .config import normalize_e164
+
+    return {
+        "task": probe.task_text,
+        "recipients": [{"phones": [normalize_e164(number)], "region": "US", "locale": "en-US"}],
+        "result_schema": probe.result_schema,
+        "metadata": {"voxprobe_probe": probe.id},
+    }
+
+
+def cmd_otherend_run_callee(args) -> None:
+    """A foreign-task row: arm the line as a callee PERSON → CALL-E runs the task author's text verbatim → fetch → grade."""
+    import time as _time
+    from datetime import UTC, datetime
+
+    from . import calle_client, line
+    from .callee import find_callee
+    from .otherend import load_probe
+
+    settings = load_settings()
+    persona = find_callee(settings.repo_root / "callees", args.callee)
+    probe = load_probe(settings.probes_dir / f"{args.probe}.yaml", settings.scenarios_dir)
+    if probe.kind != "foreign":
+        raise SystemExit(
+            f"probe {probe.id} is a scenario probe; --callee rows need a foreign probe (task_text + result_schema)"
+        )
+    if not args.yes:
+        raise SystemExit("this places a REAL call and spends one CALL-E call — re-run with --yes")
+    state = line.LineState.load(settings)
+    st = asyncio.run(line.arm_callee(line.with_public_url(settings, state.public_url), persona))
+    armed_at = datetime.now(UTC).isoformat()
+    print(f"● line armed as callee '{persona.id}' ({persona.title}) at {armed_at}")
+    number = args.to or settings.calle_target_number
+    stem = f"calle-{probe.id}-{persona.id}-{datetime.now(UTC).strftime('%Y%m%d')}-{__import__('uuid').uuid4().hex[:6]}"
+    res = calle_client.run_raw(settings, _foreign_payload(probe, number), stem, probe.id, timeout_s=args.timeout)
+    t = res.task
+    print(
+        f"● CALL-E {res.call_id}: status={t.get('status')} task_completed={t.get('task_completed')} confidence={t.get('completion_confidence')}"
+    )
+    _time.sleep(10)
+    metas = asyncio.run(line.fetch(settings, limit=5, scenario_id=probe.id, since_iso=armed_at, target_id=st.target_id))
+    fresh = [m for m in metas if m.get("kind") == "inbound-line"]
+    if not fresh:
+        raise SystemExit(f"CALL-E finished but no line call arrived after {armed_at}")
+    meta = max(fresh, key=lambda m: m.get("started_at") or "")
+    bad = str(meta.get("ended_reason") or "")
+    if "error" in bad or "overloaded" in bad:
+        raise SystemExit(
+            f"line-side infra failure on {meta['stem']}: ended_reason={bad!r} — re-run this row (not graded)"
+        )
+    print(f"● line bundle → {meta['stem']}")
+    args.calle_stem, args.line_stem = res.stem, meta["stem"]
+    cmd_otherend_grade_callee(args)
+
+
+def cmd_otherend_grade_callee(args) -> None:
+    from .callee import find_callee
+    from .otherend import GradeReport, grade_foreign, load_probe, render_report_md
+
+    settings = load_settings()
+    persona = find_callee(settings.repo_root / "callees", args.callee)
+    probe = load_probe(settings.probes_dir / f"{args.probe}.yaml", settings.scenarios_dir)
+    saved = _json.loads((settings.reports_dir / "calle" / f"{args.calle_stem}.calle.json").read_text())
+    meta = _json.loads((settings.reports_dir / f"{args.line_stem}.meta.json").read_text())
+    transcript = (settings.transcripts_dir / f"{args.line_stem}.md").read_text()
+    report = grade_foreign(
+        {"stem": saved.get("stem") or args.calle_stem, **saved["task"]},
+        persona.id,
+        persona.manifest_regex,
+        probe,
+        meta,
+        transcript,
+    )
+    out_dir = settings.reports_dir / "otherend"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    grade_path = out_dir / f"{args.calle_stem}.grade.json"
+    grade_path.write_text(_json.dumps(report.model_dump(), indent=2, ensure_ascii=False))
+    reports = [GradeReport.model_validate(_json.loads(p.read_text())) for p in sorted(out_dir.glob("*.grade.json"))]
+    (out_dir / "REPORT.md").write_text(render_report_md(reports))
+    failing = [c.check for c in report.checks if c.verdict == "fail"]
+    print(
+        f"● {persona.id} vs {args.calle_stem}: overall {report.overall.upper()}, usable={report.usable}"
+        + (f" — failing: {', '.join(failing)}" if failing else "")
+    )
+    print(f"● grade  → {grade_path.relative_to(settings.repo_root)}")
+
+
 def cmd_otherend_run(args) -> None:
     """One matrix row: arm the line for the profile → one real CALL-E call → fetch the line bundle → grade."""
     import time as _time
@@ -497,13 +585,20 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("action", choices=["grade", "run"])
     p.add_argument("--calle-stem", help="grade: stem of reports/calle/<stem>.calle.json")
     p.add_argument("--line-stem", help="grade: stem of reports/<stem>.meta.json + transcripts/<stem>.md")
-    p.add_argument("--profile", required=True, help="callee profile id (profiles/<id>.yaml)")
+    p.add_argument("--profile", help="receptionist adversity profile id (profiles/<id>.yaml)")
+    p.add_argument("--callee", help="callee PERSON id (callees/<id>.yaml) — for foreign probes that call people")
     p.add_argument("--probe", required=True, help="probe id (probes/<id>.yaml) naming the expectations")
     p.add_argument("--to", help="run: recipient E.164 (default CALLE_TARGET_E164); must be allow-listed")
     p.add_argument("--business", default="Sunrise Orthopedics")
     p.add_argument("--timeout", type=float, default=540.0)
     p.add_argument("--yes", action="store_true", help="run: confirm spending one real CALL-E call")
-    p.set_defaults(fn=lambda a: cmd_otherend_run(a) if a.action == "run" else cmd_otherend(a))
+    p.set_defaults(
+        fn=lambda a: (
+            (cmd_otherend_run_callee if a.callee else cmd_otherend_run)(a)
+            if a.action == "run"
+            else (cmd_otherend_grade_callee if a.callee else cmd_otherend)(a)
+        )
+    )
 
     p = sub.add_parser("analyze", help="re-transcribe + metrics + judge draft for recorded call(s) by artifact stem")
     p.add_argument("stems", nargs="+")

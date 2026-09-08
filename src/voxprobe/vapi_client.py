@@ -152,6 +152,24 @@ def build_line_assistant(
     }
 
 
+def build_callee_assistant(
+    persona, settings: Settings, *, max_duration_s: int = 240, voice_id: str = "asteria"
+) -> dict:
+    """The saved line assistant answering as a PERSON (callees/*.yaml) instead of the receptionist."""
+    body = build_line_assistant(
+        __import__("voxprobe.targets", fromlist=["find_target"]).find_target(settings.targets_dir, "local-clinic"),
+        settings,
+        greeting=persona.greeting,
+        max_duration_s=max_duration_s,
+        voice_id=voice_id,
+    )
+    body["model"]["messages"] = [{"role": "system", "content": f"ROLE:callee CALLEE:{persona.id}"}]
+    body["model"]["model"] = "voxprobe-callee-brain"
+    body["transcriber"]["keyterm"] = [persona.name]
+    body["metadata"] = {"role": "line", "target_id": f"callee:{persona.id}", "scenario_id": "", "project": "voxprobe"}
+    return body
+
+
 class VapiClient:
     def __init__(self, settings: Settings):
         self.settings = settings

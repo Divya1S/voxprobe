@@ -87,6 +87,34 @@ async def arm(settings: Settings, target: Target, *, scenario_id: str = "", gree
     return state
 
 
+async def arm_callee(settings: Settings, persona) -> LineState:
+    """Point the number at the saved assistant configured as a callee persona (a person answering, not the receptionist)."""
+    from .vapi_client import build_callee_assistant
+
+    settings.require_vapi()
+    client = VapiClient(settings)
+    try:
+        body = build_callee_assistant(persona, settings)
+        assistant = await client.upsert_assistant(body)
+        number = await client.get_phone_number(settings.vapi_phone_number_id)
+        if number.get("assistantId") != assistant["id"]:
+            number = await client.patch_phone_number(settings.vapi_phone_number_id, {"assistantId": assistant["id"]})
+    finally:
+        await client.aclose()
+    state = LineState(
+        public_url=settings.public_base_url,
+        assistant_id=assistant["id"],
+        phone_number_id=settings.vapi_phone_number_id,
+        number=number.get("number") or "",
+        target_id=f"callee:{persona.id}",
+        scenario_id="",
+        greeting=body["firstMessage"],
+        since=time.time(),
+    )
+    state.save(settings)
+    return state
+
+
 async def down(settings: Settings) -> None:
     settings.require_vapi()
     client = VapiClient(settings)
@@ -306,13 +334,20 @@ async def up(settings: Settings, target: Target, *, scenario_id: str = "", greet
                 proc.terminate()
                 proc, url = await _tunnel_until_healthy(settings.brain_port)
                 cur = LineState.load(settings)  # a per-row `arm` may have changed the target/scenario since startup
-                cur_target = find_target(settings.targets_dir, cur.target_id)
-                state = await arm(
-                    with_public_url(settings, url),
-                    cur_target,
-                    scenario_id=cur.scenario_id,
-                    greeting=cur.greeting or None,
-                )
+                if cur.target_id.startswith("callee:"):
+                    from .callee import find_callee
+
+                    state = await arm_callee(
+                        with_public_url(settings, url), find_callee(settings.repo_root / "callees", cur.target_id[7:])
+                    )
+                else:
+                    cur_target = find_target(settings.targets_dir, cur.target_id)
+                    state = await arm(
+                        with_public_url(settings, url),
+                        cur_target,
+                        scenario_id=cur.scenario_id,
+                        greeting=cur.greeting or None,
+                    )
                 print(f"● tunnel replaced → {url}; re-armed as '{cur.target_id}'", flush=True)
                 fails = 0
     except (KeyboardInterrupt, asyncio.CancelledError):
