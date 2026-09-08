@@ -223,6 +223,14 @@ class VapiClient:
             await asyncio.sleep(3)
         return await self.get_call(call_id)
 
+    async def download_stereo(self, call_id: str, dest: Path) -> Path:
+        """Authoritative stereo download: GET /call/{id}/stereo-recording 302s to a FRESH signed URL (artifact URLs go stale)."""
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        r = await self._http.get(f"/call/{call_id}/stereo-recording", follow_redirects=True)
+        r.raise_for_status()
+        dest.write_bytes(r.content)
+        return dest
+
     async def download(self, url: str, dest: Path) -> Path:
         """Download an artifact. Presigned URLs need no auth; stable URLs may — try both."""
         dest.parent.mkdir(parents=True, exist_ok=True)

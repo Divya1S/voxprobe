@@ -172,11 +172,14 @@ async def fetch(
                 continue
             call = await client.wait_for_artifacts(call["id"], timeout_s=90)
             art = call.get("artifact") or {}
-            url = art.get("stereoRecordingUrl") or (art.get("recording") or {}).get("stereoUrl")
             mp3 = None
-            if url:
-                raw = await client.download(url, settings.recordings_dir / "raw" / f"{stem}.vapi-stereo.mp3")
+            try:
+                raw = await client.download_stereo(
+                    call["id"], settings.recordings_dir / "raw" / f"{stem}.vapi-stereo.mp3"
+                )
                 mp3 = _swap_channels(raw, settings.recordings_dir / f"{stem}.mp3")
+            except Exception as e:  # noqa: BLE001 - a call without a recording still deserves a bundle
+                log.warning("stereo download failed for %s: %s", call["id"][:8], str(e)[:160])
             settings.transcripts_dir.mkdir(parents=True, exist_ok=True)
             (settings.transcripts_dir / f"{stem}.md").write_text(_render_live_transcript(stem, call))
             (settings.transcripts_dir / f"{stem}.json").write_text(json.dumps(call, indent=2, ensure_ascii=False))
