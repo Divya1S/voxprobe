@@ -1,0 +1,4 @@
+id: cooperative
+title: Cooperative receptionist, no planted bugs
+target_id: local-clinic
+manifest_regex: '(?i)\b(monday|tuesday|wednesday|thursday|friday)\b'

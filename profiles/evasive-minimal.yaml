@@ -1,0 +1,9 @@
+id: evasive-minimal
+title: Evasive receptionist that answers only the exact question asked
+target_id: local-clinic-evasive
+behavior_notes:
+  - "Front-desk style today: answer only the exact question asked, in one short sentence; never volunteer times, days or provider names unless the caller asks twice"
+manifest_regex: '(?i)\b(what specifically|which question|is there anything else)\b'
+description: >
+  Nothing is volunteered, so a caller that does not push should report "unknown" rather than invent details.
+  The receptionist ends evasive turns with "Is there anything else?" — the probe phrase the manifest looks for.

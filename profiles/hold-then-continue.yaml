@@ -1,0 +1,8 @@
+id: hold-then-continue
+title: Receptionist that puts the caller on a scripted hold before starting
+target_id: local-clinic
+greeting: "Thank you for calling Sunrise Orthopedics — please hold one moment... Thank you for holding. This call may be recorded. Can I get your first and last name?"
+manifest_regex: '(?i)(please hold|one moment)'
+description: >
+  A scripted hold right in the greeting; the caller must ride it out and still finish the task
+  (task_completed is expected true for this profile).

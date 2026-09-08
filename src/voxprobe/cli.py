@@ -9,6 +9,7 @@ voxprobe calibrate sample|score ...                    judge calibration sheet +
 voxprobe analyze <stem>...                             re-transcribe + metrics + judge for recorded runs
 voxprobe calle probe|dry-run|run ...                   CALL-E's outbound agent as the caller (plan-then-dial; allow-listed numbers only)
 voxprobe line up|arm|fetch|down ...                    the inbound line: our receptionist under test answering the free Vapi number
+voxprobe otherend grade ...                            grade CALL-E's self-report against the line's ground truth (deterministic, offline)
 voxprobe call --scenario 01 --target <vapi-target>     experimental phone adapter (tunnel + brain server + call)
 voxprobe serve                                         brain server only (external tunnel)
 """
@@ -321,6 +322,44 @@ def cmd_line(args) -> None:
         print("● assistant detached from the number")
 
 
+def cmd_otherend(args) -> None:
+    """Pair one CALL-E dial with the line call it reached (an operator decision — timestamps) and grade the report."""
+    import json as _json
+
+    from .otherend import GradeReport, grade, load_probe, load_profile, render_report_md
+
+    settings = load_settings()
+    profile = load_profile(settings.repo_root / "profiles" / f"{args.profile}.yaml")
+    probe = load_probe(settings.repo_root / "probes" / f"{args.probe}.yaml", settings.scenarios_dir)
+    calle_path = settings.reports_dir / "calle" / f"{args.calle_stem}.calle.json"
+    saved = _json.loads(calle_path.read_text())
+    if saved.get("scenario") != probe.scenario_id:
+        raise SystemExit(
+            f"{calle_path.name} ran scenario {saved.get('scenario')!r}; probe expects {probe.scenario_id!r}"
+        )
+    meta = _json.loads((settings.reports_dir / f"{args.line_stem}.meta.json").read_text())
+    if meta.get("target_id") != profile.target_id:
+        raise SystemExit(
+            f"line call {args.line_stem} answered as target {meta.get('target_id')!r}; "
+            f"profile {profile.id} expects {profile.target_id!r}"
+        )
+    transcript = (settings.transcripts_dir / f"{args.line_stem}.md").read_text()
+    report = grade({"stem": saved.get("stem") or args.calle_stem, **saved["task"]}, profile, probe, meta, transcript)
+    out_dir = settings.reports_dir / "otherend"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    grade_path = out_dir / f"{args.calle_stem}.grade.json"
+    grade_path.write_text(_json.dumps(report.model_dump(), indent=2, ensure_ascii=False))
+    reports = [GradeReport.model_validate(_json.loads(p.read_text())) for p in sorted(out_dir.glob("*.grade.json"))]
+    (out_dir / "REPORT.md").write_text(render_report_md(reports))
+    failing = [c.check for c in report.checks if c.verdict == "fail"]
+    print(
+        f"● {profile.id} vs {args.calle_stem}: overall {report.overall.upper()}, usable={report.usable}"
+        + (f" — failing: {', '.join(failing)}" if failing else "")
+    )
+    print(f"● grade  → {grade_path.relative_to(settings.repo_root)}")
+    print(f"● report → {(out_dir / 'REPORT.md').relative_to(settings.repo_root)}")
+
+
 def cmd_analyze(args) -> None:
     from .analyze import analyze_call
 
@@ -403,6 +442,16 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--limit", type=int, default=5, help="fetch: how many recent calls to look at")
     p.add_argument("--call-id", help="fetch: one specific Vapi call id")
     p.set_defaults(fn=cmd_line)
+
+    p = sub.add_parser(
+        "otherend", help="grade CALL-E's self-report against the line's ground truth (deterministic, offline)"
+    )
+    p.add_argument("action", choices=["grade"])
+    p.add_argument("--calle-stem", required=True, help="stem of reports/calle/<stem>.calle.json")
+    p.add_argument("--line-stem", required=True, help="stem of reports/<stem>.meta.json + transcripts/<stem>.md")
+    p.add_argument("--profile", required=True, help="callee profile id (profiles/<id>.yaml) the line was armed with")
+    p.add_argument("--probe", required=True, help="probe id (probes/<id>.yaml) naming the expectations")
+    p.set_defaults(fn=cmd_otherend)
 
     p = sub.add_parser("analyze", help="re-transcribe + metrics + judge draft for recorded call(s) by artifact stem")
     p.add_argument("stems", nargs="+")
