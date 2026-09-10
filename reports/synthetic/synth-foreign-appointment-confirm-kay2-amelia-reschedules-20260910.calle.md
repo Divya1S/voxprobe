@@ -1,6 +1,6 @@
 # synth-foreign-appointment-confirm-kay2-amelia-reschedules-20260910 - transcript (SYNTHETIC - in-process text simulation; no phone call, no CALL-E, no platform identifiers. Names are fictional.)
 
-Source: CALL-E CallTask.transcript_turns (integer-second offsets; words and timing are CALL-E's, not measured from audio).
+Source: synthetic transcript_turns from the in-process simulation (no phone call, no CALL-E; offsets are simulated).
 
 ## attempt ? - status completed - None -> None
 
