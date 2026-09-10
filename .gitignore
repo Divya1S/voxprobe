@@ -46,3 +46,8 @@ recordings/*.mp3
 reports/line/*.log
 reports/line/state.json
 reports/calle/*.log
+
+# real-call raw artifacts never belong in the public tree (webhook logs carry assistant credentials/control URLs; call JSON carries numbers)
+reports/events/
+transcripts/*.json
+recordings/raw/
