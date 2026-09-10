@@ -31,7 +31,7 @@
             "no",
             "unknown"
           ],
-          "description": "Was this achieved: Get a first appointment that fits your schedule - ideally Saturday morning; otherwise a weekday after 3 pm - preferably with Doctor Chen, and have the final day, time and doctor confirmed."
+          "description": "Was this achieved: Get a first appointment that fits your schedule — ideally Saturday morning; otherwise a weekday after 3 pm — preferably with Doctor Chen, and have the final day, time and doctor confirmed."
         },
         "outcome_summary": {
           "type": "string",
