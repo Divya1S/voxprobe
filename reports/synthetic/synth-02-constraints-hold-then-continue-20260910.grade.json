@@ -9,9 +9,9 @@
     {
       "check": "manifest",
       "expected": "(?i)(please hold|one moment)",
-      "got": "Thank you for calling Sunrise Orthopedics — please hold one moment... Thank you for holding. This call may be recorded. Can I get your first and last name?",
+      "got": "Thank you for calling Sunrise Orthopedics - please hold one moment... Thank you for holding. This call may be recorded. Can I get your first and last name?",
       "verdict": "pass",
-      "evidence": "Thank you for calling Sunrise Orthopedics — please hold one moment... Thank you for holding. This call may be recorded. Can I get your first and last name?"
+      "evidence": "Thank you for calling Sunrise Orthopedics - please hold one moment... Thank you for holding. This call may be recorded. Can I get your first and last name?"
     },
     {
       "check": "task_completed",

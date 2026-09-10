@@ -34,7 +34,8 @@ SYNTH_NOTE = (
 
 
 def _turns(transcript: list[dict]) -> list[dict]:
-    """voxprobe transcript → CallTask-shaped transcript_turns (bot = caller, user = the line)."""
+    """voxprobe transcript -> CallTask-shaped transcript_turns (bot = caller, user = the line); degenerate turns dropped."""
+    transcript = [t for t in transcript if re.search(r"[A-Za-z0-9]", t.get("text") or "")]
     return [
         {"offset_seconds": int(t["t"]), "speaker": "bot" if t["speaker"] == "CALLER" else "user", "text": t["text"]}
         for t in transcript

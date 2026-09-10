@@ -1,7 +1,7 @@
 {
   "stem": "synth-foreign-appointment-confirm-kay2-amelia-confirms-20260910",
   "scenario": "foreign-appointment-confirm",
-  "synthetic": "SYNTHETIC — in-process text simulation; no phone call, no CALL-E, no platform identifiers. Names are fictional.",
+  "synthetic": "SYNTHETIC - in-process text simulation; no phone call, no CALL-E, no platform identifiers. Names are fictional.",
   "request": {
     "task": "You are an AI phone assistant calling on behalf of KAY2 Studios.\nDisclose immediately that you are AI, that this is one appointment-confirmation call, and that\nstudio coordinator authorized it because: Recipient booked this session online and asked the studio to call to confirm.\n\nSpeak with Amelia. If you have the wrong person, apologise, end the call,\nand set disposition to wrong_number.\n\nPurpose: confirm one existing appointment. Do not sell, collect payment, give medical/legal/financial\nadvice, or discuss anything outside this booking.\n\nAppointment:\n- Service: brand strategy session\n- When: Thursday 03 September 2026 at 10:00 (Europe/London)\n- Duration: 45 minutes\n- Location: KAY2 Studios, London\n\nAsk:\n1. Is this Amelia?\n2. Can they attend this appointment? Capture can_attend as yes, no, or unknown.\n3. If yes, read the time back and capture confirmed_time as the booked start time.\n4. If no, ask whether they want to cancel or move.\nIf they cannot attend the booked slot, offer ONLY these alternative times and capture the one they choose:\n- Thursday 03 September 2026 at 14:00 (Europe/London)\n- Friday 04 September 2026 at 10:00 (Europe/London)\nDo not invent other times. Do not book, move, or cancel anything in a calendar.\n\nIf voicemail answers, leave a short message asking them to call the studio back. Do not include\nany other personal details. Set disposition to voicemail and can_attend to unknown.\nIf they decline, set can_attend to no and disposition to declined.\nIf they ask to move to one of the allowed windows, set can_attend to no, disposition to\nreschedule_requested, and requested_time to that window.\nDo not infer yes from silence. Ambiguity must be unknown / needs_human.\n\nReturn the structured result. Do not update any calendar yourself.\n",
     "recipients": [
@@ -59,13 +59,13 @@
     "stem": "synth-foreign-appointment-confirm-kay2-amelia-confirms-20260910",
     "object": "call",
     "status": "completed",
-    "synthetic": "SYNTHETIC — in-process text simulation; no phone call, no CALL-E, no platform identifiers. Names are fictional.",
+    "synthetic": "SYNTHETIC - in-process text simulation; no phone call, no CALL-E, no platform identifiers. Names are fictional.",
     "task_completed": true,
     "completion_confidence": {
       "score": 1.0,
       "label": "high"
     },
-    "summary": "SYNTHETIC — in-process text simulation; no phone call, no CALL-E, no platform identifiers. Names are fictional. Simulated caller running a foreign task against persona kay2-amelia-confirms.",
+    "summary": "SYNTHETIC - in-process text simulation; no phone call, no CALL-E, no platform identifiers. Names are fictional. Simulated caller running a foreign task against persona kay2-amelia-confirms.",
     "evidence": [],
     "structured_result": {
       "can_attend": "yes",
@@ -110,11 +110,6 @@
                 "offset_seconds": 22,
                 "speaker": "user",
                 "text": "Yes, I can make it on the third at ten."
-              },
-              {
-                "offset_seconds": 28,
-                "speaker": "bot",
-                "text": "{"
               },
               {
                 "offset_seconds": 33,

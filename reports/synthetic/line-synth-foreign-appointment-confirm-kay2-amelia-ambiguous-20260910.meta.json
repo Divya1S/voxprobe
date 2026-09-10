@@ -3,5 +3,5 @@
   "kind": "synthetic",
   "scenario_id": "foreign-appointment-confirm",
   "target_id": "callee:kay2-amelia-ambiguous",
-  "note": "SYNTHETIC \u2014 in-process text simulation; no phone call, no CALL-E, no platform identifiers. Names are fictional."
+  "note": "SYNTHETIC - in-process text simulation; no phone call, no CALL-E, no platform identifiers. Names are fictional."
 }
