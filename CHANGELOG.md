@@ -2,6 +2,13 @@
 
 All notable changes to voxprobe. Dates are UTC.
 
+## v0.2.2 — 2026-09-09
+
+### Fixed (hardening, from review on awesome-phone-call-agents#371)
+- E.164 validation is ASCII-only (`[0-9]`); Python's `\d` also accepts Unicode digits, so `+1٢١٣…` used to pass.
+- CALL-E credentials are only ever sent to the approved origins (`https://api.heycall-e.com`, `https://test-api.heycall-e.com`);
+  any other `CALLE_BASE_URL` is refused before a request is made.
+
 ## v0.2.1 — 2026-09-08
 
 ### Added

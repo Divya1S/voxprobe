@@ -19,7 +19,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-_E164 = re.compile(r"^\+[1-9]\d{6,14}$")
+_E164 = re.compile(r"^\+[1-9][0-9]{6,14}$")  # ASCII digits only: Python's \d also matches Unicode digits
+CALLE_ALLOWED_ORIGINS = ("https://api.heycall-e.com", "https://test-api.heycall-e.com")
 
 
 class TargetNumberError(RuntimeError):
@@ -28,7 +29,9 @@ class TargetNumberError(RuntimeError):
 
 def normalize_e164(number: str) -> str:
     """Normalize human-typed numbers like '+1 (555) 010-1234' to strict E.164 '+15550101234'."""
-    digits = re.sub(r"[^\d+]", "", number.strip())
+    if not number.isascii():
+        raise ValueError(f"phone number must be ASCII E.164, got {number!r}")
+    digits = re.sub(r"[^0-9+]", "", number.strip())
     if not digits.startswith("+"):
         digits = "+" + digits
     if not _E164.match(digits):
@@ -155,6 +158,10 @@ class Settings:
         if not self.calle_api_key:
             raise RuntimeError(
                 "CALL-E adapter needs CALLE_API_KEY (dashboard.heycall-e.com → Account → API keys; see .env.example)"
+            )
+        if self.calle_base_url not in CALLE_ALLOWED_ORIGINS:
+            raise RuntimeError(
+                f"refusing to send CALL-E credentials to {self.calle_base_url!r}; allowed origins: {CALLE_ALLOWED_ORIGINS}"
             )
 
     def require_vapi(self) -> None:

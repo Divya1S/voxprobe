@@ -1,6 +1,6 @@
 [project]
 name = "voxprobe"
-version = "0.2.1"
+version = "0.2.2"
 description = "Persona-driven QA for voice agents: simulated callers or a programmable callee line, both-sides recording, audio-timed transcripts, turn-taking metrics, evidence-backed reports; CALL-E adapter + otherend grader."
 readme = "README.md"
 requires-python = ">=3.11"

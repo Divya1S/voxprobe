@@ -36,3 +36,27 @@ def test_settings_load_without_any_phone_adapter(monkeypatch):
     settings = load_settings()
     assert settings.recordings_dir.name == "recordings"
     assert settings.allowed_numbers == frozenset() or isinstance(settings.allowed_numbers, frozenset)
+
+
+def test_e164_rejects_unicode_digits_and_non_ascii():
+    import pytest
+
+    from voxprobe.config import normalize_e164
+
+    with pytest.raises(ValueError):
+        normalize_e164("+1٢١٣٢٨٩٢٠٨١")  # Arabic-Indic digits: matched by \\d, must not pass
+    with pytest.raises(ValueError):
+        normalize_e164("+1 213 289 2081​")  # zero-width space
+    assert normalize_e164("+1 (213) 289-2081") == "+1XXXXXXXXXX"
+
+
+def test_calle_credentials_only_go_to_approved_origins():
+    import pytest
+
+    from voxprobe.config import Settings
+
+    Settings(calle_api_key="k", calle_base_url="https://api.heycall-e.com").require_calle()
+    Settings(calle_api_key="k", calle_base_url="https://test-api.heycall-e.com").require_calle()
+    for bad in ("http://api.heycall-e.com", "https://api.heycall-e.com.evil.example", "https://example.com"):
+        with pytest.raises(RuntimeError, match="refusing to send CALL-E credentials"):
+            Settings(calle_api_key="k", calle_base_url=bad).require_calle()
