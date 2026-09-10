@@ -8,7 +8,7 @@ voxprobe bench --name <name> -k 3                      planted-bug detection ben
 voxprobe calibrate sample|score ...                    judge calibration sheet + human agreement / kappa
 voxprobe analyze <stem>...                             re-transcribe + metrics + judge for recorded runs
 voxprobe calle probe|dry-run|run ...                   CALL-E's outbound agent as the caller (plan-then-dial; allow-listed numbers only)
-voxprobe line up|arm|fetch|down ...                    the inbound line: our receptionist under test answering the free Vapi number
+voxprobe line up|arm|fetch|down|rotate ...             the inbound line: our receptionist under test answering the free Vapi number
 voxprobe otherend grade ...                            grade CALL-E's self-report against the line's ground truth (deterministic, offline)
 voxprobe call --scenario 01 --target <vapi-target>     experimental phone adapter (tunnel + brain server + call)
 voxprobe serve                                         brain server only (external tunnel)
@@ -320,6 +320,14 @@ def cmd_line(args) -> None:
     elif args.action == "down":
         asyncio.run(line.down(settings))
         print("● assistant detached from the number")
+    elif args.action == "rotate":
+        ok = asyncio.run(line.rotate(settings))
+        print(
+            "● saved assistant now carries the current BRAIN_SERVER_SECRET"
+            if ok
+            else "! Vapi did not echo the new secret back — check the dashboard"
+        )
+        raise SystemExit(0 if ok else 1)
 
 
 def _foreign_payload(probe, number: str) -> dict:
@@ -571,7 +579,7 @@ def main(argv: list[str] | None = None) -> None:
     p = sub.add_parser(
         "line", help="inbound line: up (server+tunnel+assistant on the free number), arm, fetch artifacts, down"
     )
-    p.add_argument("action", choices=["up", "arm", "fetch", "down"])
+    p.add_argument("action", choices=["up", "arm", "fetch", "down", "rotate"])
     p.add_argument("--target", default="local-clinic", help="receptionist profile (target id) the line answers as")
     p.add_argument("--scenario", help="the persona the CALLER is expected to play (attached to evidence for the judge)")
     p.add_argument("--greeting", help="override the receptionist's first line")

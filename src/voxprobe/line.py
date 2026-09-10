@@ -115,6 +115,38 @@ async def arm_callee(settings: Settings, persona) -> LineState:
     return state
 
 
+async def rotate(settings: Settings) -> bool:
+    """Push the CURRENT brain-server secret to the saved assistant (custom-LLM credential + webhook header).
+
+    Use after changing BRAIN_SERVER_SECRET in .env: the assistant stored on Vapi still carries the previous value until it
+    is re-armed, and this needs no tunnel. Returns True when Vapi reports the new value on the assistant.
+    """
+    settings.require_vapi()
+    if not settings.brain_server_secret:
+        raise RuntimeError("BRAIN_SERVER_SECRET is empty")
+    client = VapiClient(settings)
+    try:
+        current = await client.find_assistant(LINE_ASSISTANT_NAME)
+        if not current:
+            raise RuntimeError(f"no saved assistant named {LINE_ASSISTANT_NAME!r}")
+        server = dict(current.get("server") or {})
+        server["headers"] = {"Authorization": f"Bearer {settings.brain_server_secret}"}
+        body = {
+            "credentials": [
+                {"provider": "custom-llm", "apiKey": settings.brain_server_secret, "name": "voxprobe-brain"}
+            ],
+            "server": server,
+        }
+        updated = await client.upsert_assistant({"name": LINE_ASSISTANT_NAME, **body})
+    finally:
+        await client.aclose()
+    creds = updated.get("credentials") or []
+    header = ((updated.get("server") or {}).get("headers") or {}).get("Authorization", "")
+    return any(c.get("apiKey") == settings.brain_server_secret for c in creds) and header.endswith(
+        settings.brain_server_secret
+    )
+
+
 async def down(settings: Settings) -> None:
     settings.require_vapi()
     client = VapiClient(settings)
