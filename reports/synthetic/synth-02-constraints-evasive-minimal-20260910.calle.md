@@ -2,7 +2,7 @@
 
 Source: CALL-E CallTask.transcript_turns (integer-second offsets; words and timing are CALL-E's, not measured from audio).
 
-## attempt ? - status completed - None → None
+## attempt ? - status completed - None -> None
 
 [00:04] AGENT: Please note that this call may be recorded. Could you please tell me your first and last name, your date of birth, and the reason for your call today?
 [00:09] CALLER(CALL-E): Hi, I'm Daniel Reyes, born September thirtieth, nineteen seventy-eight. I'm calling because my left shoulder's been stiff and painful for about a month, especially when I reach overhead.

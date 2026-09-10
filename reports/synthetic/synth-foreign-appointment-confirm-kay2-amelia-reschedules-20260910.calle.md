@@ -2,7 +2,7 @@
 
 Source: CALL-E CallTask.transcript_turns (integer-second offsets; words and timing are CALL-E's, not measured from audio).
 
-## attempt ? - status completed - None → None
+## attempt ? - status completed - None -> None
 
 [00:00] AGENT: Hello, Amelia speaking.
 [00:06] CALLER(CALL-E): Hello, this is an AI calling on behalf of KAY2 Studios to confirm an appointment you booked online. May I speak with Amelia?

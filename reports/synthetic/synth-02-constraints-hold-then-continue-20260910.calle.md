@@ -2,7 +2,7 @@
 
 Source: CALL-E CallTask.transcript_turns (integer-second offsets; words and timing are CALL-E's, not measured from audio).
 
-## attempt ? - status completed - None → None
+## attempt ? - status completed - None -> None
 
 [00:17] AGENT: Thank you for calling Sunrise Orthopedics - please hold one moment... Thank you for holding. This call may be recorded. Can I get your first and last name?
 [00:21] CALLER(CALL-E): Hi, I'm Daniel Reyes, September thirtieth, nineteen seventy-eight, and I'm calling because my left shoulder has been stiff and painful for about a month, especially when I reach overhead.
