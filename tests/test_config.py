@@ -46,8 +46,8 @@ def test_e164_rejects_unicode_digits_and_non_ascii():
     with pytest.raises(ValueError):
         normalize_e164("+1٢١٣٢٨٩٢٠٨١")  # Arabic-Indic digits: matched by \\d, must not pass
     with pytest.raises(ValueError):
-        normalize_e164("+1 213 289 2081​")  # zero-width space
-    assert normalize_e164("+1 (213) 289-2081") == "+1XXXXXXXXXX"
+        normalize_e164("+1 202 555 0100​")  # zero-width space
+    assert normalize_e164("+1 (202) 555-0100") == "+12025550100"
 
 
 def test_calle_credentials_only_go_to_approved_origins():
