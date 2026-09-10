@@ -51,3 +51,11 @@ reports/calle/*.log
 reports/events/
 transcripts/*.json
 recordings/raw/
+
+# real-call evidence stays local (published only as synthetic rows under reports/synthetic)
+reports/calle/
+reports/otherend/
+reports/line-*
+transcripts/line-*
+transcripts/*calle*
+recordings/*.mp3

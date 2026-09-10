@@ -44,9 +44,9 @@ capture — pacing proven. (Bug found on the way: `runner.add_workers()` must be
 
 **First full runs** (Deepgram nova-3 + aura-2 both sides; caller brain = our persona/director on Groq 70B; sample agent on Gemini flash-lite):
 - scenario 01 vs clean agent: 90 s conversation, 4/3 turns, caller median response 1.77 s (agent-stops → caller-starts, VAD-corrected),
-  agent 1.97 s, 0 overlaps, one 4.6 s silence (a 3.5 s Groq outlier). Judge: no issues — correct.
+ agent 1.97 s, 0 overlaps, one 4.6 s silence (a 3.5 s Groq outlier). Judge: no issues — correct.
 - scenario 02 vs planted-bug agent: agent confirmed **Saturday 10 am** at a Mon–Fri clinic; judge flagged HIGH @ 01:00 with the verbatim
-  quote and matched the scenario's hypothesis; metrics exposed a 13 s first-response silence (Gemini cold start).
+ quote and matched the scenario's hypothesis; metrics exposed a 13 s first-response silence (Gemini cold start).
 - Recording convention holds: LEFT = agent, RIGHT = caller; per-channel loudness −24/−28 dB; Whisper-per-region transcript clean.
 
 **Open items:** deliberate barge-in driver for scenario 09; smart-turn (ONNX) instead of speech-timeout; local Kokoro/Whisper option;
@@ -57,16 +57,16 @@ teardown warnings from Deepgram STT connection cancel; the judge should weigh lo
 Research (repo craft, hiring signals, voice-eval SOTA, competitors, feasibility) + a blunt critic pass found claims a reviewer could
 disprove by grep in a minute. Fixed, in small commits carrying the numbers:
 - **Metrics conflation**: a 13.24 s agent response gap was counted as latency *and* as a "long silence"; `p90` was reported over n=4.
-  Now: response gaps split by direction; **dead air** (≥3 s) is a labelled subset attributed to the slow party; p95 only for n≥5;
-  intra-turn pauses are a separate phenomenon; thresholds live in a named `SegmentationPolicy`. +5 tests on hand-built timelines.
+ Now: response gaps split by direction; **dead air** (≥3 s) is a labelled subset attributed to the slow party; p95 only for n≥5;
+ intra-turn pauses are a separate phenomenon; thresholds live in a named `SegmentationPolicy`. +5 tests on hand-built timelines.
 - **Timing findings are deterministic now** ("measured issues"): dead air and overlaps go into the report straight from the
-  instrument with exact timestamps and rule-based severity; the LLM judge is told not to re-list them but must reflect them in its
-  latency score (it had rated a 13 s silence "latency 4"; it now says 3, and the measured issue is HIGH @ 00:26 regardless).
+ instrument with exact timestamps and rule-based severity; the LLM judge is told not to re-list them but must reflect them in its
+ latency score (it had rated a 13 s silence "latency 4"; it now says 3, and the measured issue is HIGH @ 00:26 regardless).
 - **Claims**: websocket target demoted to "planned" (schema kept, CLI refuses); the transport claim now names `pipecat.evals`
-  precisely (its virtual mic plays *scripted* utterances over a websocket into one pipeline; voxprobe's pair lets two full
-  pipelines talk in-process, no socket); analysis headers no longer say "Vapi"/"Call id None" on local runs.
+ precisely (its virtual mic plays *scripted* utterances over a websocket into one pipeline; voxprobe's pair lets two full
+ pipelines talk in-process, no socket); analysis headers no longer say "Vapi"/"Call id None" on local runs.
 - arena-01's own example now shows a 4.6 s dead-air event that is *our simulator's* (slow LLM turn) — kept on purpose: the
-  instrument measures both parties.
+ instrument measures both parties.
 
 ## 2026-08-17 — P3 the benchmark (in flight) and P4 proving the instrument
 
